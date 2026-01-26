@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | The BIU Archive</title>
+    <style>
+        :root {
+            --primary: #002147; --accent: #FFD700; --light: #f4f4f4;
+            --white: #ffffff; --text: #333;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--light); color: var(--text); margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; padding: 20px; }
+        .container { background: var(--white); padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        footer { margin-top: 40px; font-size: 12px; opacity: 0.8; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 20px; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div id="entry-gate" class="container">
+        <h1 style="color:var(--primary); margin-bottom:0;">The BIU Archive</h1>
+        <p style="font-size: 14px; opacity:0.7;">The BIU Archive: Your Academic Legacy</p>
+        <form id="login-form">
+            <input type="text" id="name" placeholder="Full Name" minlength="5" required style="width:100%; padding:12px; margin:10px 0; border:1px solid #ccc; border-radius:8px; box-sizing: border-box;">
+            <select id="dept" required style="width:100%; padding:12px; margin:10px 0; border:1px solid #ccc; border-radius:8px; box-sizing: border-box;">
+                <option value="">Select Your Department</option>
+                <option value="CSC">Computer Science</option>
+                <option value="ENG">Engineering</option>
+                <option value="MLS">Med Lab Science</option>
+                <option value="Nursing">Nursing</option>
+                <option value="Law">Law</option>
+                <option value="ISD">International Studies & Diplomacy</option>
+            </select>
+            <button type="submit" style="width:100%; padding:14px; background:var(--primary); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:16px;">ENTER VAULT</button>
+        </form>
+        <footer>
+            <strong>Created by Celebrity Attitude</strong><br>
+            100L Computer Science<br>
+            Benson Idahosa University
+        </footer>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak", 
+            authDomain: "biu-archive.firebaseapp.com",
+            databaseURL: "https://biu-archive-default-rtdb.firebaseio.com",
+            projectId: "biu-archive",
+            storageBucket: "biu-archive.firebasestorage.app",
+            messagingSenderId: "245967347998",
+            appId: "1:245967347998:web:a8feb5ad0ef9650946a90f" 
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const logsRef = ref(db, "logs");
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxMBRUDASHeZaRvpsBCpp1hgADOHyc5TNFcvbEvvqLmKYO1S7d39AhVIAOVMcxMBtfT/exec';
+
+        // --- CHECK IF ALREADY LOGGED IN ---
+        if (localStorage.getItem('biu_user_name')) {
+            window.location.href = 'index.html';
+        }
+
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const dept = document.getElementById('dept').value;
+
+            // 1. Generate or Retrieve unique User ID
+            let userId = localStorage.getItem('biu_user_id');
+            if (!userId) {
+                userId = 'user_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('biu_user_id', userId);
+            }
+
+            // 2. Save Session Data
+            localStorage.setItem('biu_user_name', name);
+            localStorage.setItem('biu_user_dept', dept);
+
+            // 3. Log to Google Sheets
+            fetch(SCRIPT_URL, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                body: new URLSearchParams({'name': name, 'dept': dept}) 
+            });
+
+            // 4. Log to Firebase with the User ID
+            push(logsRef, { 
+                userId: userId,
+                name: name, 
+                dept: dept, 
+                timestamp: new Date().toLocaleString() 
+            });
+
+            // 5. Redirect to main archive
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>

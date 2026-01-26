@@ -129,6 +129,7 @@
         }
 
         function startListeners() {
+            // Listen for Payment Requests (Notes)
             onValue(ref(db, "payment_requests"), (snapshot) => {
                 const data = snapshot.val();
                 const list = document.getElementById('payment-list');
@@ -143,7 +144,7 @@
                             <div class="payment-request-card">
                                 <div>
                                     <strong style="color:#333">${req.name}</strong><br>
-                                    <small style="color:#666">${req.time || 'Recent'}</small>
+                                    <small style="color:#666">${req.dept || 'Department N/A'}</small>
                                 </div>
                                 <button class="btn-approve" onclick="approvePayment('${key}', '${req.userId}')">Approve & Unlock</button>
                             </div>`;
@@ -154,6 +155,7 @@
                 }
             });
 
+            // Listen for Login Logs
             onValue(ref(db, "logs"), (snapshot) => {
                 const data = snapshot.val();
                 const list = document.getElementById('log-list');
@@ -178,7 +180,11 @@
         }
 
         window.approvePayment = function(reqId, userId) {
-            if(confirm("Confirm payment received for this user?")) {
+            if(!userId || userId === 'undefined') {
+                alert("Error: User ID not found for this request.");
+                return;
+            }
+            if(confirm("Confirm payment received? This will unlock notes for this student.")) {
                 set(ref(db, "paid_users/" + userId), true).then(() => {
                     remove(ref(db, "payment_requests/" + reqId));
                     alert("User upgraded to Premium!");

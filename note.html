@@ -83,8 +83,15 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Keep the same logic as index.html
+        // Session & User ID Check
+        const studentName = localStorage.getItem('biu_user_name');
         let userId = localStorage.getItem('biu_user_id');
+
+        if (!studentName) {
+            alert("Please login first!");
+            window.location.href = 'login.html';
+        }
+
         if (!userId) {
             userId = 'user_' + Math.random().toString(36).substr(2, 9);
             localStorage.setItem('biu_user_id', userId);
@@ -98,19 +105,9 @@
         });
 
         window.startVerification = function() {
-            const studentName = prompt("Enter your Full Name for verification:");
-            if (!studentName) return;
-
             document.getElementById('status-overlay').classList.remove('hidden');
             
-            // Send request to Admin Dashboard
-            push(ref(db, "payment_requests"), { 
-                userId: userId, 
-                name: studentName, 
-                time: new Date().toLocaleString() 
-            });
-
-            // Redirect to WhatsApp
+            // Redirect to WhatsApp with info from localStorage
             const whatsappUrl = `https://wa.me/2347041795388?text=${encodeURIComponent("Hello Paul, I just paid for the BIU Notes Archive.\n\nName: " + studentName + "\nUser ID: " + userId)}`;
             setTimeout(() => { window.open(whatsappUrl, '_blank'); }, 1500);
         }

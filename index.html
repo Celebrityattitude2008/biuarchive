@@ -17,24 +17,17 @@
         .container { background: var(--white); padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 850px; text-align: center; position: relative; }
         .hidden { display: none !important; }
         
-        /* Navigation */
         .top-nav { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 10; flex-wrap: wrap; justify-content: flex-end; }
         .nav-btn { padding: 8px 12px; border-radius: 20px; border: none; cursor: pointer; font-size: 11px; font-weight: bold; background: var(--primary); color: var(--white); transition: 0.2s; }
         .nav-btn:hover { transform: scale(1.05); }
 
-        /* Marketplace */
         .marketplace-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 15px 0; }
         .ad-card { background: linear-gradient(145deg, var(--white), var(--light)); border: 1px solid var(--accent); padding: 12px; border-radius: 10px; font-size: 12px; text-align: left; position: relative; cursor: pointer; transition: 0.3s; }
         .ad-tag { position: absolute; top: 5px; right: 5px; font-size: 8px; background: var(--accent); color: var(--primary); padding: 2px 5px; border-radius: 4px; font-weight: bold; }
 
-        /* Support Strip */
-        .support-strip { background: rgba(0, 33, 71, 0.05); border: 1.5px solid var(--primary); padding: 15px; border-radius: 12px; margin: 25px 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-
-        /* Broadcast Bar */
         #broadcast-bar { background: #FFD700; color: #002147; padding: 12px; border-radius: 10px; margin-top: 50px; margin-bottom: 15px; font-weight: bold; border-left: 5px solid #002147; display: flex; justify-content: space-between; align-items: center; font-size: 14px; animation: slideDown 0.5s ease; }
         @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* Layout Sections */
         .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 25px 0; }
         .timetable-box, .study-advice { background: rgba(128, 128, 128, 0.05); border: 1px solid rgba(0,0,0,0.1); padding: 15px; border-radius: 12px; text-align: left; }
         .timetable-box h3, .study-advice h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid var(--accent); display: inline-block; }
@@ -43,7 +36,6 @@
         th { background: var(--primary); color: var(--white); padding: 8px; text-align: left; }
         td { border-bottom: 1px solid rgba(0,0,0,0.05); padding: 8px; }
 
-        /* Tabs & Cards */
         .tab-container { display: flex; justify-content: center; gap: 8px; margin: 20px 0; flex-wrap: wrap; }
         .tab-btn { background: rgba(0,0,0,0.05); padding: 8px 16px; border-radius: 20px; border: none; cursor: pointer; font-size: 13px; color: var(--text); }
         .tab-btn.active { background: var(--primary); color: var(--white); font-weight: bold; }
@@ -53,7 +45,6 @@
         .course-card h3 { margin: 0; font-size: 1.1rem; }
         .download-btn { width: 100%; padding: 10px; background: var(--primary); color: var(--white); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 12px; }
 
-        /* Chat System */
         .chat-section { margin-top: 30px; background: rgba(0,0,0,0.03); padding: 20px; border-radius: 15px; text-align: left; }
         #chat-display { height: 180px; overflow-y: auto; background: var(--white); border-radius: 8px; padding: 10px; margin-bottom: 0px; border: 1px solid rgba(0,0,0,0.1); font-size: 13px; border-left: 4px solid var(--accent); }
         #typing-indicator { height: 15px; font-size: 11px; color: var(--info); margin-bottom: 5px; font-style: italic; }
@@ -61,7 +52,6 @@
         .chat-input-area input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc; }
 
         footer { margin-top: 40px; font-size: 12px; opacity: 0.8; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 20px; line-height: 1.6; }
-        
         #toast { visibility: hidden; min-width: 250px; background: var(--primary); color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border-bottom: 4px solid var(--accent); }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
@@ -72,37 +62,14 @@
     <div id="toast"></div>
     <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" preload="auto"></audio>
 
-    <div id="entry-gate" class="container" style="max-width: 400px;">
-        <h1 style="color:var(--primary); margin-bottom:0;">The BIU Archive</h1>
-        <p style="font-size: 14px; opacity:0.7;">The BIU Archive: Your Academic Legacy</p>
-        <form id="login-form">
-            <input type="text" id="name" placeholder="Full Name" minlength="5" required style="width:100%; padding:12px; margin:10px 0; border:1px solid #ccc; border-radius:8px; box-sizing: border-box;">
-            <select id="dept" required style="width:100%; padding:12px; margin:10px 0; border:1px solid #ccc; border-radius:8px; box-sizing: border-box;">
-                <option value="">Select Your Department</option>
-                <option value="CSC">Computer Science</option>
-                <option value="ENG">Engineering</option>
-                <option value="MLS">Med Lab Science</option>
-                <option value="Nursing">Nursing</option>
-                <option value="Law">Law</option>
-                <option value="ISD">International Studies & Diplomacy</option>
-            </select>
-            <button type="submit" style="width:100%; padding:14px; background:var(--primary); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:16px;">ENTER VAULT</button>
-        </form>
-        <footer>
-            <strong>Created by Celebrity Attitude</strong><br>
-            100L Computer Science<br>
-            Benson Idahosa University
-        </footer>
-    </div>
-
-    <div id="main-archive" class="container hidden">
+    <div id="main-archive" class="container">
         <div class="top-nav">
             <span id="user-count-badge" style="background:var(--success); color:white; padding: 4px 10px; border-radius:20px; font-size:10px; display:flex; align-items:center; gap:4px;">● <span id="online-count">1</span> Online</span>
             <button class="nav-btn" style="background:#28a745" onclick="window.location.href='note.html'">📚 Course Notes</button>
             <button class="nav-btn" style="background:#6f42c1" onclick="window.location.href='lost.html'">🔍 Lost & Found</button>
             <button class="nav-btn" onclick="toggleTheme()">🌓 Theme</button>
             <button class="nav-btn" onclick="window.location.href='admin.html'">⚙️ Admin</button>
-            <button class="nav-btn" style="background:#b30000" onclick="location.reload()">Logout</button>
+            <button class="nav-btn" style="background:#b30000" onclick="logout()">Logout</button>
         </div>
 
         <div id="broadcast-bar" class="hidden">
@@ -177,10 +144,54 @@
                 <p>Handwritten & Typed notes for all 100L courses.</p>
                 <button class="download-btn" style="background:#28a745;" onclick="window.location.href='note.html'">Get Full Access 🔓</button>
             </div>
-            <div class="course-card cat-gst"><h3>GST 111</h3><p>Communication English</p><button class="download-btn" onclick="handleDownload('GST 111','https://docs.google.com/document/d/1cICV9V2Wtywaofp_1cA84ItLXu-vve-p/edit')">View PQ</button></div>
-            <div class="course-card cat-gst"><h3>GST 112</h3><p>Nigerian People and Culture</p><button class="download-btn" onclick="handleDownload('GST 112','https://drive.google.com/file/d/1o290W5ofDBxyoik0WC-y-VdjyHUqylJN/view?usp=drivesdk')">View PQ</button></div>
-            <div class="course-card cat-sci"><h3>MTH 111</h3><p>General Mathematics</p><button class="download-btn" onclick="handleDownload('MTH 111','https://docs.google.com/document/d/1IHjwn7HRnlUoypBEOJL2-k_u0ptZ8GEq/edit')">View PQ</button></div>
-            <div class="course-card cat-dept dept-csc"><h3>CSC 111</h3><p>Intro to Computer Science</p><button class="download-btn" onclick="handleDownload('CSC 111','https://drive.google.com/file/d/11vKL51kJKHPX83P8sv9sc_qDOhKegcup/view')">View PQ</button></div>
+            
+            <div class="course-card cat-gst">
+                <h3>GST 111</h3>
+                <p>Communication English</p>
+                <button class="download-btn" onclick="handleDownload('GST 111','https://docs.google.com/document/d/1cICV9V2Wtywaofp_1cA84ItLXu-vve-p/edit')">View PQ</button>
+            </div>
+            
+            <div class="course-card cat-gst">
+                <h3>GST 112</h3>
+                <p>Nigerian People and Culture</p>
+                <button class="download-btn" onclick="handleDownload('GST 112','https://drive.google.com/file/d/1o290W5ofDBxyoik0WC-y-VdjyHUqylJN/view?usp=drivesdk')">View PQ</button>
+            </div>
+
+            <div class="course-card cat-gst">
+                <h3>IDS 111</h3>
+                <p>InterDisciplinary Studies</p>
+                <button class="download-btn" onclick="handleDownload('IDS 111','https://docs.google.com/document/d/1E04sy5KLj_-4vtKAxwBydUlb3rCxpvzu/edit')">View PQ</button>
+            </div>
+            
+            <div class="course-card cat-sci">
+                <h3>MTH 111</h3>
+                <p>General Mathematics</p>
+                <button class="download-btn" onclick="handleDownload('MTH 111','https://docs.google.com/document/d/1IHjwn7HRnlUoypBEOJL2-k_u0ptZ8GEq/edit')">View PQ</button>
+            </div>
+
+            <div class="course-card cat-sci">
+                <h3>MTH 112</h3>
+                <p>Elementary Statistics</p>
+                <button class="download-btn" onclick="handleDownload('MTH 112','https://docs.google.com/document/d/1IHjwn7HRnlUoypBEOJL2-k_u0ptZ8GEq/edit')">View PQ</button>
+            </div>
+
+            <div class="course-card cat-sci">
+                <h3>CHM 111</h3>
+                <p>General Chemistry I</p>
+                <button class="download-btn" onclick="handleDownload('CHM 111','https://drive.google.com/file/d/11vKL51kJKHPX83P8sv9sc_qDOhKegcup/view')">View PQ</button>
+            </div>
+            
+            <div class="course-card cat-dept dept-csc">
+                <h3>CSC 111</h3>
+                <p>Intro to Computer Science</p>
+                <button class="download-btn" onclick="handleDownload('CSC 111','https://docs.google.com/document/d/1tGh6b6NQTMQoF_IpiMb6HY-xQ5HrsPyf/view')">View PQ</button>
+            </div>
+
+            <div class="course-card cat-dept dept-csc">
+                <h3>CSC 112</h3>
+                <p>Computer Applications</p>
+                <button class="download-btn" onclick="handleDownload('CSC 112','https://drive.google.com/file/d/11vKL51kJKHPX83P8sv9sc_qDOhKegcup/view')">View PQ</button>
+            </div>
         </div>
 
         <div class="chat-section">
@@ -217,26 +228,30 @@
         const db = getDatabase(app);
         const chatRef = ref(db, "messages");
         const typingRef = ref(db, "typing");
-        const logsRef = ref(db, "logs");
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxMBRUDASHeZaRvpsBCpp1hgADOHyc5TNFcvbEvvqLmKYO1S7d39AhVIAOVMcxMBtfT/exec';
 
-        let userId = localStorage.getItem('biu_user_id');
-        if (!userId) {
-            userId = 'user_' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('biu_user_id', userId);
+        // CHECK SESSION
+        const name = localStorage.getItem('biu_user_name');
+        const dept = localStorage.getItem('biu_user_dept');
+        if(!name || !dept) {
+            window.location.href = 'login.html';
+        } else {
+            document.getElementById('display-name').innerText = name;
+            applyAccess(dept);
         }
+
+        let userId = localStorage.getItem('biu_user_id') || 'user_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('biu_user_id', userId);
 
         function playNotif() {
             const sound = document.getElementById('notif-sound');
             if(sound) { sound.currentTime = 0; sound.play().catch(e => {}); }
         }
 
-        // Typing Indicator Logic
         const chatInput = document.getElementById('chat-msg');
         chatInput.addEventListener('input', () => {
-            const name = document.getElementById('display-name').innerText.split(' ')[0];
+            const shortName = name.split(' ')[0];
             if(chatInput.value.length > 0) {
-                set(ref(db, `typing/${userId}`), name);
+                set(ref(db, `typing/${userId}`), shortName);
                 setTimeout(() => remove(ref(db, `typing/${userId}`)), 3000);
             } else {
                 remove(ref(db, `typing/${userId}`));
@@ -247,21 +262,17 @@
             const typers = snapshot.val();
             const indicator = document.getElementById('typing-indicator');
             if (typers) {
-                const names = Object.values(typers).filter(n => n !== document.getElementById('display-name').innerText.split(' ')[0]);
+                const names = Object.values(typers).filter(n => n !== name.split(' ')[0]);
                 indicator.innerText = names.length > 0 ? `${names.join(', ')} is typing...` : "";
-            } else {
-                indicator.innerText = "";
-            }
+            } else { indicator.innerText = ""; }
         });
 
-        // Premium status check
         onValue(ref(db, "paid_users/" + userId), (snapshot) => {
             if (snapshot.val() === true) {
                 document.getElementById('header-title').innerHTML = "BIU Portal <span style='font-size:12px; background:#28a745; color:white; padding:2px 8px; border-radius:10px; vertical-align:middle; margin-left:10px;'>PREMIUM</span>";
             }
         });
 
-        // Online Count and Theme Logic Remains Identical
         const presenceRef = ref(db, "online_users");
         const myPresenceRef = push(presenceRef);
         onDisconnect(myPresenceRef).remove();
@@ -273,27 +284,11 @@
             body.setAttribute('data-theme', body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
         }
 
-        document.getElementById('login-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const name = document.getElementById('name').value;
-            const dept = document.getElementById('dept').value;
-
-            document.getElementById('display-name').innerText = name;
-            set(myPresenceRef, { name: name, active: true });
-
-            fetch(SCRIPT_URL, { 
-                method: 'POST', 
-                mode: 'no-cors', 
-                body: new URLSearchParams({'name': name, 'dept': dept}) 
-            });
-
-            push(logsRef, { name: name, dept: dept, timestamp: new Date().toLocaleString() });
-
-            applyAccess(dept);
-            document.getElementById('entry-gate').classList.add('hidden');
-            document.getElementById('main-archive').classList.remove('hidden');
-            showToast(`Welcome, ${name.split(' ')[0]}!`);
-        });
+        window.logout = function() {
+            localStorage.removeItem('biu_user_name');
+            localStorage.removeItem('biu_user_dept');
+            window.location.href = 'login.html';
+        }
 
         function applyAccess(dept) {
             document.querySelectorAll('.dept-eng, .dept-nur, .dept-mls, .dept-isd, .dept-law, .dept-csc').forEach(el => el.classList.add('hidden'));
@@ -307,9 +302,9 @@
 
         window.sendChat = function() {
             const input = document.getElementById('chat-msg');
-            const name = document.getElementById('display-name').innerText.split(' ')[0] || "Student";
+            const senderName = name.split(' ')[0] || "Student";
             if (input.value.trim() !== "") {
-                push(chatRef, { sender: name, message: input.value, timestamp: Date.now(), displayTime: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
+                push(chatRef, { sender: senderName, message: input.value, timestamp: Date.now(), displayTime: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
                 input.value = "";
                 remove(ref(db, `typing/${userId}`));
             }
@@ -328,6 +323,18 @@
 
         window.showToast = function(m) { const t = document.getElementById('toast'); t.innerText = m; t.className = "show"; setTimeout(() => t.className = "", 3000); }
         window.handleDownload = function(t, u) { showToast(`✅ Opening ${t}...`); setTimeout(() => window.open(u, '_blank'), 800); }
+        
+        window.filterTab = function(category, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.course-card').forEach(card => {
+                if (category === 'all' || card.classList.contains(category)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
     </script>
 </body>
 </html>

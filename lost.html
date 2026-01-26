@@ -50,7 +50,8 @@
             <h4 style="margin-top:0;">📢 Report an Item</h4>
             <input type="text" id="item-name" placeholder="What did you lose/find? (e.g. Black ID Card)">
             <input type="text" id="item-location" placeholder="Last seen location? (e.g. FOS Lecture Hall)">
-            <textarea id="item-contact" rows="2" placeholder="How can they reach you? (e.g. WhatsApp number or Dept)"></textarea>
+            <textarea id="item-contact" rows="2" placeholder="Extra details (e.g. It has a blue sticker)"></textarea>
+            <p id="reporter-tag" style="font-size: 11px; color: #666; margin-top: 5px;"></p>
             <button class="post-btn" onclick="submitPost()">Post to Board</button>
         </div>
 
@@ -80,6 +81,16 @@
         const db = getDatabase(app);
         const lostRef = ref(db, "lost_found");
 
+        // --- SESSION SECURITY CHECK ---
+        const loggedInUser = localStorage.getItem('biu_user_name');
+        const loggedInDept = localStorage.getItem('biu_user_dept');
+
+        if (!loggedInUser) {
+            window.location.href = 'login.html';
+        } else {
+            document.getElementById('reporter-tag').innerText = "Posting as: " + loggedInUser;
+        }
+
         // UI Theme persistence
         if (localStorage.getItem('theme') === 'dark') {
             document.body.setAttribute('data-theme', 'dark');
@@ -99,6 +110,8 @@
                 item: name,
                 location: loc,
                 contact: contact,
+                postedBy: loggedInUser, // Saved from login
+                department: loggedInDept, // Saved from login
                 timestamp: new Date().toLocaleString(),
                 timeUnix: Date.now()
             }).then(() => {
@@ -116,7 +129,6 @@
             const data = snapshot.val();
 
             if (data) {
-                // Convert to array and reverse to show newest first
                 const items = Object.values(data).reverse();
                 items.forEach(item => {
                     list.innerHTML += `
@@ -124,13 +136,14 @@
                             <span class="status-tag">ACTIVE</span>
                             <h3>${item.item}</h3>
                             <p>📍 <strong>Location:</strong> ${item.location}</p>
-                            <p>📞 <strong>Contact:</strong> ${item.contact}</p>
+                            <p>📞 <strong>Details:</strong> ${item.contact}</p>
+                            <p>👤 <strong>Reported By:</strong> ${item.postedBy} (${item.department})</p>
                             <span class="meta">Posted: ${item.timestamp}</span>
                         </div>
                     `;
                 });
             } else {
-                list.innerHTML = '<p class="empty-msg">No items reported yet. Items cleared by admin will disappear here.</p>';
+                list.innerHTML = '<p class="empty-msg">No items reported yet.</p>';
             }
         });
 
