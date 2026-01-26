@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The BIU Archive | Student Portal</title>
+    <style>
+        :root {
+            --primary: #002147; --accent: #FFD700; --light: #f4f4f4;
+            --white: #ffffff; --text: #333; --success: #28a745; --info: #17a2b8;
+        }
+        [data-theme="dark"] {
+            --primary: #FFD700; --accent: #002147; --light: #121212;
+            --white: #1e1e1e; --text: #f4f4f4;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--light); color: var(--text); margin: 0; display: flex; justify-content: center; padding: 20px; transition: 0.3s; }
+        .container { background: var(--white); padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 850px; text-align: center; position: relative; }
+        .hidden { display: none !important; }
+        
+        /* Navigation */
+        .top-nav { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 10; }
+        .nav-btn { padding: 8px 12px; border-radius: 20px; border: none; cursor: pointer; font-size: 11px; font-weight: bold; background: var(--primary); color: var(--white); transition: 0.2s; }
+        .nav-btn:hover { transform: scale(1.05); }
+
+        /* Marketplace */
+        .marketplace-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 15px 0; }
+        .ad-card { background: linear-gradient(145deg, var(--white), var(--light)); border: 1px solid var(--accent); padding: 12px; border-radius: 10px; font-size: 12px; text-align: left; position: relative; cursor: pointer; transition: 0.3s; }
+        .ad-tag { position: absolute; top: 5px; right: 5px; font-size: 8px; background: var(--accent); color: var(--primary); padding: 2px 5px; border-radius: 4px; font-weight: bold; }
+
+        /* Support Strip */
+        .support-strip { background: rgba(0, 33, 71, 0.05); border: 1.5px solid var(--primary); padding: 15px; border-radius: 12px; margin: 25px 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+
+        /* Broadcast Bar */
+        #broadcast-bar { background: #FFD700; color: #002147; padding: 12px; border-radius: 10px; margin-top: 50px; margin-bottom: 15px; font-weight: bold; border-left: 5px solid #002147; display: flex; justify-content: space-between; align-items: center; font-size: 14px; animation: slideDown 0.5s ease; }
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* Layout Sections */
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 25px 0; }
+        .timetable-box, .study-advice { background: rgba(128, 128, 128, 0.05); border: 1px solid rgba(0,0,0,0.1); padding: 15px; border-radius: 12px; text-align: left; }
+        .timetable-box h3, .study-advice h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid var(--accent); display: inline-block; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+        th { background: var(--primary); color: var(--white); padding: 8px; text-align: left; }
+        td { border-bottom: 1px solid rgba(0,0,0,0.05); padding: 8px; }
+
+        /* Tabs & Cards */
+        .tab-container { display: flex; justify-content: center; gap: 8px; margin: 20px 0; flex-wrap: wrap; }
+        .tab-btn { background: rgba(0,0,0,0.05); padding: 8px 16px; border-radius: 20px; border: none; cursor: pointer; font-size: 13px; color: var(--text); }
+        .tab-btn.active { background: var(--primary); color: var(--white); font-weight: bold; }
+
+        .course-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; }
+        .course-card { border: 1.5px solid var(--primary); padding: 18px; border-radius: 12px; text-align: left; background: var(--white); transition: 0.3s; }
+        .course-card h3 { margin: 0; font-size: 1.1rem; }
+        .download-btn { width: 100%; padding: 10px; background: var(--primary); color: var(--white); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 12px; }
+
+        /* Chat System */
+        .chat-section { margin-top: 30px; background: rgba(0,0,0,0.03); padding: 20px; border-radius: 15px; text-align: left; }
+        #chat-display { height: 180px; overflow-y: auto; background: var(--white); border-radius: 8px; padding: 10px; margin-bottom: 10px; border: 1px solid rgba(0,0,0,0.1); font-size: 13px; border-left: 4px solid var(--accent); }
+        .chat-input-area { display: flex; gap: 5px; }
+        .chat-input-area input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc; }
+
+        footer { margin-top: 40px; font-size: 12px; opacity: 0.8; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 20px; line-height: 1.6; }
+        
+        /* Enhanced Success Toast */
+        #toast { visibility: hidden; min-width: 250px; background: var(--primary); color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border-bottom: 4px solid var(--accent); }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+    </style>
+</head>
+<body>
+    <div id="toast"></div>
+
+    <div id="entry-gate" class="container" style="max-width: 400px;">
+        <h1 style="color:var(--primary); margin-bottom:0;">The BIU Archive</h1>
+        <p style="font-size: 14px; opacity:0.7;">The BIU Archive: Your Academic Legacy</p>
+        <form id="login-form">
+            <input type="text" id="name" placeholder="Full Name" minlength="5" required style="width:100%; padding:12px; margin:10px 0; border:1px solid #ccc; border-radius:8px; box-sizing: border-box;">
+            <input type="text" id="matric" placeholder="Matric Number (e.g. BIU/24/CSC/001)" minlength="7" required style="width:100%; padding:12px; margin:10px 0; border:1px solid #ccc; border-radius:8px; box-sizing: border-box;">
+            <select id="dept" required style="width:100%; padding:12px; margin:10px 0; border:1px solid #ccc; border-radius:8px; box-sizing: border-box;">
+                <option value="">Select Your Department</option>
+                <option value="CSC">Computer Science</option>
+                <option value="ENG">Engineering</option>
+                <option value="MLS">Med Lab Science</option>
+                <option value="Nursing">Nursing</option>
+                <option value="Law">Law</option>
+                <option value="ISD">International Studies & Diplomacy</option>
+            </select>
+            <button type="submit" style="width:100%; padding:14px; background:var(--primary); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:16px;">ENTER VAULT</button>
+        </form>
+        <footer>
+            <strong>Created by Celebrity Attitude</strong><br>
+            100L Computer Science<br>
+            Benson Idahosa University
+        </footer>
+    </div>
+
+    <div id="main-archive" class="container hidden">
+        <div class="top-nav">
+            <span id="user-count-badge" style="background:var(--success); color:white; padding: 4px 10px; border-radius:20px; font-size:10px; display:flex; align-items:center; gap:4px;">● <span id="online-count">1</span> Online</span>
+            <button class="nav-btn" style="background:#6f42c1" onclick="window.location.href='lost.html'">🔍 Lost & Found</button>
+            <button class="nav-btn" onclick="toggleTheme()">🌓 Theme</button>
+            <button class="nav-btn" onclick="window.location.href='admin.html'">⚙️ Admin</button>
+            <button class="nav-btn" style="background:#b30000" onclick="location.reload()">Logout</button>
+        </div>
+
+        <div id="broadcast-bar" class="hidden">
+            <span>📢 <span id="broadcast-text">Announcement here...</span></span>
+            <button onclick="this.parentElement.classList.add('hidden')" style="background:none; border:none; cursor:pointer; font-weight:bold; color:var(--primary);">✕</button>
+        </div>
+
+        <h1 id="header-title" style="margin-top: 60px;">BIU Portal</h1>
+        <p>Active Session: <span id="display-name" style="color:var(--info); font-weight:bold;"></span></p>
+
+        <div style="text-align: left; margin-top: 25px;">
+            <h4 style="margin: 0; color: var(--primary); font-size: 14px; border-left: 3px solid var(--accent); padding-left: 10px;">🚀 Campus Services (Sponsored)</h4>
+            <div class="marketplace-grid" id="marketplace-grid">
+                <div class="ad-card" id="ad1-card">
+                    <span class="ad-tag">SERVICE</span>
+                    <strong id="ad1-title">Past Question Printing</strong>
+                    <p id="ad1-desc" style="margin:5px 0 0 0; opacity:0.7;">Doorstep delivery to all hostels.</p>
+                </div>
+                <div class="ad-card" id="ad2-card">
+                    <span class="ad-tag">AD</span>
+                    <strong id="ad2-title">Student Hub Ad</strong>
+                    <p id="ad2-desc" style="margin:5px 0 0 0; opacity:0.7;">Promote your campus brand here.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-grid">
+            <div class="timetable-box">
+                <h3>📅 Official Exam Schedule (100L)</h3>
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr><th>Date</th><th>Time</th><th>Course</th><th>Venue</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Mon 02/02</td><td>9AM-4PM</td><td>GST 111 (English I)</td><td>ICT FOS/ENG</td></tr>
+                            <tr><td>Tue 03/02</td><td>9AM-4PM</td><td>GST 112 (People & Culture)</td><td>ICT FOS/ENG</td></tr>
+                            <tr><td>Fri 06/02</td><td>9AM-3PM</td><td>IDS 111 (Rudiments)</td><td>ICT</td></tr>
+                            <tr><td>Mon 09/02</td><td>9AM-12PM</td><td>CSC 111 (Intro to CS)</td><td>ICT FOS</td></tr>
+                            <tr><td>Mon 09/02</td><td>12PM-3PM</td><td>CHM 111 (Gen Chem I)</td><td>ICT/ENG</td></tr>
+                            <tr><td>Tue 10/02</td><td>9AM-12PM</td><td>MTH 112 (Statistics)</td><td>ICT FOS</td></tr>
+                            <tr><td>Wed 11/02</td><td>9AM-12PM</td><td>MTH 111 (Elem Math I)</td><td>ICT FOS</td></tr>
+                            <tr><td>Thu 12/02</td><td>12PM-3PM</td><td>CSC 112 (Comp App)</td><td>ICT ENG</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <button class="download-btn" 
+                        style="background: #28a745; margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 8px;" 
+                        onclick="window.open('https://docs.google.com/document/d/1E04sy5KLj_-4vtKAxwBydUlb3rCxpvzu/edit?usp=sharing', '_blank')">
+                    <span>📥</span> Download Full Timetable (PDF)
+                </button>
+            </div>
+
+            <div class="study-advice">
+                <h3>💡 Study Advice</h3>
+                <p style="font-size: 14px; line-height: 1.5;">
+                    • <strong>GST 111:</strong> Focus on Common Errors in English section.<br>
+                    • <strong>MTH 111:</strong> Set theory and Trigonometry always appear.<br>
+                    • <strong>CHM 113:</strong> Master the periodic table trends.
+                </p>
+            </div>
+        </div>
+
+        <div class="support-strip">
+            <div style="text-align: left;">
+                <strong style="color:var(--primary);">Fuel the Project</strong>
+                <p style="margin:0; font-size: 12px; opacity:0.8;">Support hosting and maintenance costs.</p>
+            </div>
+            <button class="nav-btn" onclick="showToast('Contact Admin to contribute.')">Contribute</button>
+        </div>
+
+        <div class="tab-container">
+            <button class="tab-btn active" onclick="filterTab('all', this)">All Files</button>
+            <button class="tab-btn" onclick="filterTab('cat-gst', this)">GSTs</button>
+            <button class="tab-btn" onclick="filterTab('cat-sci', this)">Sciences/Math</button>
+            <button class="tab-btn" onclick="filterTab('cat-dept', this)">Departmental</button>
+        </div>
+
+        <div class="course-grid" id="course-list">
+            <div class="course-card cat-gst"><h3>GST 111</h3><p>Communication English</p><button class="download-btn" onclick="handleDownload('GST 111','https://docs.google.com/document/d/1cICV9V2Wtywaofp_1cA84ItLXu-vve-p/edit')">View PQ</button></div>
+            <div class="course-card cat-gst"><h3>GST 112</h3><p>Nigerian People and Culture</p><button class="download-btn" onclick="handleDownload('GST 112','https://drive.google.com/file/d/1o290W5ofDBxyoik0WC-y-VdjyHUqylJN/view?usp=drivesdk')">View PQ</button></div>
+            <div class="course-card cat-sci"><h3>MTH 111</h3><p>General Mathematics</p><button class="download-btn" onclick="handleDownload('MTH 111','https://docs.google.com/document/d/1IHjwn7HRnlUoypBEOJL2-k_u0ptZ8GEq/edit')">View PQ</button></div>
+            
+            <div class="course-card cat-sci dept-eng"><h3>MTH 112</h3><p>Calculus (Engineering)</p><button class="download-btn" onclick="handleDownload('MTH 112','https://docs.google.com/document/d/10XrPIviR4rz_7mvBRlfn7ENwhFK68ofN/edit')">View PQ</button></div>
+            
+            <div class="course-card cat-dept dept-csc"><h3>CSC 111</h3><p>Intro to Computer Science</p><button class="download-btn" onclick="handleDownload('CSC 111','https://drive.google.com/file/d/11vKL51kJKHPX83P8sv9sc_qDOhKegcup/view')">View PQ</button></div>
+            
+            <div class="course-card cat-sci dept-nur dept-mls"><h3>CHM 111</h3><p>Chemistry (Nursing/MLS)</p><button class="download-btn" onclick="handleDownload('CHM 111','https://drive.google.com/file/d/1w8e61Q8bRlr3mnwR_ELex5n-tTeOsi8k/view')">View PQ</button></div>
+            <div class="course-card cat-sci dept-nur dept-mls"><h3>CHM 113</h3><p>Chemistry (Nursing/MLS)</p><button class="download-btn" onclick="handleDownload('CHM 113','https://drive.google.com/file/d/1L4MCa53lMxfPLDraYph_Mfzi0aVuNpvQ/view')">View PQ</button></div>
+            <div class="course-card cat-sci dept-nur dept-mls"><h3>Botany</h3><p>Bio Science</p><button class="download-btn" onclick="handleDownload('Botany','https://docs.google.com/document/d/1mQNwHtK1UlnrEvScHSOYxBs0X95VYFU1/edit')">View PQ</button></div>
+            
+            <div class="course-card cat-dept dept-isd"><h3>FRN 111</h3><p>French (ISD)</p><button class="download-btn" onclick="handleDownload('FRN 111','https://docs.google.com/document/d/1kUytdkBtJLFYrMvTBHVULffuqwstVq6J/edit?usp=drivesdk&ouid=111271384522252483913&rtpof=true&sd=true')">View PQ</button></div>
+        </div>
+
+        <div class="chat-section">
+            <h3>💬 Student Discussion (Live)</h3>
+            <div id="chat-display"><em>Connecting to BIU chat...</em></div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-msg" placeholder="Ask a question or request a PQ...">
+                <button class="nav-btn" onclick="sendChat()">Send</button>
+            </div>
+        </div>
+
+        <footer>
+            <strong>Created by Celebrity Attitude</strong><br>
+            100L Computer Science | Benson Idahosa University
+        </footer>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, push, onChildAdded, onValue, get, remove, onDisconnect, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak", 
+            authDomain: "biu-archive.firebaseapp.com",
+            databaseURL: "https://biu-archive-default-rtdb.firebaseio.com",
+            projectId: "biu-archive",
+            storageBucket: "biu-archive.firebasestorage.app",
+            messagingSenderId: "245967347998",
+            appId: "1:245967347998:web:a8feb5ad0ef9650946a90f" 
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const chatRef = ref(db, "messages");
+        const logsRef = ref(db, "logs");
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxMBRUDASHeZaRvpsBCpp1hgADOHyc5TNFcvbEvvqLmKYO1S7d39AhVIAOVMcxMBtfT/exec';
+
+        // 48-hour cleanup
+        function cleanupOldMessages() {
+            const fortyEightHoursAgo = Date.now() - (48 * 60 * 60 * 1000);
+            get(chatRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        const messageData = childSnapshot.val();
+                        if (messageData.timestamp && messageData.timestamp < fortyEightHoursAgo) {
+                            remove(ref(db, `messages/${childSnapshot.key}`));
+                        }
+                    });
+                }
+            });
+        }
+        cleanupOldMessages();
+
+        // MARKETPLACE SYNC (NEW)
+        onValue(ref(db, "marketplace"), (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                if (data.ad1) {
+                    document.getElementById('ad1-title').innerText = data.ad1.title;
+                    document.getElementById('ad1-desc').innerText = data.ad1.desc;
+                    document.getElementById('ad1-card').onclick = () => window.open(data.ad1.link, '_blank');
+                }
+                if (data.ad2) {
+                    document.getElementById('ad2-title').innerText = data.ad2.title;
+                    document.getElementById('ad2-desc').innerText = data.ad2.desc;
+                    document.getElementById('ad2-card').onclick = () => window.open(data.ad2.link, '_blank');
+                }
+            }
+        });
+
+        // BROADCAST LISTENER
+        onValue(ref(db, "broadcast"), (snapshot) => {
+            const data = snapshot.val();
+            const bar = document.getElementById('broadcast-bar');
+            if (data && data.text) {
+                document.getElementById('broadcast-text').innerText = data.text;
+                bar.classList.remove('hidden');
+            } else {
+                bar.classList.add('hidden');
+            }
+        });
+
+        // ONLINE USER COUNTER
+        const presenceRef = ref(db, "online_users");
+        const myPresenceRef = push(presenceRef);
+        onDisconnect(myPresenceRef).remove();
+        onValue(presenceRef, (snapshot) => {
+            const count = snapshot.size || 1;
+            document.getElementById('online-count').innerText = count;
+        });
+
+        window.toggleTheme = function() {
+            const body = document.body;
+            body.setAttribute('data-theme', body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        }
+
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const matric = document.getElementById('matric').value;
+            const dept = document.getElementById('dept').value;
+            const time = new Date().toLocaleString();
+
+            document.getElementById('display-name').innerText = name;
+            set(myPresenceRef, { name: name, active: true });
+
+            fetch(SCRIPT_URL, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                body: new URLSearchParams({'name': name, 'matric': matric, 'dept': dept}) 
+            });
+
+            push(logsRef, { 
+                name: name, 
+                matric: matric, 
+                dept: dept, 
+                timestamp: time 
+            });
+
+            applyAccess(dept);
+            document.getElementById('entry-gate').classList.add('hidden');
+            document.getElementById('main-archive').classList.remove('hidden');
+            showToast(`Welcome back, ${name.split(' ')[0]}!`);
+        });
+
+        function applyAccess(dept) {
+            document.querySelectorAll('.dept-eng, .dept-nur, .dept-mls, .dept-isd, .dept-law, .dept-csc').forEach(el => el.classList.add('hidden'));
+            if (dept === 'ENG') document.querySelectorAll('.dept-eng').forEach(el => el.classList.remove('hidden'));
+            if (dept === 'Nursing') document.querySelectorAll('.dept-nur').forEach(el => el.classList.remove('hidden'));
+            if (dept === 'MLS') document.querySelectorAll('.dept-mls').forEach(el => el.classList.remove('hidden'));
+            if (dept === 'ISD') document.querySelectorAll('.dept-isd').forEach(el => el.classList.remove('hidden'));
+            if (dept === 'Law') document.querySelectorAll('.dept-law').forEach(el => el.classList.remove('hidden'));
+            if (dept !== 'Law' && dept !== 'ISD') {
+                document.querySelectorAll('.dept-csc').forEach(el => el.classList.remove('hidden'));
+            }
+        }
+
+        window.filterTab = function(cat, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const userDept = document.getElementById('dept').value;
+            
+            document.querySelectorAll('.course-card').forEach(card => {
+                card.classList.add('hidden');
+                const matchCat = (cat === 'all' || card.classList.contains(cat));
+                const hasNur = card.classList.contains('dept-nur');
+                const hasMls = card.classList.contains('dept-mls');
+                const hasEng = card.classList.contains('dept-eng');
+                const hasIsd = card.classList.contains('dept-isd');
+                const hasLaw = card.classList.contains('dept-law');
+                const hasCsc = card.classList.contains('dept-csc');
+                let allowed = true;
+                if (hasNur || hasMls || hasEng || hasIsd || hasLaw || hasCsc) {
+                    allowed = false;
+                    if (hasNur && userDept === 'Nursing') allowed = true;
+                    if (hasMls && userDept === 'MLS') allowed = true;
+                    if (hasEng && userDept === 'ENG') allowed = true;
+                    if (hasIsd && userDept === 'ISD') allowed = true;
+                    if (hasLaw && userDept === 'Law') allowed = true;
+                    if (hasCsc && (userDept !== 'Law' && userDept !== 'ISD')) allowed = true;
+                }
+                if (matchCat && allowed) card.classList.remove('hidden');
+            });
+        }
+
+        window.sendChat = function() {
+            const input = document.getElementById('chat-msg');
+            const name = document.getElementById('display-name').innerText.split(' ')[0] || "Student";
+            if (input.value.trim() !== "") {
+                push(chatRef, {
+                    sender: name,
+                    message: input.value,
+                    timestamp: Date.now(), 
+                    displayTime: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                });
+                input.value = "";
+            }
+        }
+
+        onChildAdded(chatRef, (snapshot) => {
+            const data = snapshot.val();
+            const display = document.getElementById('chat-display');
+            if (display.innerHTML.includes('Connecting')) display.innerHTML = '';
+            const timeToShow = data.displayTime || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            display.innerHTML += `<div style="margin-bottom:8px;"><strong>${data.sender}</strong> <small style="opacity:0.5">${timeToShow}</small><br>${data.message}</div>`;
+            display.scrollTop = display.scrollHeight;
+        });
+
+        window.showToast = function(m) { 
+            const t = document.getElementById('toast'); 
+            t.innerText = m; 
+            t.className = "show"; 
+            setTimeout(() => t.className = "", 3000); 
+        }
+
+        window.handleDownload = function(t, u) { 
+            showToast(`✅ Successfully opening ${t}...`); 
+            setTimeout(() => window.open(u, '_blank'), 800); 
+        }
+    </script>
+</body>
+</html>
