@@ -93,7 +93,6 @@
                 <thead>
                     <tr>
                         <th>Student Name</th>
-                        <th>Matric Number</th>
                         <th>Department</th>
                         <th>Log-in Time</th>
                     </tr>
@@ -130,13 +129,11 @@
         }
 
         function startListeners() {
-            // 1. Listen for Payment Requests
             onValue(ref(db, "payment_requests"), (snapshot) => {
                 const data = snapshot.val();
                 const list = document.getElementById('payment-list');
                 const countBadge = document.getElementById('pending-pay-count');
                 list.innerHTML = "";
-                
                 if (data) {
                     const keys = Object.keys(data);
                     countBadge.innerText = keys.length;
@@ -149,8 +146,7 @@
                                     <small style="color:#666">${req.time || 'Recent'}</small>
                                 </div>
                                 <button class="btn-approve" onclick="approvePayment('${key}', '${req.userId}')">Approve & Unlock</button>
-                            </div>
-                        `;
+                            </div>`;
                     });
                 } else {
                     countBadge.innerText = "0";
@@ -158,7 +154,6 @@
                 }
             });
 
-            // 2. Listen for User Logs
             onValue(ref(db, "logs"), (snapshot) => {
                 const data = snapshot.val();
                 const list = document.getElementById('log-list');
@@ -170,7 +165,6 @@
                         list.innerHTML += `
                             <tr>
                                 <td>${item.name}</td>
-                                <td>${item.matric || 'N/A (Hidden)'}</td>
                                 <td>${item.dept}</td>
                                 <td>${item.timestamp}</td>
                             </tr>`;
@@ -178,13 +172,11 @@
                 }
             });
 
-            // 3. Chat Message Counter
             onValue(ref(db, "messages"), (snapshot) => {
                 document.getElementById('live-chat-count').innerText = snapshot.size || 0;
             });
         }
 
-        // Global functions
         window.approvePayment = function(reqId, userId) {
             if(confirm("Confirm payment received for this user?")) {
                 set(ref(db, "paid_users/" + userId), true).then(() => {
@@ -212,18 +204,9 @@
             const title = document.getElementById('ad-title').value;
             const desc = document.getElementById('ad-desc').value;
             const link = document.getElementById('ad-link').value;
-            
             if(!title || !desc) return alert("Fill Title and Description");
-
-            update(ref(db, `marketplace/${slot}`), {
-                title: title,
-                desc: desc,
-                link: link || "#"
-            }).then(() => {
+            update(ref(db, `marketplace/${slot}`), { title: title, desc: desc, link: link || "#" }).then(() => {
                 alert(`Slot ${slot} Updated!`);
-                document.getElementById('ad-title').value = "";
-                document.getElementById('ad-desc').value = "";
-                document.getElementById('ad-link').value = "";
             });
         };
 
