@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIU Archive | Admin Panel</title>
+    <style>
+        :root { --primary: #002147; --accent: #FFD700; --bg: #f8f9fa; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+        .admin-container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: var(--primary); color: white; padding: 20px; border-radius: 15px; text-align: center; border-bottom: 5px solid var(--accent); }
+        .stat-card h2 { margin: 0; font-size: 2.5rem; }
+        
+        /* New Payment Section Styling */
+        .payment-request-card { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-approve { background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-approve:hover { background: #218838; }
+
+        .action-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        #admin-search { flex: 1; padding: 12px 20px; border-radius: 10px; border: 2px solid #eee; font-size: 16px; outline: none; transition: 0.3s; min-width: 250px; }
+        .btn-export { background: #1d6f42; color: white; border: none; padding: 0 20px; border-radius: 10px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+
+        .table-wrapper { overflow-x: auto; background: white; border-radius: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #f1f1f1; color: var(--primary); padding: 15px; text-align: left; }
+        td { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 14px; }
+        .hidden-row { display: none; }
+        .btn-back { padding: 10px 20px; background: #333; color: white; border: none; border-radius: 8px; cursor: pointer; text-decoration: none; display: inline-block; margin-bottom: 20px; }
+        .dept-tag { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .btn-danger { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+
+        .ad-manager { background: #003366; color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; border-bottom: 5px solid #00d4ff; }
+        .ad-input-group { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .ad-input-group input { padding: 10px; border-radius: 5px; border: none; }
+    </style>
+</head>
+<body>
+
+    <div id="admin-content" class="admin-container" style="display:none;">
+        <a href="index.html" class="btn-back">← Back to Vault</a>
+        <h1 style="color: var(--primary);">Celebrity's Dashboard</h1>
+        
+        <div class="stats-row">
+            <div class="stat-card">
+                <h2 id="count">0</h2>
+                <p>Total Visitors</p>
+            </div>
+            <div class="stat-card" style="background: #ffc107; color: #333;">
+                <h2 id="pending-pay-count">0</h2>
+                <p>Pending Payments</p>
+            </div>
+            <div class="stat-card" style="background: #28a745;">
+                <h2 id="live-chat">0</h2>
+                <p>Chat Messages</p>
+            </div>
+        </div>
+
+        <div class="stat-card" style="background: white; border: 2px solid #eee; text-align: left; margin-bottom: 25px;">
+            <h3 style="color: var(--primary); margin-top:0;">💳 Payment Requests (Notes Unlock)</h3>
+            <div id="payment-list">
+                <p style="color: #666;">No pending requests...</p>
+            </div>
+        </div>
+
+        <div class="stat-card" style="background: #ce8900; margin-bottom: 20px; text-align: left;">
+            <h3 style="margin-top:0;">📢 Send Global Broadcast</h3>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <input type="text" id="broadcast-input" placeholder="Type an announcement..." style="flex:1; padding: 12px; border-radius: 8px; border:none;">
+                <button onclick="sendBroadcast()" style="padding: 10px 20px; border-radius: 8px; border:none; background: var(--primary); color:white; cursor:pointer;">Send Alert</button>
+            </div>
+            <button onclick="clearBroadcast()" class="btn-danger" style="background: #a30000;">Remove Current Broadcast</button>
+        </div>
+
+        <div class="ad-manager">
+            <h3>🚀 Marketplace Ad Manager</h3>
+            <div class="ad-input-group">
+                <input type="text" id="ad-title" placeholder="Ad Title">
+                <input type="text" id="ad-desc" placeholder="Description">
+                <input type="text" id="ad-link" placeholder="WhatsApp Link">
+                <div style="display:flex; gap:10px;">
+                    <button onclick="updateAd('ad1')" style="flex:1; padding:10px; background:var(--accent); border:none; border-radius:5px; cursor:pointer;">Update Slot 1</button>
+                    <button onclick="updateAd('ad2')" style="flex:1; padding:10px; background:#fff; border:none; border-radius:5px; cursor:pointer;">Update Slot 2</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-bar">
+            <input type="text" id="admin-search" placeholder="Search logs..." onkeyup="filterTable()">
+            <button class="btn-export" onclick="exportToExcel()">📊 Export CSV</button>
+        </div>
+
+        <div class="table-wrapper">
+            <table id="log-table">
+                <thead>
+                    <tr>
+                        <th>Student Name</th>
+                        <th>Matric Number</th>
+                        <th>Department</th>
+                        <th>Log-in Time</th>
+                    </tr>
+                </thead>
+                <tbody id="log-list"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue, set, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
+            authDomain: "biu-archive.firebaseapp.com",
+            databaseURL: "https://biu-archive-default-rtdb.firebaseio.com",
+            projectId: "biu-archive",
+            storageBucket: "biu-archive.firebasestorage.app",
+            messagingSenderId: "245967347998",
+            appId: "1:245967347998:web:a8feb5ad0ef9650946a90f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // SECURITY GATE
+        const pass = prompt("Enter Celebrity Access Key:");
+        if (pass !== "BIU2026") { 
+            window.location.href = "index.html";
+        } else {
+            document.getElementById('admin-content').style.display = 'block';
+            loadData();
+        }
+
+        // --- PAYMENT APPROVAL LOGIC ---
+        function loadData() {
+            // Listen for Payment Requests
+            onValue(ref(db, "payment_requests"), (snapshot) => {
+                const data = snapshot.val();
+                const list = document.getElementById('payment-list');
+                const countBadge = document.getElementById('pending-pay-count');
+                list.innerHTML = "";
+                
+                if (data) {
+                    const keys = Object.keys(data);
+                    countBadge.innerText = keys.length;
+                    keys.forEach(key => {
+                        const req = data[key];
+                        list.innerHTML += `
+                            <div class="payment-request-card">
+                                <div>
+                                    <strong style="color:#333">${req.name}</strong><br>
+                                    <small style="color:#666">${req.time}</small>
+                                </div>
+                                <button class="btn-approve" onclick="approvePayment('${key}', '${req.userId}')">Approve & Unlock</button>
+                            </div>
+                        `;
+                    });
+                } else {
+                    countBadge.innerText = "0";
+                    list.innerHTML = `<p style="color: #666;">No pending requests...</p>`;
+                }
+            });
+
+            // Rest of your log loading code...
+            onValue(ref(db, "logs"), (snapshot) => {
+                const data = snapshot.val();
+                const list = document.getElementById('log-list');
+                list.innerHTML = "";
+                if (data) {
+                    const entries = Object.values(data).reverse();
+                    document.getElementById('count').innerText = entries.length;
+                    entries.forEach(item => {
+                        list.innerHTML += `<tr><td>${item.name}</td><td>${item.matric}</td><td>${item.dept}</td><td>${item.timestamp}</td></tr>`;
+                    });
+                }
+            });
+        }
+
+        window.approvePayment = function(reqId, userId) {
+    if(confirm("Confirm payment received?")) {
+        // This marks the specific device as "Paid"
+        set(ref(db, "paid_users/" + userId), true).then(() => {
+            // This removes the notification from your dashboard
+            remove(ref(db, "payment_requests/" + reqId));
+        });
+    }
+};
+
+        // ... existing updateAd, sendBroadcast, etc functions ...
+        window.sendBroadcast = function() { /* same as before */ };
+        window.updateAd = function(slot) { /* same as before */ };
+    </script>
+</body>
+</html>
