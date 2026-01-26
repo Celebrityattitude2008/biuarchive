@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Course Notes | BIUArchive</title>
+    <title>Course Notes | BIU Archive</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-gray-900 font-sans">
@@ -11,7 +11,7 @@
     <nav class="bg-blue-900 text-white p-4 shadow-lg">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold tracking-tight">BIU<span class="text-blue-400">Archive</span></h1>
-            <a href="/" class="text-sm hover:underline">Back to Home</a>
+            <a href="index.html" class="text-sm bg-blue-800 px-3 py-1 rounded hover:bg-blue-700 transition">Back to Home</a>
         </div>
     </nav>
 
@@ -38,8 +38,9 @@
         <div id="status-overlay" class="hidden fixed inset-0 bg-blue-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div class="bg-white p-8 rounded-2xl max-w-sm w-full text-center shadow-2xl">
                 <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-600 mx-auto mb-6"></div>
-                <h3 class="text-2xl font-bold text-gray-800">Verifying Payment...</h3>
+                <h3 class="text-2xl font-bold text-gray-800">Verifying...</h3>
                 <p class="text-gray-600 mt-4 text-sm">Please do not close this page. Paul is verifying your receipt on WhatsApp.</p>
+                <button onclick="document.getElementById('status-overlay').classList.add('hidden')" class="mt-6 text-xs text-gray-400 underline">Cancel</button>
             </div>
         </div>
 
@@ -47,9 +48,20 @@
             <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
                 <h3 class="text-xl font-bold border-b pb-2 mb-4 text-blue-900">CSC 111 Notes</h3>
                 <ul class="space-y-3" id="csc-list">
-                    <li class="flex justify-between items-center"><span>Week 1 Note</span><a href="#" class="note-link text-gray-400 cursor-not-allowed" data-url="https://docs.google.com/document/d/1h4bQbzrBq0Wy-Einz69xmdYMWz55ydY3/edit">Locked 🔒</a></li>
-                    <li class="flex justify-between items-center"><span>Week 2 Note</span><a href="#" class="note-link text-gray-400 cursor-not-allowed" data-url="https://docs.google.com/document/d/1jh4GRfoYRw6MTaDj_I2XkUeDhwWPSSES/edit">Locked 🔒</a></li>
+                    <li class="flex justify-between items-center">
+                        <span>Week 1 Note</span>
+                        <a href="#" class="note-link text-gray-400 cursor-not-allowed font-bold" data-url="https://docs.google.com/document/d/1h4bQbzrBq0Wy-Einz69xmdYMWz55ydY3/edit">Locked 🔒</a>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span>Week 2 Note</span>
+                        <a href="#" class="note-link text-gray-400 cursor-not-allowed font-bold" data-url="https://docs.google.com/document/d/1jh4GRfoYRw6MTaDj_I2XkUeDhwWPSSES/edit">Locked 🔒</a>
+                    </li>
                 </ul>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100 opacity-60">
+                <h3 class="text-xl font-bold border-b pb-2 mb-4 text-gray-500">Other Courses</h3>
+                <p class="text-sm italic">Unlock premium to see all 100L departmental notes.</p>
             </div>
         </div>
     </main>
@@ -71,11 +83,18 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        let userId = localStorage.getItem('biu_user_id') || ('user_' + Math.random().toString(36).substr(2, 9));
-        localStorage.setItem('biu_user_id', userId);
+        // Keep the same logic as index.html
+        let userId = localStorage.getItem('biu_user_id');
+        if (!userId) {
+            userId = 'user_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('biu_user_id', userId);
+        }
 
+        // Listen for admin approval
         onValue(ref(db, "paid_users/" + userId), (snapshot) => {
-            if (snapshot.val() === true) { unlockNotes(); }
+            if (snapshot.val() === true) { 
+                unlockNotes(); 
+            }
         });
 
         window.startVerification = function() {
@@ -83,20 +102,31 @@
             if (!studentName) return;
 
             document.getElementById('status-overlay').classList.remove('hidden');
-            push(ref(db, "payment_requests"), { userId, name: studentName, time: new Date().toLocaleString() });
+            
+            // Send request to Admin Dashboard
+            push(ref(db, "payment_requests"), { 
+                userId: userId, 
+                name: studentName, 
+                time: new Date().toLocaleString() 
+            });
 
-            const whatsappUrl = `https://wa.me/2347041795388?text=${encodeURIComponent("Payment for notes. Name: " + studentName + ". ID: " + userId)}`;
-            setTimeout(() => { window.open(whatsappUrl, '_blank'); }, 2000);
+            // Redirect to WhatsApp
+            const whatsappUrl = `https://wa.me/2347041795388?text=${encodeURIComponent("Hello Paul, I just paid for the BIU Notes Archive.\n\nName: " + studentName + "\nUser ID: " + userId)}`;
+            setTimeout(() => { window.open(whatsappUrl, '_blank'); }, 1500);
         }
 
         function unlockNotes() {
             document.getElementById('status-overlay').classList.add('hidden');
-            document.getElementById('payment-box').style.display = 'none';
+            const pBox = document.getElementById('payment-box');
+            if(pBox) pBox.style.display = 'none';
+            
             document.querySelectorAll('.note-link').forEach(link => {
-                link.setAttribute('href', link.getAttribute('data-url'));
+                const realUrl = link.getAttribute('data-url');
+                link.setAttribute('href', realUrl);
+                link.setAttribute('target', '_blank');
                 link.classList.replace('text-gray-400', 'text-green-600');
                 link.classList.remove('cursor-not-allowed');
-                link.innerHTML = 'Download 🔓';
+                link.innerHTML = 'View Note 🔓';
             });
         }
     </script>

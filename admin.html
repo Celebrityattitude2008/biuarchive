@@ -13,7 +13,6 @@
         .stat-card { background: var(--primary); color: white; padding: 20px; border-radius: 15px; text-align: center; border-bottom: 5px solid var(--accent); }
         .stat-card h2 { margin: 0; font-size: 2.5rem; }
         
-        /* New Payment Section Styling */
         .payment-request-card { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .btn-approve { background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .btn-approve:hover { background: #218838; }
@@ -26,14 +25,12 @@
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th { background: #f1f1f1; color: var(--primary); padding: 15px; text-align: left; }
         td { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 14px; }
-        .hidden-row { display: none; }
         .btn-back { padding: 10px 20px; background: #333; color: white; border: none; border-radius: 8px; cursor: pointer; text-decoration: none; display: inline-block; margin-bottom: 20px; }
-        .dept-tag { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-        .btn-danger { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+        .btn-danger { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-top: 10px; }
 
         .ad-manager { background: #003366; color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; border-bottom: 5px solid #00d4ff; }
         .ad-input-group { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
-        .ad-input-group input { padding: 10px; border-radius: 5px; border: none; }
+        .ad-input-group input { padding: 12px; border-radius: 5px; border: none; }
     </style>
 </head>
 <body>
@@ -45,14 +42,14 @@
         <div class="stats-row">
             <div class="stat-card">
                 <h2 id="count">0</h2>
-                <p>Total Visitors</p>
+                <p>Total Logins</p>
             </div>
             <div class="stat-card" style="background: #ffc107; color: #333;">
                 <h2 id="pending-pay-count">0</h2>
                 <p>Pending Payments</p>
             </div>
             <div class="stat-card" style="background: #28a745;">
-                <h2 id="live-chat">0</h2>
+                <h2 id="live-chat-count">0</h2>
                 <p>Chat Messages</p>
             </div>
         </div>
@@ -64,31 +61,31 @@
             </div>
         </div>
 
-        <div class="stat-card" style="background: #ce8900; margin-bottom: 20px; text-align: left;">
+        <div class="stat-card" style="background: #ce8900; margin-bottom: 20px; text-align: left; color: white;">
             <h3 style="margin-top:0;">📢 Send Global Broadcast</h3>
             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                 <input type="text" id="broadcast-input" placeholder="Type an announcement..." style="flex:1; padding: 12px; border-radius: 8px; border:none;">
-                <button onclick="sendBroadcast()" style="padding: 10px 20px; border-radius: 8px; border:none; background: var(--primary); color:white; cursor:pointer;">Send Alert</button>
+                <button onclick="sendBroadcast()" style="padding: 10px 20px; border-radius: 8px; border:none; background: var(--primary); color:white; cursor:pointer; font-weight:bold;">Send Alert</button>
             </div>
-            <button onclick="clearBroadcast()" class="btn-danger" style="background: #a30000;">Remove Current Broadcast</button>
+            <button onclick="clearBroadcast()" class="btn-danger">Remove Current Broadcast</button>
         </div>
 
         <div class="ad-manager">
             <h3>🚀 Marketplace Ad Manager</h3>
             <div class="ad-input-group">
                 <input type="text" id="ad-title" placeholder="Ad Title">
-                <input type="text" id="ad-desc" placeholder="Description">
-                <input type="text" id="ad-link" placeholder="WhatsApp Link">
+                <input type="text" id="ad-desc" placeholder="Description (e.g. Delivery to all hostels)">
+                <input type="text" id="ad-link" placeholder="WhatsApp/External Link">
                 <div style="display:flex; gap:10px;">
-                    <button onclick="updateAd('ad1')" style="flex:1; padding:10px; background:var(--accent); border:none; border-radius:5px; cursor:pointer;">Update Slot 1</button>
-                    <button onclick="updateAd('ad2')" style="flex:1; padding:10px; background:#fff; border:none; border-radius:5px; cursor:pointer;">Update Slot 2</button>
+                    <button onclick="updateAd('ad1')" style="flex:1; padding:12px; background:var(--accent); color:var(--primary); border:none; border-radius:5px; cursor:pointer; font-weight:bold;">Update Slot 1</button>
+                    <button onclick="updateAd('ad2')" style="flex:1; padding:12px; background:#fff; color:var(--primary); border:none; border-radius:5px; cursor:pointer; font-weight:bold;">Update Slot 2</button>
                 </div>
             </div>
         </div>
 
         <div class="action-bar">
-            <input type="text" id="admin-search" placeholder="Search logs..." onkeyup="filterTable()">
-            <button class="btn-export" onclick="exportToExcel()">📊 Export CSV</button>
+            <input type="text" id="admin-search" placeholder="Search by name or department..." onkeyup="filterTable()">
+            <button class="btn-export" onclick="exportToExcel()">📊 Export Logs</button>
         </div>
 
         <div class="table-wrapper">
@@ -129,12 +126,11 @@
             window.location.href = "index.html";
         } else {
             document.getElementById('admin-content').style.display = 'block';
-            loadData();
+            startListeners();
         }
 
-        // --- PAYMENT APPROVAL LOGIC ---
-        function loadData() {
-            // Listen for Payment Requests
+        function startListeners() {
+            // 1. Listen for Payment Requests
             onValue(ref(db, "payment_requests"), (snapshot) => {
                 const data = snapshot.val();
                 const list = document.getElementById('payment-list');
@@ -150,7 +146,7 @@
                             <div class="payment-request-card">
                                 <div>
                                     <strong style="color:#333">${req.name}</strong><br>
-                                    <small style="color:#666">${req.time}</small>
+                                    <small style="color:#666">${req.time || 'Recent'}</small>
                                 </div>
                                 <button class="btn-approve" onclick="approvePayment('${key}', '${req.userId}')">Approve & Unlock</button>
                             </div>
@@ -162,7 +158,7 @@
                 }
             });
 
-            // Rest of your log loading code...
+            // 2. Listen for User Logs
             onValue(ref(db, "logs"), (snapshot) => {
                 const data = snapshot.val();
                 const list = document.getElementById('log-list');
@@ -171,25 +167,84 @@
                     const entries = Object.values(data).reverse();
                     document.getElementById('count').innerText = entries.length;
                     entries.forEach(item => {
-                        list.innerHTML += `<tr><td>${item.name}</td><td>${item.matric}</td><td>${item.dept}</td><td>${item.timestamp}</td></tr>`;
+                        list.innerHTML += `
+                            <tr>
+                                <td>${item.name}</td>
+                                <td>${item.matric || 'N/A (Hidden)'}</td>
+                                <td>${item.dept}</td>
+                                <td>${item.timestamp}</td>
+                            </tr>`;
                     });
                 }
             });
+
+            // 3. Chat Message Counter
+            onValue(ref(db, "messages"), (snapshot) => {
+                document.getElementById('live-chat-count').innerText = snapshot.size || 0;
+            });
         }
 
+        // Global functions
         window.approvePayment = function(reqId, userId) {
-    if(confirm("Confirm payment received?")) {
-        // This marks the specific device as "Paid"
-        set(ref(db, "paid_users/" + userId), true).then(() => {
-            // This removes the notification from your dashboard
-            remove(ref(db, "payment_requests/" + reqId));
-        });
-    }
-};
+            if(confirm("Confirm payment received for this user?")) {
+                set(ref(db, "paid_users/" + userId), true).then(() => {
+                    remove(ref(db, "payment_requests/" + reqId));
+                    alert("User upgraded to Premium!");
+                });
+            }
+        };
 
-        // ... existing updateAd, sendBroadcast, etc functions ...
-        window.sendBroadcast = function() { /* same as before */ };
-        window.updateAd = function(slot) { /* same as before */ };
+        window.sendBroadcast = function() {
+            const text = document.getElementById('broadcast-input').value;
+            if(text.trim() !== "") {
+                set(ref(db, "broadcast"), { text: text, timestamp: Date.now() });
+                alert("Broadcast Sent!");
+                document.getElementById('broadcast-input').value = "";
+            }
+        };
+
+        window.clearBroadcast = function() {
+            remove(ref(db, "broadcast"));
+            alert("Broadcast Removed.");
+        };
+
+        window.updateAd = function(slot) {
+            const title = document.getElementById('ad-title').value;
+            const desc = document.getElementById('ad-desc').value;
+            const link = document.getElementById('ad-link').value;
+            
+            if(!title || !desc) return alert("Fill Title and Description");
+
+            update(ref(db, `marketplace/${slot}`), {
+                title: title,
+                desc: desc,
+                link: link || "#"
+            }).then(() => {
+                alert(`Slot ${slot} Updated!`);
+                document.getElementById('ad-title').value = "";
+                document.getElementById('ad-desc').value = "";
+                document.getElementById('ad-link').value = "";
+            });
+        };
+
+        window.filterTable = function() {
+            let input = document.getElementById("admin-search").value.toLowerCase();
+            let rows = document.getElementById("log-list").getElementsByTagName("tr");
+            for (let row of rows) {
+                row.style.display = row.innerText.toLowerCase().includes(input) ? "" : "none";
+            }
+        };
+
+        window.exportToExcel = function() {
+            let table = document.getElementById("log-table");
+            let rows = Array.from(table.rows);
+            let csvContent = rows.map(row => Array.from(row.cells).map(cell => `"${cell.innerText}"`).join(",")).join("\n");
+            let blob = new Blob([csvContent], { type: 'text/csv' });
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "BIU_Archive_Logs.csv";
+            link.click();
+        };
     </script>
 </body>
 </html>
