@@ -56,6 +56,24 @@
                         <span>Week 2 Note</span>
                         <a href="#" class="note-link text-gray-400 cursor-not-allowed font-bold" data-url="https://docs.google.com/document/d/1jh4GRfoYRw6MTaDj_I2XkUeDhwWPSSES/edit">Locked 🔒</a>
                     </li>
+                    <li class="flex justify-between items-center">
+                        <span>Week 4 Note</span>
+                        <a href="#" class="note-link text-gray-400 cursor-not-allowed font-bold" data-url="https://docs.google.com/document/d/1JJI3XIsuKNWgxtcj_m8gHFY-zx1l9bKx/edit">Locked 🔒</a>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span>Week 5 Note</span>
+                        <a href="#" class="note-link text-gray-400 cursor-not-allowed font-bold" data-url="https://docs.google.com/document/d/1Noh_u4kM0M0XQ7OKHSFRSjt5X3FnTwmM/edit">Locked 🔒</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                <h3 class="text-xl font-bold border-b pb-2 mb-4 text-blue-900">Physics Notes (111/113)</h3>
+                <ul class="space-y-3">
+                    <li class="flex justify-between items-center">
+                        <span>Full Physics Note/PQs Folder</span>
+                        <a href="#" class="note-link text-gray-400 cursor-not-allowed font-bold" data-url="https://drive.google.com/drive/folders/16H9xh6u8rctHtdYjv-OPetsA6Djo11Vj?usp=sharing">Locked 🔒</a>
+                    </li>
                 </ul>
             </div>
 
@@ -68,7 +86,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, set, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
@@ -83,21 +101,21 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Session & User ID Check
         const studentName = localStorage.getItem('biu_user_name');
         let userId = localStorage.getItem('biu_user_id');
 
         if (!studentName) {
             alert("Please login first!");
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
         }
 
+        // Generate ID if missing
         if (!userId) {
             userId = 'user_' + Math.random().toString(36).substr(2, 9);
             localStorage.setItem('biu_user_id', userId);
         }
 
-        // Listen for admin approval
+        // Check if user is already paid
         onValue(ref(db, "paid_users/" + userId), (snapshot) => {
             if (snapshot.val() === true) { 
                 unlockNotes(); 
@@ -106,8 +124,6 @@
 
         window.startVerification = function() {
             document.getElementById('status-overlay').classList.remove('hidden');
-            
-            // Redirect to WhatsApp with info from localStorage
             const whatsappUrl = `https://wa.me/2347041795388?text=${encodeURIComponent("Hello Paul, I just paid for the BIU Notes Archive.\n\nName: " + studentName + "\nUser ID: " + userId)}`;
             setTimeout(() => { window.open(whatsappUrl, '_blank'); }, 1500);
         }

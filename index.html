@@ -46,7 +46,7 @@
         .download-btn { width: 100%; padding: 10px; background: var(--primary); color: var(--white); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 12px; }
 
         .chat-section { margin-top: 30px; background: rgba(0,0,0,0.03); padding: 20px; border-radius: 15px; text-align: left; }
-        #chat-display { height: 180px; overflow-y: auto; background: var(--white); border-radius: 8px; padding: 10px; margin-bottom: 0px; border: 1px solid rgba(0,0,0,0.1); font-size: 13px; border-left: 4px solid var(--accent); }
+        #chat-display { height: 180px; overflow-y: auto; background: var(--white); border-radius: 8px; padding: 10px; border: 1px solid rgba(0,0,0,0.1); font-size: 13px; border-left: 4px solid var(--accent); }
         #typing-indicator { height: 15px; font-size: 11px; color: var(--info); margin-bottom: 5px; font-style: italic; }
         .chat-input-area { display: flex; gap: 5px; }
         .chat-input-area input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc; }
@@ -65,15 +65,16 @@
     <div id="main-archive" class="container">
         <div class="top-nav">
             <span id="user-count-badge" style="background:var(--success); color:white; padding: 4px 10px; border-radius:20px; font-size:10px; display:flex; align-items:center; gap:4px;">● <span id="online-count">1</span> Online</span>
+            <button class="nav-btn" style="background:#007bff" onclick="contactAdmin()">📧 Contact Admin</button>
             <button class="nav-btn" style="background:#28a745" onclick="window.location.href='note.html'">📚 Course Notes</button>
             <button class="nav-btn" style="background:#6f42c1" onclick="window.location.href='lost.html'">🔍 Lost & Found</button>
             <button class="nav-btn" onclick="toggleTheme()">🌓 Theme</button>
             <button class="nav-btn" onclick="window.location.href='admin.html'">⚙️ Admin</button>
             <button class="nav-btn" style="background:#b30000" onclick="logout()">Logout</button>
         </div>
-
+        
         <div id="broadcast-bar" class="hidden">
-            <span>📢 <span id="broadcast-text">Announcement here...</span></span>
+            <span>📢 <span id="live-broadcast-text"></span></span>
             <button onclick="this.parentElement.classList.add('hidden')" style="background:none; border:none; cursor:pointer; font-weight:bold; color:var(--primary);">✕</button>
         </div>
 
@@ -85,13 +86,13 @@
             <div class="marketplace-grid" id="marketplace-grid">
                 <div class="ad-card" id="ad1-card">
                     <span class="ad-tag">SERVICE</span>
-                    <strong id="ad1-title">Past Question Printing</strong>
-                    <p id="ad1-desc" style="margin:5px 0 0 0; opacity:0.7;">Doorstep delivery to all hostels.</p>
+                    <strong id="ad1-title">Loading...</strong>
+                    <p id="ad1-desc" style="margin:5px 0 0 0; opacity:0.7;">...</p>
                 </div>
                 <div class="ad-card" id="ad2-card">
                     <span class="ad-tag">AD</span>
-                    <strong id="ad2-title">Student Hub Ad</strong>
-                    <p id="ad2-desc" style="margin:5px 0 0 0; opacity:0.7;">Promote your campus brand here.</p>
+                    <strong id="ad2-title">Loading...</strong>
+                    <p id="ad2-desc" style="margin:5px 0 0 0; opacity:0.7;">...</p>
                 </div>
             </div>
         </div>
@@ -107,25 +108,22 @@
                         <tbody>
                             <tr><td>Mon 02/02</td><td>9AM-4PM</td><td>GST 111 (English I)</td><td>ICT FOS/ENG</td></tr>
                             <tr><td>Tue 03/02</td><td>9AM-4PM</td><td>GST 112 (People & Culture)</td><td>ICT FOS/ENG</td></tr>
-                            <tr><td>Fri 06/02</td><td>9AM-3PM</td><td>IDS 111 (Rudiments)</td><td>ICT</td></tr>
+                            <tr><td>Fri 06/02</td><td>9AM-3PM</td><td>IDS 111 (Interdisciplinary Studies)</td><td>ICT</td></tr>
                             <tr><td>Mon 09/02</td><td>9AM-12PM</td><td>CSC 111 (Intro to CS)</td><td>ICT FOS</td></tr>
                             <tr><td>Mon 09/02</td><td>12PM-3PM</td><td>CHM 111 (Gen Chem I)</td><td>ICT/ENG</td></tr>
-                            <tr><td>Tue 10/02</td><td>9AM-12PM</td><td>MTH 112 (Statistics)</td><td>ICT FOS</td></tr>
-                            <tr><td>Wed 11/02</td><td>9AM-12PM</td><td>MTH 111 (Elem Math I)</td><td>ICT FOS</td></tr>
-                            <tr><td>Thu 12/02</td><td>12PM-3PM</td><td>CSC 112 (Comp App)</td><td>ICT ENG</td></tr>
                         </tbody>
                     </table>
                 </div>
                 <button class="download-btn" style="background: #28a745; margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="window.open('https://docs.google.com/document/d/1E04sy5KLj_-4vtKAxwBydUlb3rCxpvzu/edit?usp=sharing', '_blank')">
-                    <span>📥</span> Download Full Timetable (PDF)
+                    <span>📥</span> Download Timetable
                 </button>
             </div>
             <div class="study-advice">
                 <h3>💡 Study Advice</h3>
                 <p style="font-size: 14px; line-height: 1.5;">
-                    • <strong>GST 111:</strong> Focus on Common Errors in English section.<br>
-                    • <strong>MTH 111:</strong> Set theory and Trigonometry always appear.<br>
-                    • <strong>CHM 113:</strong> Master the periodic table trends.
+                    • <strong>GST 111:</strong> Focus on Common Errors section.<br>
+                    • <strong>MTH 111:</strong> Set theory and Trigonometry.<br>
+                    • <strong>CHM 113:</strong> Master periodic table trends.
                 </p>
             </div>
         </div>
@@ -135,62 +133,53 @@
             <button class="tab-btn" onclick="filterTab('cat-gst', this)">GSTs</button>
             <button class="tab-btn" onclick="filterTab('cat-sci', this)">Sciences/Math</button>
             <button class="tab-btn" onclick="filterTab('cat-dept', this)">Departmental</button>
+            <button class="tab-btn" style="border: 1px solid var(--success); color: var(--success);" onclick="filterTab('cat-premium', this)">💎 Premium Notes</button>
         </div>
 
         <div class="course-grid" id="course-list">
-            <div class="course-card" style="border-color: #28a745; background: #f0fff4;">
-                <span class="ad-tag" style="background:#28a745; color:white;">NEW</span>
+            <div class="course-card cat-premium" style="border-color: #28a745; background: #f0fff4;">
+                <span class="ad-tag" style="background:#28a745; color:white;">₦5,000</span>
                 <h3>Full Course Notes</h3>
-                <p>Handwritten & Typed notes for all 100L courses.</p>
+                <p>Unlock everything in the Archive.</p>
                 <button class="download-btn" style="background:#28a745;" onclick="window.location.href='note.html'">Get Full Access 🔓</button>
             </div>
             
             <div class="course-card cat-gst">
-                <h3>GST 111</h3>
-                <p>Communication English</p>
+                <h3>GST 111</h3><p>Communication English</p>
                 <button class="download-btn" onclick="handleDownload('GST 111','https://docs.google.com/document/d/1cICV9V2Wtywaofp_1cA84ItLXu-vve-p/edit')">View PQ</button>
             </div>
-            
             <div class="course-card cat-gst">
-                <h3>GST 112</h3>
-                <p>Nigerian People and Culture</p>
-                <button class="download-btn" onclick="handleDownload('GST 112','https://drive.google.com/file/d/1o290W5ofDBxyoik0WC-y-VdjyHUqylJN/view?usp=drivesdk')">View PQ</button>
+                <h3>GST 112</h3><p>People and Culture</p>
+                <button class="download-btn" onclick="handleDownload('GST 112','https://drive.google.com/file/d/1o290W5ofDBxyoik0WC-y-VdjyHUqylJN/view')">View PQ</button>
             </div>
-
             <div class="course-card cat-gst">
-                <h3>IDS 111</h3>
-                <p>InterDisciplinary Studies</p>
+                <h3>IDS 111</h3><p>Interdisciplinary Studies</p>
                 <button class="download-btn" onclick="handleDownload('IDS 111','https://docs.google.com/document/d/1E04sy5KLj_-4vtKAxwBydUlb3rCxpvzu/edit')">View PQ</button>
             </div>
-            
             <div class="course-card cat-sci">
-                <h3>MTH 111</h3>
-                <p>General Mathematics</p>
+                <h3>MTH 111</h3><p>General Mathematics</p>
                 <button class="download-btn" onclick="handleDownload('MTH 111','https://docs.google.com/document/d/1IHjwn7HRnlUoypBEOJL2-k_u0ptZ8GEq/edit')">View PQ</button>
             </div>
 
-            <div class="course-card cat-sci">
-                <h3>MTH 112</h3>
-                <p>Elementary Statistics</p>
+            <div class="course-card cat-sci dept-eng hidden">
+                <h3>MTH 112</h3><p>Elementary Statistics (ENG Only)</p>
                 <button class="download-btn" onclick="handleDownload('MTH 112','https://docs.google.com/document/d/1IHjwn7HRnlUoypBEOJL2-k_u0ptZ8GEq/edit')">View PQ</button>
             </div>
-
-            <div class="course-card cat-sci">
-                <h3>CHM 111</h3>
-                <p>General Chemistry I</p>
+            <div class="course-card cat-sci dept-med hidden">
+                <h3>CHM 111</h3><p>General Chemistry I</p>
                 <button class="download-btn" onclick="handleDownload('CHM 111','https://drive.google.com/file/d/11vKL51kJKHPX83P8sv9sc_qDOhKegcup/view')">View PQ</button>
             </div>
-            
-            <div class="course-card cat-dept dept-csc">
-                <h3>CSC 111</h3>
-                <p>Intro to Computer Science</p>
-                <button class="download-btn" onclick="handleDownload('CSC 111','https://docs.google.com/document/d/1tGh6b6NQTMQoF_IpiMb6HY-xQ5HrsPyf/view')">View PQ</button>
+            <div class="course-card cat-sci dept-med hidden">
+                <h3>CHM 113</h3><p>Practical Chemistry</p>
+                <button class="download-btn" onclick="handleDownload('CHM 113','#')">View PQ</button>
             </div>
-
+            <div class="course-card cat-sci dept-med hidden">
+                <h3>BOT 111</h3><p>General Botany</p>
+                <button class="download-btn" onclick="handleDownload('BOT 111','#')">View PQ</button>
+            </div>
             <div class="course-card cat-dept dept-csc">
-                <h3>CSC 112</h3>
-                <p>Computer Applications</p>
-                <button class="download-btn" onclick="handleDownload('CSC 112','https://drive.google.com/file/d/11vKL51kJKHPX83P8sv9sc_qDOhKegcup/view')">View PQ</button>
+                <h3>CSC 111</h3><p>Intro to Computer Science</p>
+                <button class="download-btn" onclick="handleDownload('CSC 111','https://docs.google.com/document/d/1tGh6b6NQTMQoF_IpiMb6HY-xQ5HrsPyf/view')">View PQ</button>
             </div>
         </div>
 
@@ -199,7 +188,7 @@
             <div id="chat-display"><em>Connecting to BIU chat...</em></div>
             <div id="typing-indicator"></div>
             <div class="chat-input-area">
-                <input type="text" id="chat-msg" placeholder="Ask a question or request a PQ...">
+                <input type="text" id="chat-msg" placeholder="Ask a question...">
                 <button class="nav-btn" onclick="sendChat()">Send</button>
             </div>
         </div>
@@ -229,9 +218,9 @@
         const chatRef = ref(db, "messages");
         const typingRef = ref(db, "typing");
 
-        // CHECK SESSION
         const name = localStorage.getItem('biu_user_name');
         const dept = localStorage.getItem('biu_user_dept');
+        
         if(!name || !dept) {
             window.location.href = 'login.html';
         } else {
@@ -242,63 +231,64 @@
         let userId = localStorage.getItem('biu_user_id') || 'user_' + Math.random().toString(36).substr(2, 9);
         localStorage.setItem('biu_user_id', userId);
 
-        function playNotif() {
-            const sound = document.getElementById('notif-sound');
-            if(sound) { sound.currentTime = 0; sound.play().catch(e => {}); }
+        function applyAccess(userDept) {
+            if (userDept === 'ENG') {
+                document.querySelectorAll('.dept-eng').forEach(el => el.classList.remove('hidden'));
+            }
+            if (userDept === 'Nursing' || userDept === 'MLS') {
+                document.querySelectorAll('.dept-med').forEach(el => el.classList.remove('hidden'));
+            }
+            if (userDept === 'CSC' || userDept === 'ENG') {
+                document.querySelectorAll('.dept-csc').forEach(el => el.classList.remove('hidden'));
+            }
         }
 
-        const chatInput = document.getElementById('chat-msg');
-        chatInput.addEventListener('input', () => {
-            const shortName = name.split(' ')[0];
-            if(chatInput.value.length > 0) {
-                set(ref(db, `typing/${userId}`), shortName);
-                setTimeout(() => remove(ref(db, `typing/${userId}`)), 3000);
+        // --- BROADCAST LISTENER (Fixed & Cross-Checked) ---
+        onValue(ref(db, "broadcast"), (snapshot) => {
+            const data = snapshot.val();
+            const bar = document.getElementById('broadcast-bar');
+            const barText = document.getElementById('live-broadcast-text');
+            if(data && data.text) {
+                barText.innerText = data.text;
+                bar.classList.remove('hidden');
             } else {
-                remove(ref(db, `typing/${userId}`));
+                bar.classList.add('hidden');
             }
         });
 
-        onValue(typingRef, (snapshot) => {
-            const typers = snapshot.val();
-            const indicator = document.getElementById('typing-indicator');
-            if (typers) {
-                const names = Object.values(typers).filter(n => n !== name.split(' ')[0]);
-                indicator.innerText = names.length > 0 ? `${names.join(', ')} is typing...` : "";
-            } else { indicator.innerText = ""; }
-        });
-
-        onValue(ref(db, "paid_users/" + userId), (snapshot) => {
-            if (snapshot.val() === true) {
-                document.getElementById('header-title').innerHTML = "BIU Portal <span style='font-size:12px; background:#28a745; color:white; padding:2px 8px; border-radius:10px; vertical-align:middle; margin-left:10px;'>PREMIUM</span>";
+        // --- MARKETPLACE LISTENER ---
+        onValue(ref(db, "marketplace"), (snapshot) => {
+            const data = snapshot.val();
+            if(data) {
+                if(data.ad1) {
+                    document.getElementById('ad1-title').innerText = data.ad1.title;
+                    document.getElementById('ad1-desc').innerText = data.ad1.desc;
+                    document.getElementById('ad1-card').onclick = () => window.open(data.ad1.link, '_blank');
+                }
+                if(data.ad2) {
+                    document.getElementById('ad2-title').innerText = data.ad2.title;
+                    document.getElementById('ad2-desc').innerText = data.ad2.desc;
+                    document.getElementById('ad2-card').onclick = () => window.open(data.ad2.link, '_blank');
+                }
             }
         });
 
-        const presenceRef = ref(db, "online_users");
-        const myPresenceRef = push(presenceRef);
-        onDisconnect(myPresenceRef).remove();
-        onDisconnect(ref(db, `typing/${userId}`)).remove();
-        onValue(presenceRef, (snapshot) => { document.getElementById('online-count').innerText = snapshot.size || 1; });
+        // --- CORE FUNCTIONS ---
+        window.contactAdmin = function() {
+            const subject = encodeURIComponent("BIU Archive Support - " + name);
+            const body = encodeURIComponent("Hello Celebrity, \n\nI am " + name + " from " + dept + " department.");
+            window.location.href = `mailto:pauladamu600@gmail.com?subject=${subject}&body=${body}`;
+        };
 
         window.toggleTheme = function() {
             const body = document.body;
             body.setAttribute('data-theme', body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
-        }
+        };
 
         window.logout = function() {
-            localStorage.removeItem('biu_user_name');
-            localStorage.removeItem('biu_user_dept');
+            localStorage.clear();
             window.location.href = 'login.html';
-        }
-
-        function applyAccess(dept) {
-            document.querySelectorAll('.dept-eng, .dept-nur, .dept-mls, .dept-isd, .dept-law, .dept-csc').forEach(el => el.classList.add('hidden'));
-            if (dept === 'ENG') document.querySelectorAll('.dept-eng').forEach(el => el.classList.remove('hidden'));
-            if (dept === 'Nursing') document.querySelectorAll('.dept-nur').forEach(el => el.classList.remove('hidden'));
-            if (dept === 'MLS') document.querySelectorAll('.dept-mls').forEach(el => el.classList.remove('hidden'));
-            if (dept === 'ISD') document.querySelectorAll('.dept-isd').forEach(el => el.classList.remove('hidden'));
-            if (dept === 'Law') document.querySelectorAll('.dept-law').forEach(el => el.classList.remove('hidden'));
-            if (dept !== 'Law' && dept !== 'ISD') document.querySelectorAll('.dept-csc').forEach(el => el.classList.remove('hidden'));
-        }
+        };
 
         window.sendChat = function() {
             const input = document.getElementById('chat-msg');
@@ -306,24 +296,24 @@
             if (input.value.trim() !== "") {
                 push(chatRef, { sender: senderName, message: input.value, timestamp: Date.now(), displayTime: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
                 input.value = "";
-                remove(ref(db, `typing/${userId}`));
             }
-        }
+        };
 
-        let initialChatLoad = true;
         onChildAdded(chatRef, (snapshot) => {
             const data = snapshot.val();
             const display = document.getElementById('chat-display');
             if (display.innerHTML.includes('Connecting')) display.innerHTML = '';
             display.innerHTML += `<div style="margin-bottom:8px;"><strong>${data.sender}</strong> <small style="opacity:0.5">${data.displayTime}</small><br>${data.message}</div>`;
             display.scrollTop = display.scrollHeight;
-            if(!initialChatLoad) playNotif();
         });
-        setTimeout(() => initialChatLoad = false, 2000);
 
-        window.showToast = function(m) { const t = document.getElementById('toast'); t.innerText = m; t.className = "show"; setTimeout(() => t.className = "", 3000); }
-        window.handleDownload = function(t, u) { showToast(`✅ Opening ${t}...`); setTimeout(() => window.open(u, '_blank'), 800); }
-        
+        window.handleDownload = function(t, u) { 
+            const toast = document.getElementById('toast');
+            toast.innerText = `✅ Opening ${t}...`;
+            toast.className = "show";
+            setTimeout(() => { toast.className = ""; window.open(u, '_blank'); }, 2000);
+        };
+
         window.filterTab = function(category, btn) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -334,7 +324,7 @@
                     card.style.display = 'none';
                 }
             });
-        }
+        };
     </script>
 </body>
 </html>
