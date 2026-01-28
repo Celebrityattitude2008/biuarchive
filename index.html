@@ -70,7 +70,7 @@
     <div id="ban-screen" class="hidden">
         <h1 style="font-size: 4rem;">🚫</h1>
         <h2>Account Suspended</h2>
-        <p>Your access has been revoked.<br>If this is a mistake, contact Celebrity Paul.</p>
+        <p>Your access has been revoked.<br>If this is a mistake, contact Celebrity Attitude.</p>
         <button onclick="logout()" class="nav-btn" style="background: white; color: #900; margin-top: 20px;">Return to Login</button>
     </div>
 
@@ -80,8 +80,8 @@
             <div class="dropdown">
                 <button class="nav-btn" onclick="toggleDropdown()">☰ Menu</button>
                 <div id="myDropdown" class="dropdown-content">
-                    <button id="admin-link" class="hidden" onclick="window.location.href='admin.html'" style="background: rgba(255, 215, 0, 0.1); color: #FFD700; border-left: 3px solid #FFD700;">⚙️ Admin Dashboard</button>
-                    
+                    <button onclick="enterAdmin()" style="background: rgba(255, 215, 0, 0.1); color: #FFD700; border-left: 3px solid #FFD700;">⚙️ Admin Dashboard</button>
+                    <button onclick="window.location.href='leaderboard.html'">🏆 View Leaderboard</button>
                     <button onclick="window.location.href='profile.html'">👤 My Profile</button>
                     <button onclick="window.location.href='pq.html'">📄 Past Questions</button>
                     <button onclick="window.location.href='note.html'">📚 Course Notes</button>
@@ -251,14 +251,18 @@
             disp.scrollTop = disp.scrollHeight;
         });
 
-        // --- UTILS ---
+        // --- UTILS & SECURITY ---
         document.getElementById('display-name').innerText = name;
-
-        // --- SECURITY LOGIC: SHOW ADMIN LINK ONLY FOR PAUL ---
-        if (name && name.toLowerCase().includes("Paul Adamu")) {
-            const adminBtn = document.getElementById('admin-link');
-            if (adminBtn) adminBtn.classList.remove('hidden');
-        }
+        
+        // Admin entrance function
+        window.enterAdmin = () => {
+            const pass = prompt("Enter Admin Access Code:");
+            if(pass === "BIU2026") {
+                window.location.href = 'admin.html';
+            } else {
+                alert("Incorrect Code. Access Denied.");
+            }
+        };
 
         if (localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
         window.toggleDropdown = () => document.getElementById("myDropdown").classList.toggle("show");

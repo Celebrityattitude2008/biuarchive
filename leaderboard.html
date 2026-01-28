@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Leaderboard | BIU Archive</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary: #002147; --accent: #FFD700; --light: #f4f4f4;
+            --white: #ffffff; --text: #333; --info: #17a2b8;
+        }
+        [data-theme="dark"] {
+            --primary: #FFD700; --accent: #002147; --light: #121212;
+            --white: #1e1e1e; --text: #f4f4f4;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--light); color: var(--text); margin: 0; display: flex; justify-content: center; padding: 20px; transition: 0.3s; }
+        .container { background: var(--white); padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 600px; text-align: center; }
+        
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .back-btn, .share-btn { padding: 8px 15px; border-radius: 20px; border: none; cursor: pointer; background: var(--primary); color: var(--white); font-weight: bold; text-decoration: none; font-size: 12px; transition: 0.2s; }
+        .share-btn { background: var(--info); margin-top: 10px; width: 100%; }
+        .share-btn:active { transform: scale(0.98); }
+
+        .search-box { width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); background: var(--light); color: var(--text); box-sizing: border-box; outline: none; }
+
+        .leaderboard-list { text-align: left; }
+        .entry { display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-bottom: 10px; background: rgba(128,128,128,0.05); border-radius: 10px; border: 1px solid rgba(0,0,0,0.05); transition: 0.2s; }
+        .entry-info { display: flex; align-items: center; gap: 15px; }
+        .rank { font-weight: bold; color: var(--primary); width: 35px; }
+        .name { font-weight: 600; font-size: 1.05rem; }
+        .streak { font-weight: bold; color: #ff5e00; }
+
+        .rank-1 { background: rgba(255, 215, 0, 0.15); border: 1px solid #FFD700; }
+        .my-rank-card { margin-top: 25px; padding: 20px; background: var(--primary); color: var(--white); border-radius: 12px; text-align: left; position: relative; overflow: hidden; }
+        .my-rank-card::after { content: 'BIU'; position: absolute; right: -10px; bottom: -10px; font-size: 50px; font-weight: 900; opacity: 0.1; }
+        .match-highlight { border: 2px solid var(--primary); background: rgba(0, 33, 71, 0.05); transform: scale(1.02); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="back-btn">← Back</a>
+            <h2 style="margin:0;">🏆 Top 10 Scholars</h2>
+            <div style="width:60px;"></div>
+        </div>
+
+        <input type="text" id="searchBar" class="search-box" placeholder="Search student name..." onkeyup="filterLeaderboard()">
+
+        <div id="loading">Loading rankings...</div>
+        <div id="leaderboard-full" class="leaderboard-list"></div>
+
+        <div id="personal-rank-container"></div>
+        <div id="share-area"></div>
+
+        <footer style="margin-top: 30px; font-size: 12px; opacity: 0.7;">
+            The BIU Archive © 2026
+        </footer>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
+            authDomain: "biu-archive.firebaseapp.com",
+            databaseURL: "https://biu-archive-default-rtdb.firebaseio.com",
+            projectId: "biu-archive",
+            storageBucket: "biu-archive.firebasestorage.app",
+            messagingSenderId: "245967347998",
+            appId: "1:245967347998:web:a8feb5ad0ef9650946a90f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const currentUserId = localStorage.getItem('biu_user_id');
+        if (localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
+
+        const leaderboardDiv = document.getElementById('leaderboard-full');
+        const personalDiv = document.getElementById('personal-rank-container');
+        const loadingDiv = document.getElementById('loading');
+        const shareArea = document.getElementById('share-area');
+
+        onValue(ref(db, "users"), (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+
+            const allUsers = Object.entries(data).map(([id, val]) => ({ id, ...val }))
+                .sort((a, b) => (b.streak || 0) - (a.streak || 0));
+
+            const myIndex = allUsers.findIndex(u => u.id === currentUserId);
+            const myRank = myIndex + 1;
+            const myData = allUsers[myIndex];
+
+            loadingDiv.style.display = 'none';
+            renderList(allUsers.slice(0, 10));
+
+            if (myData) {
+                personalDiv.innerHTML = `
+                    <div id="capture-card" class="my-rank-card">
+                        <div style="font-size: 12px; text-transform: uppercase; opacity: 0.8; letter-spacing: 1px;">BIU Archive Scholar</div>
+                        <div style="font-size: 20px; font-weight: bold; margin: 5px 0;">${myData.name}</div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                            <span style="font-size: 24px; font-weight: 900; color: var(--accent);">Rank #${myRank}</span>
+                            <span style="font-size: 16px;">🔥 ${myData.streak || 0} Streak</span>
+                        </div>
+                    </div>
+                `;
+                shareArea.innerHTML = `<button class="share-btn" onclick="captureRank()">📸 Save Rank Image</button>`;
+            }
+        });
+
+        function renderList(users) {
+            leaderboardDiv.innerHTML = users.map((user, index) => `
+                <div class="entry ${index === 0 ? 'rank-1' : ''}" data-name="${user.name.toLowerCase()}">
+                    <div class="entry-info">
+                        <span class="rank">#${index + 1}</span>
+                        <span class="name">${user.name}</span>
+                    </div>
+                    <span class="streak">🔥 ${user.streak || 0}</span>
+                </div>
+            `).join('');
+        }
+
+        window.filterLeaderboard = function() {
+            const term = document.getElementById('searchBar').value.toLowerCase();
+            document.querySelectorAll('.entry').forEach(item => {
+                const name = item.getAttribute('data-name');
+                if (name.includes(term)) {
+                    item.style.display = 'flex';
+                    item.classList.toggle('match-highlight', term !== "");
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        };
+
+        window.captureRank = function() {
+            const btn = document.querySelector('.share-btn');
+            btn.innerText = "Generating...";
+            html2canvas(document.getElementById('capture-card'), {
+                backgroundColor: null,
+                scale: 2
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'BIU-Archive-Rank.png';
+                link.href = canvas.toDataURL();
+                link.click();
+                btn.innerText = "📸 Save Rank Image";
+            });
+        };
+    </script>
+</body>
+</html>
