@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Past Questions | BIU Archive</title>
+    <style>
+        :root {
+            --primary: #002147; --accent: #FFD700; --light: #f4f4f4;
+            --white: #ffffff; --text: #333; --success: #28a745; --info: #17a2b8;
+        }
+        [data-theme="dark"] {
+            --primary: #FFD700; --accent: #002147; --light: #121212;
+            --white: #1e1e1e; --text: #f4f4f4;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--light); color: var(--text); margin: 0; display: flex; justify-content: center; padding: 20px; transition: 0.3s; }
+        .container { background: var(--white); padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 850px; text-align: center; position: relative; }
+        .hidden { display: none !important; }
+        
+        .top-nav { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 10; }
+        .nav-btn { padding: 8px 12px; border-radius: 20px; border: none; cursor: pointer; font-size: 11px; font-weight: bold; background: var(--primary); color: var(--white); transition: 0.2s; }
+        
+        .tab-container { display: flex; justify-content: center; gap: 8px; margin: 20px 0; flex-wrap: wrap; }
+        .tab-btn { background: rgba(0,0,0,0.05); padding: 8px 16px; border-radius: 20px; border: none; cursor: pointer; font-size: 13px; color: var(--text); }
+        .tab-btn.active { background: var(--primary); color: var(--white); font-weight: bold; }
+
+        .course-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-top: 20px; }
+        .course-card { border: 1.5px solid var(--primary); padding: 18px; border-radius: 12px; text-align: left; background: var(--white); transition: 0.3s; position: relative; }
+        .course-card h3 { margin: 0; font-size: 1.1rem; }
+        .download-btn { width: 100%; padding: 10px; background: var(--primary); color: var(--white); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 12px; }
+
+        #toast { visibility: hidden; min-width: 250px; background: var(--primary); color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border-bottom: 4px solid var(--accent); }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+        
+        footer { margin-top: 40px; font-size: 12px; opacity: 0.8; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 20px; }
+    </style>
+</head>
+<body>
+    <div id="toast"></div>
+
+    <div class="container">
+        <div class="top-nav">
+            <button class="nav-btn" onclick="window.location.href='index.html'">🏠 Home</button>
+            <button class="nav-btn" onclick="toggleTheme()">🌓 Theme</button>
+        </div>
+
+        <h1 style="margin-top: 50px;">Past Questions Bank</h1>
+        <p>Accessing as: <span id="display-name" style="color:var(--info); font-weight:bold;"></span></p>
+
+        <div class="tab-container">
+            <button class="tab-btn active" onclick="filterTab('all', this)">All PQs</button>
+            <button class="tab-btn" onclick="filterTab('cat-gst', this)">GSTs</button>
+            <button class="tab-btn" onclick="filterTab('cat-sci', this)">Sciences/Math</button>
+            <button class="tab-btn" onclick="filterTab('cat-dept', this)">Departmental</button>
+        </div>
+
+        <div class="course-grid" id="course-list">
+            <div class="course-card cat-gst">
+                <h3>GST 111</h3><p>Communication English</p>
+                <button class="download-btn" onclick="handleDownload('GST 111','https://docs.google.com/document/d/1cICV9V2Wtywaofp_1cA84ItLXu-vve-p/edit')">View PQ</button>
+            </div>
+            <div class="course-card cat-gst">
+                <h3>GST 112</h3><p>People and Culture</p>
+                <button class="download-btn" onclick="handleDownload('GST 112','https://drive.google.com/file/d/1o290W5ofDBxyoik0WC-y-VdjyHUqylJN/view')">View PQ</button>
+            </div>
+            <div class="course-card cat-gst">
+                <h3>IDS 111</h3><p>Rudiments of Faith</p>
+                <button class="download-btn" onclick="handleDownload('IDS 111','https://docs.google.com/document/d/1dYTcgJQBICb8L5ZNvX4z_nb6H2d7Pd_M/edit')">View PQ</button>
+            </div>
+
+            <div class="course-card cat-sci">
+                <h3>MTH 111</h3><p>General Mathematics</p>
+                <button class="download-btn" onclick="handleDownload('MTH 111','https://docs.google.com/document/d/1IHjwn7HRnlUoypBEOJL2-k_u0ptZ8GEq/edit')">View PQ</button>
+            </div>
+            <div class="course-card cat-sci dept-eng hidden">
+                <h3>MTH 112</h3><p>Elementary Statistics (ENG)</p>
+                <button class="download-btn" onclick="handleDownload('MTH 112','https://docs.google.com/document/d/1IHjwn7HRnlUoypBEOJL2-k_u0ptZ8GEq/edit')">View PQ</button>
+            </div>
+            <div class="course-card cat-sci dept-med hidden">
+                <h3>CHM 111</h3><p>General Chemistry I</p>
+                <button class="download-btn" onclick="handleDownload('CHM 111','https://drive.google.com/file/d/11vKL51kJKHPX83P8sv9sc_qDOhKegcup/view')">View PQ</button>
+            </div>
+
+            <div class="course-card cat-dept dept-csc hidden">
+                <h3>CSC 111</h3><p>Intro to Computer Science</p>
+                <button class="download-btn" onclick="handleDownload('CSC 111','https://docs.google.com/document/d/1tGh6b6NQTMQoF_IpiMb6HY-xQ5HrsPyf/view')">View PQ</button>
+            </div>
+        </div>
+
+        <footer>
+            <strong>The BIU Archive</strong><br>
+            Past Questions Repository
+        </footer>
+    </div>
+
+    <script>
+        const name = localStorage.getItem('biu_user_name');
+        const dept = localStorage.getItem('biu_user_dept');
+
+        if(!name) { window.location.href = 'login.html'; }
+        document.getElementById('display-name').innerText = name;
+
+        // Apply same department restriction logic
+        function applyAccess(userDept) {
+            if (userDept === 'ENG') {
+                document.querySelectorAll('.dept-eng').forEach(el => el.classList.remove('hidden'));
+                document.querySelectorAll('.dept-csc').forEach(el => el.classList.remove('hidden'));
+            }
+            if (userDept === 'Nursing' || userDept === 'MLS') {
+                document.querySelectorAll('.dept-med').forEach(el => el.classList.remove('hidden'));
+            }
+            if (userDept === 'CSC') {
+                document.querySelectorAll('.dept-csc').forEach(el => el.classList.remove('hidden'));
+            }
+        }
+        applyAccess(dept);
+
+        window.handleDownload = function(t, u) { 
+            const toast = document.getElementById('toast');
+            toast.innerText = `✅ Opening ${t} Past Question...`;
+            toast.className = "show";
+            setTimeout(() => { toast.className = ""; window.open(u, '_blank'); }, 1500);
+        };
+
+        window.filterTab = function(category, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.course-card').forEach(card => {
+                const isHiddenByDept = card.classList.contains('hidden');
+                if (!isHiddenByDept && (category === 'all' || card.classList.contains(category))) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        };
+
+        window.toggleTheme = function() {
+            const body = document.body;
+            const current = body.getAttribute('data-theme');
+            body.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+        };
+    </script>
+</body>
+</html>
