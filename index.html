@@ -80,6 +80,8 @@
             <div class="dropdown">
                 <button class="nav-btn" onclick="toggleDropdown()">☰ Menu</button>
                 <div id="myDropdown" class="dropdown-content">
+                    <button id="admin-link" class="hidden" onclick="window.location.href='admin.html'" style="background: rgba(255, 215, 0, 0.1); color: #FFD700; border-left: 3px solid #FFD700;">⚙️ Admin Dashboard</button>
+                    
                     <button onclick="window.location.href='profile.html'">👤 My Profile</button>
                     <button onclick="window.location.href='pq.html'">📄 Past Questions</button>
                     <button onclick="window.location.href='note.html'">📚 Course Notes</button>
@@ -251,6 +253,13 @@
 
         // --- UTILS ---
         document.getElementById('display-name').innerText = name;
+
+        // --- SECURITY LOGIC: SHOW ADMIN LINK ONLY FOR PAUL ---
+        if (name && name.toLowerCase().includes("Paul Adamu")) {
+            const adminBtn = document.getElementById('admin-link');
+            if (adminBtn) adminBtn.classList.remove('hidden');
+        }
+
         if (localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
         window.toggleDropdown = () => document.getElementById("myDropdown").classList.toggle("show");
         window.toggleTheme = () => {
