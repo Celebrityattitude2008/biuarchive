@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BIU Archive | Admin Panel</title>
     <style>
-        :root { --primary: #002147; --accent: #FFD700; --bg: #f8f9fa; }
+        :root { --primary: #002147; --accent: #FFD700; --bg: #f8f9fa; --danger: #dc3545; --success: #28a745; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
         .admin-container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         
@@ -13,9 +13,16 @@
         .stat-card { background: var(--primary); color: white; padding: 20px; border-radius: 15px; text-align: center; border-bottom: 5px solid var(--accent); position: relative; }
         .stat-card h2 { margin: 0; font-size: 2.5rem; }
         
+        /* Maintenance Toggle Styles */
+        .maintenance-card { background: #1a1a1a; color: white; padding: 20px; border-radius: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; border-left: 10px solid var(--danger); }
+        .status-indicator { font-weight: bold; padding: 5px 12px; border-radius: 20px; font-size: 14px; }
+        .status-online { background: var(--success); color: white; }
+        .status-offline { background: var(--danger); color: white; }
+
         .payment-request-card { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .btn-approve { background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .btn-approve:hover { background: #218838; }
+        .btn-reject { background: var(--danger); color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-left: 5px; }
 
         .action-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         #admin-search { flex: 1; padding: 12px 20px; border-radius: 10px; border: 2px solid #eee; font-size: 16px; outline: none; transition: 0.3s; min-width: 250px; }
@@ -41,6 +48,17 @@
     <div id="admin-content" class="admin-container" style="display:none;">
         <a href="index.html" class="btn-back">← Back to Vault</a>
         <h1 style="color: var(--primary);">Celebrity's Dashboard</h1>
+
+        <div class="maintenance-card">
+            <div>
+                <h3 style="margin:0">🛠️ System Maintenance Mode</h3>
+                <p style="margin:5px 0 0 0; font-size: 13px; opacity:0.8;">When active, students cannot access the portal.</p>
+            </div>
+            <div style="text-align: right;">
+                <span id="m-status-text" class="status-indicator">Checking...</span><br>
+                <button id="m-toggle-btn" onclick="toggleMaintenance()" style="margin-top:10px; padding: 8px 15px; border-radius: 5px; border:none; cursor:pointer; font-weight:bold;">Loading...</button>
+            </div>
+        </div>
         
         <div class="stats-row">
             <div class="stat-card">
@@ -89,7 +107,7 @@
         </div>
 
         <div class="action-bar">
-            <input type="text" id="admin-search" placeholder="Search by name or department..." onkeyup="filterTable()">
+            <input type="text" id="admin-search" placeholder="Search by name, matric, or department..." onkeyup="filterTable()">
             <button class="btn-export" onclick="exportToExcel()">📊 Export Logs</button>
         </div>
 
@@ -98,6 +116,7 @@
                 <thead>
                     <tr>
                         <th>Student Name</th>
+                        <th>Matric Number</th>
                         <th>Department</th>
                         <th>Log-in Time</th>
                         <th>Action</th>
@@ -134,6 +153,29 @@
         }
 
         function startListeners() {
+            // MAINTENANCE MODE LISTENER
+            onValue(ref(db, "maintenance_mode"), (snapshot) => {
+                const isMaint = snapshot.val() || false;
+                const statusTxt = document.getElementById('m-status-text');
+                const btn = document.getElementById('m-toggle-btn');
+                
+                if(isMaint) {
+                    statusTxt.innerText = "STATUS: UNDER MAINTENANCE";
+                    statusTxt.className = "status-indicator status-offline";
+                    btn.innerText = "Disable Maintenance (Go Live)";
+                    btn.style.background = "var(--success)";
+                    btn.style.color = "white";
+                } else {
+                    statusTxt.innerText = "STATUS: LIVE";
+                    statusTxt.className = "status-indicator status-online";
+                    btn.innerText = "Enable Maintenance (Lock Portal)";
+                    btn.style.background = "var(--danger)";
+                    btn.style.color = "white";
+                }
+                window.currentMaintenanceState = isMaint;
+            });
+
+            // UPDATED PAYMENT LISTENER (WITH REJECT)
             onValue(ref(db, "payment_requests"), (snapshot) => {
                 const data = snapshot.val();
                 const list = document.getElementById('payment-list');
@@ -148,9 +190,12 @@
                             <div class="payment-request-card">
                                 <div>
                                     <strong style="color:#333">${req.name}</strong><br>
-                                    <small style="color:#666">${req.dept || 'Department N/A'}</small>
+                                    <small style="color:#666">${req.matric || 'N/A'} | ${req.dept || 'N/A'}</small>
                                 </div>
-                                <button class="btn-approve" onclick="approvePayment('${key}', '${req.userId}')">Approve & Unlock ✅</button>
+                                <div>
+                                    <button class="btn-approve" onclick="approvePayment('${key}', '${req.userId}')">Approve ✅</button>
+                                    <button class="btn-reject" onclick="rejectPayment('${key}')">Reject ❌</button>
+                                </div>
                             </div>`;
                     });
                 } else {
@@ -159,6 +204,7 @@
                 }
             });
 
+            // LOGS LISTENER
             onValue(ref(db, "logs"), (snapshot) => {
                 const data = snapshot.val();
                 const list = document.getElementById('log-list');
@@ -171,6 +217,7 @@
                         list.innerHTML += `
                             <tr>
                                 <td>${item.name}</td>
+                                <td style="font-family: monospace; font-weight: bold;">${item.matric || 'No Matric'}</td>
                                 <td>${item.dept}</td>
                                 <td>${item.timestamp}</td>
                                 <td><button onclick="deleteLog('${key}')" style="cursor:pointer; border:none; background:none;">🗑️</button></td>
@@ -184,12 +231,31 @@
             });
         }
 
+        // TOGGLE MAINTENANCE
+        window.toggleMaintenance = function() {
+            const newState = !window.currentMaintenanceState;
+            const msg = newState ? "Lock the portal for maintenance?" : "Make the portal live for all students?";
+            if(confirm(msg)) {
+                set(ref(db, "maintenance_mode"), newState);
+            }
+        };
+
+        // APPROVE PAYMENT
         window.approvePayment = function(reqId, userId) {
             if(!userId || userId === 'undefined') return alert("User ID Missing");
             if(confirm("Unlock Premium for this student?")) {
                 set(ref(db, "paid_users/" + userId), true).then(() => {
                     remove(ref(db, "payment_requests/" + reqId));
                     alert("User Approved!");
+                });
+            }
+        };
+
+        // REJECT PAYMENT
+        window.rejectPayment = function(reqId) {
+            if(confirm("Are you sure you want to REJECT this payment? This will delete the request.")) {
+                remove(ref(db, "payment_requests/" + reqId)).then(() => {
+                    alert("Request Rejected.");
                 });
             }
         };

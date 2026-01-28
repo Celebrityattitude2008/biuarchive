@@ -20,7 +20,11 @@
         .top-nav { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 10; }
         .nav-btn { padding: 8px 12px; border-radius: 20px; border: none; cursor: pointer; font-size: 11px; font-weight: bold; background: var(--primary); color: var(--white); transition: 0.2s; }
         
-        .tab-container { display: flex; justify-content: center; gap: 8px; margin: 20px 0; flex-wrap: wrap; }
+        /* SEARCH BAR STYLE */
+        .search-container { margin: 20px 0 10px 0; width: 100%; }
+        #courseSearch { width: 100%; padding: 12px 15px; border-radius: 10px; border: 1.5px solid var(--primary); background: var(--white); color: var(--text); font-size: 14px; box-sizing: border-box; outline: none; }
+
+        .tab-container { display: flex; justify-content: center; gap: 8px; margin: 10px 0 20px 0; flex-wrap: wrap; }
         .tab-btn { background: rgba(0,0,0,0.05); padding: 8px 16px; border-radius: 20px; border: none; cursor: pointer; font-size: 13px; color: var(--text); }
         .tab-btn.active { background: var(--primary); color: var(--white); font-weight: bold; }
 
@@ -49,8 +53,12 @@
         <h1 style="margin-top: 50px;">Past Questions Bank</h1>
         <p>Accessing as: <span id="display-name" style="color:var(--info); font-weight:bold;"></span></p>
 
+        <div class="search-container">
+            <input type="text" id="courseSearch" placeholder="🔍 Search course code or name (e.g. GST 111)..." onkeyup="filterCourses()">
+        </div>
+
         <div class="tab-container">
-            <button class="tab-btn active" onclick="filterTab('all', this)">All PQs</button>
+            <button class="tab-btn active" id="btn-all" onclick="filterTab('all', this)">All PQs</button>
             <button class="tab-btn" onclick="filterTab('cat-gst', this)">GSTs</button>
             <button class="tab-btn" onclick="filterTab('cat-sci', this)">Sciences/Math</button>
             <button class="tab-btn" onclick="filterTab('cat-dept', this)">Departmental</button>
@@ -98,11 +106,11 @@
     <script>
         const name = localStorage.getItem('biu_user_name');
         const dept = localStorage.getItem('biu_user_dept');
+        let currentCategory = 'all';
 
         if(!name) { window.location.href = 'login.html'; }
         document.getElementById('display-name').innerText = name;
 
-        // Apply same department restriction logic
         function applyAccess(userDept) {
             if (userDept === 'ENG') {
                 document.querySelectorAll('.dept-eng').forEach(el => el.classList.remove('hidden'));
@@ -124,17 +132,29 @@
             setTimeout(() => { toast.className = ""; window.open(u, '_blank'); }, 1500);
         };
 
-        window.filterTab = function(category, btn) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+        // COMBINED FILTERING LOGIC (Tab + Search)
+        window.filterCourses = function() {
+            const query = document.getElementById('courseSearch').value.toLowerCase();
             document.querySelectorAll('.course-card').forEach(card => {
+                const title = card.querySelector('h3').innerText.toLowerCase();
+                const desc = card.querySelector('p').innerText.toLowerCase();
                 const isHiddenByDept = card.classList.contains('hidden');
-                if (!isHiddenByDept && (category === 'all' || card.classList.contains(category))) {
+                const matchesCategory = (currentCategory === 'all' || card.classList.contains(currentCategory));
+                const matchesSearch = title.includes(query) || desc.includes(query);
+
+                if (!isHiddenByDept && matchesCategory && matchesSearch) {
                     card.style.display = 'block';
                 } else {
                     card.style.display = 'none';
                 }
             });
+        };
+
+        window.filterTab = function(category, btn) {
+            currentCategory = category;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            filterCourses(); // Re-run search logic with new category
         };
 
         window.toggleTheme = function() {
