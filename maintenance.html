@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance | BIU Archive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .bg-pattern {
+            background-color: #002147;
+            background-image: url("https://www.transparenttextures.com/patterns/cubes.png");
+        }
+        .shimmer {
+            animation: shimmer 2s infinite linear;
+            background: linear-gradient(to right, #ffd700 0%, #fff 50%, #ffd700 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        @keyframes shimmer {
+            to { background-position: 200% center; }
+        }
+    </style>
+</head>
+<body class="bg-pattern h-screen flex items-center justify-center p-6 text-white overflow-hidden">
+
+    <div class="max-w-md w-full text-center space-y-8">
+        <div class="relative inline-block">
+            <div class="text-7xl animate-bounce">🛠️</div>
+            <div class="absolute -top-2 -right-2 w-4 h-4 bg-yellow-400 rounded-full animate-ping"></div>
+        </div>
+
+        <div class="space-y-4">
+            <h1 class="text-4xl font-black tracking-tighter shimmer">BIU ARCHIVE</h1>
+            <h2 class="text-xl font-bold text-blue-200">System Upgrade in Progress</h2>
+            <p class="text-blue-100 opacity-80 leading-relaxed">
+                We are currently performing scheduled maintenance to improve your study experience. 
+                Don't worry, your streaks and data are safe!
+            </p>
+        </div>
+
+        <div class="w-full bg-blue-900/50 rounded-full h-2 overflow-hidden border border-blue-800">
+            <div class="bg-yellow-400 h-full w-2/3 rounded-full animate-pulse"></div>
+        </div>
+
+        <div class="flex flex-col gap-4">
+            <button onclick="window.location.href='index.html'" class="w-full py-3 bg-yellow-400 hover:bg-yellow-500 text-blue-900 font-bold rounded-xl transition-all active:scale-95 shadow-lg">
+                🔄 Try Refreshing
+            </button>
+            <p class="text-xs text-blue-300 italic">Admin: Paul Adamu</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
+            authDomain: "biu-archive.firebaseapp.com",
+            databaseURL: "https://biu-archive-default-rtdb.firebaseio.com",
+            projectId: "biu-archive",
+            storageBucket: "biu-archive.firebasestorage.app",
+            messagingSenderId: "245967347998",
+            appId: "1:245967347998:web:a8feb5ad0ef9650946a90f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // If maintenance is turned OFF in Admin, automatically send user back to home
+        onValue(ref(db, "maintenance_mode"), (snapshot) => {
+            if (snapshot.val() === false) {
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>

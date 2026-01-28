@@ -77,9 +77,9 @@
                 </ul>
             </div>
 
-            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100 opacity-60">
+            <div id="other-courses-card" class="bg-white p-6 rounded-xl shadow-md border border-gray-100 opacity-60">
                 <h3 class="text-xl font-bold border-b pb-2 mb-4 text-gray-500">Other Courses</h3>
-                <p class="text-sm italic">Unlock premium to see all 100L departmental notes.</p>
+                <p id="lock-text" class="text-sm italic">Unlock premium to see all 100L departmental notes.</p>
             </div>
         </div>
     </main>
@@ -102,37 +102,50 @@
         const db = getDatabase(app);
 
         const studentName = localStorage.getItem('biu_user_name');
-        let userId = localStorage.getItem('biu_user_id');
+        const userId = localStorage.getItem('biu_user_id');
 
-        if (!studentName) {
-            alert("Please login first!");
-            window.location.href = 'index.html';
+        if (!studentName || !userId) {
+            window.location.href = 'login.html';
         }
 
-        // Generate ID if missing
-        if (!userId) {
-            userId = 'user_' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('biu_user_id', userId);
-        }
-
-        // Check if user is already paid
+        // --- REAL-TIME PREMIUM LISTENER ---
         onValue(ref(db, "paid_users/" + userId), (snapshot) => {
-            if (snapshot.val() === true) { 
+            if (snapshot.exists() && snapshot.val() === true) { 
                 unlockNotes(); 
+            } else {
+                lockNotes(); // Ensure they are locked if not paid
+            }
+        });
+
+        // --- REAL-TIME BAN LISTENER ---
+        onValue(ref(db, "banned_users/" + userId), (snapshot) => {
+            if (snapshot.exists()) {
+                localStorage.clear();
+                window.location.href = 'login.html';
             }
         });
 
         window.startVerification = function() {
             document.getElementById('status-overlay').classList.remove('hidden');
             const whatsappUrl = `https://wa.me/2347041795388?text=${encodeURIComponent("Hello Paul, I just paid for the BIU Notes Archive.\n\nName: " + studentName + "\nUser ID: " + userId)}`;
-            setTimeout(() => { window.open(whatsappUrl, '_blank'); }, 1500);
+            // Open WhatsApp in a new tab
+            setTimeout(() => { window.open(whatsappUrl, '_blank'); }, 1000);
         }
 
         function unlockNotes() {
             document.getElementById('status-overlay').classList.add('hidden');
             const pBox = document.getElementById('payment-box');
             if(pBox) pBox.style.display = 'none';
+
+            // Update the "Other Courses" card appearance
+            const otherCard = document.getElementById('other-courses-card');
+            if(otherCard) {
+                otherCard.classList.remove('opacity-60');
+                document.getElementById('lock-text').innerText = "Premium Access Active ✅";
+                otherCard.querySelector('h3').classList.replace('text-gray-500', 'text-blue-900');
+            }
             
+            // Unlock all link attributes
             document.querySelectorAll('.note-link').forEach(link => {
                 const realUrl = link.getAttribute('data-url');
                 link.setAttribute('href', realUrl);
@@ -140,6 +153,18 @@
                 link.classList.replace('text-gray-400', 'text-green-600');
                 link.classList.remove('cursor-not-allowed');
                 link.innerHTML = 'View Note 🔓';
+            });
+        }
+
+        function lockNotes() {
+            const pBox = document.getElementById('payment-box');
+            if(pBox) pBox.style.display = 'block';
+            
+            document.querySelectorAll('.note-link').forEach(link => {
+                link.setAttribute('href', '#');
+                link.classList.add('text-gray-400', 'cursor-not-allowed');
+                link.classList.remove('text-green-600');
+                link.innerHTML = 'Locked 🔒';
             });
         }
     </script>

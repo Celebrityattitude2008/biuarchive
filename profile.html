@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | The BIU Archive</title>
+    <style>
+        :root {
+            --primary: #002147; --accent: #FFD700; --bg: #f4f4f4;
+            --white: #ffffff; --text: #333; --success: #28a745; --danger: #dc3545;
+        }
+
+        [data-theme="dark"] {
+            --primary: #FFD700; --accent: #002147; --bg: #0a0a0a;
+            --white: #1a1a1a; --text: #f4f4f4;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; transition: 0.3s; }
+        
+        .profile-container { max-width: 500px; margin: 40px auto; background: var(--white); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
+        
+        .avatar { width: 80px; height: 80px; background: var(--primary); color: var(--white); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: bold; margin: 0 auto 15px; border: 4px solid var(--accent); }
+        
+        .info-card { background: rgba(128,128,128,0.05); padding: 15px; border-radius: 12px; margin: 10px 0; text-align: left; border-left: 5px solid var(--primary); }
+        
+        .status-badge { display: inline-block; padding: 6px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; margin-top: 10px; }
+        .verified { background: var(--success); color: white; }
+        .unverified { background: #666; color: white; }
+
+        .btn-action { width: 100%; padding: 12px; margin-top: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-logout { background: #333; color: white; }
+        .btn-back { background: var(--primary); color: var(--white); }
+        
+        .nav-links { margin-top: 20px; font-size: 14px; }
+        .nav-links a { color: var(--primary); text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="profile-container">
+        <div class="avatar" id="user-initial">?</div>
+        <h2 id="user-name" style="margin: 0;">Student Name</h2>
+        <p id="user-dept" style="opacity: 0.7; margin: 5px 0;">Department</p>
+        
+        <div id="status-area">
+            <span class="status-badge unverified">Checking Status...</span>
+        </div>
+
+        <div class="info-card">
+            <strong>Matric Number:</strong> <span id="display-matric">Loading...</span>
+        </div>
+
+        <div class="info-card">
+            <strong>Account ID:</strong> <small id="display-id" style="font-family: monospace;">Loading...</small>
+        </div>
+
+        <button class="btn-action btn-back" onclick="window.location.href='index.html'">Go to Vault</button>
+        <button class="btn-action btn-logout" onclick="logout()">Log Out</button>
+
+        <div class="nav-links">
+            <a href="index.html">← Return to Archive</a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
+            authDomain: "biu-archive.firebaseapp.com",
+            databaseURL: "https://biu-archive-default-rtdb.firebaseio.com",
+            projectId: "biu-archive",
+            storageBucket: "biu-archive.firebasestorage.app",
+            messagingSenderId: "245967347998",
+            appId: "1:245967347998:web:a8feb5ad0ef9650946a90f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Load Theme
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+
+        const name = localStorage.getItem('biu_user_name');
+        const dept = localStorage.getItem('biu_user_dept');
+        const matric = localStorage.getItem('biu_user_matric');
+        const userId = localStorage.getItem('biu_user_id');
+
+        if (!name || !userId) {
+            window.location.href = 'login.html';
+        } else {
+            document.getElementById('user-name').innerText = name;
+            document.getElementById('user-dept').innerText = dept;
+            document.getElementById('display-matric').innerText = matric || "Not Set";
+            document.getElementById('display-id').innerText = userId;
+            document.getElementById('user-initial').innerText = name.charAt(0).toUpperCase();
+
+            // 1. REAL-TIME PAYMENT CHECK
+            onValue(ref(db, "paid_users/" + userId), (snapshot) => {
+                const statusArea = document.getElementById('status-area');
+                if (snapshot.exists() && snapshot.val() === true) {
+                    statusArea.innerHTML = `<span class="status-badge verified">Verified Premium ✅</span>`;
+                } else {
+                    statusArea.innerHTML = `<span class="status-badge unverified">Free Member 🔒</span>`;
+                }
+            });
+
+            // 2. REAL-TIME BAN CHECK (In case they are banned while on profile page)
+            onValue(ref(db, "banned_users/" + userId), (snapshot) => {
+                if (snapshot.exists()) {
+                    localStorage.clear();
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+
+        window.logout = function() {
+            if(confirm("Are you sure you want to logout?")) {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            }
+        };
+    </script>
+</body>
+</html>

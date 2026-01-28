@@ -129,10 +129,9 @@
             const toast = document.getElementById('toast');
             toast.innerText = `✅ Opening ${t} Past Question...`;
             toast.className = "show";
-            setTimeout(() => { toast.className = ""; window.open(u, '_blank'); }, 1500);
+            setTimeout(() => { toast.className = ""; window.open(u, '_blank'); }, 1200);
         };
 
-        // COMBINED FILTERING LOGIC (Tab + Search)
         window.filterCourses = function() {
             const query = document.getElementById('courseSearch').value.toLowerCase();
             document.querySelectorAll('.course-card').forEach(card => {
@@ -154,7 +153,7 @@
             currentCategory = category;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            filterCourses(); // Re-run search logic with new category
+            filterCourses();
         };
 
         window.toggleTheme = function() {

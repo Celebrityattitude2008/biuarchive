@@ -40,7 +40,6 @@
             position: relative;
         }
 
-        /* Theme Toggle Button */
         .theme-toggle {
             position: absolute;
             top: 15px;
@@ -67,7 +66,6 @@
 
         input:focus { border-color: var(--accent); }
 
-        /* Animated Button */
         .btn-vault {
             width: 100%; 
             padding: 16px; 
@@ -92,18 +90,6 @@
             background: #003366;
         }
 
-        .btn-vault:active { transform: translateY(0); }
-
-        /* Subtle Pulse Animation */
-        @keyframes pulse-glow {
-            0% { box-shadow: 0 0 0 0px rgba(255, 215, 0, 0.4); }
-            100% { box-shadow: 0 0 0 15px rgba(255, 215, 0, 0); }
-        }
-
-        .btn-vault:focus {
-            animation: pulse-glow 1.5s infinite;
-        }
-
         footer { 
             margin-top: 30px; 
             font-size: 12px; 
@@ -119,11 +105,10 @@
         <button class="theme-toggle" id="theme-btn" title="Toggle Light/Dark Mode">🌓</button>
         
         <h1 style="color:var(--primary); margin-bottom:5px;">The BIU Archive</h1>
-        <p style="font-size: 13px; margin-bottom: 25px;">The BIU Archive: Your Academic Legacy</p>
+        <p style="font-size: 13px; margin-bottom: 25px;">Your Academic Legacy Starts Here</p>
 
         <form id="login-form">
             <input type="text" id="name" placeholder="Full Name" minlength="5" required>
-            
             <input type="text" id="matric" placeholder="Matric Number (e.g. 23/1234)" required>
             
             <select id="dept" required>
@@ -136,7 +121,7 @@
                 <option value="ISD">International Studies & Diplomacy</option>
             </select>
 
-            <button type="submit" class="btn-vault">ENTER VAULT</button>
+            <button type="submit" class="btn-vault" id="submit-btn">ENTER VAULT</button>
         </form>
 
         <footer>
@@ -148,7 +133,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, push, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak", 
@@ -163,61 +148,81 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- THEME SWAP LOGIC ---
+        // --- THEME LOGIC ---
         const themeBtn = document.getElementById('theme-btn');
-        const currentTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', currentTheme);
+        const setTheme = (theme) => {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+        };
+        setTheme(localStorage.getItem('theme') || 'light');
 
         themeBtn.addEventListener('click', () => {
-            let theme = document.documentElement.getAttribute('data-theme');
-            let newTheme = theme === 'light' ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
+            const newTheme = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            setTheme(newTheme);
         });
 
-        // --- CHECK MAINTENANCE MODE ---
+        // --- UPGRADE: DYNAMIC MAINTENANCE REDIRECT ---
         onValue(ref(db, "maintenance_mode"), (snapshot) => {
             if (snapshot.val() === true) {
-                document.body.innerHTML = `
-                <div class="container">
-                    <h1 style="color:#dc3545;">🛠️ Under Maintenance</h1>
-                    <p>The BIU Archive is currently being updated. Please check back later.</p>
-                    <footer style="border:none;">Celebrity Attitude © 2026</footer>
-                </div>`;
+                window.location.href = 'maintenance.html';
             }
         });
 
-        // --- LOGIN LOGIC ---
-        if (localStorage.getItem('biu_user_name')) {
-            window.location.href = 'index.html';
+        // --- BAN CHECK ---
+        const userId = localStorage.getItem('biu_user_id');
+        if (userId) {
+            onValue(ref(db, `banned_users/${userId}`), (snapshot) => {
+                if (snapshot.exists()) {
+                    localStorage.clear();
+                    alert("🚫 Your account has been suspended.");
+                    window.location.reload();
+                }
+            });
         }
 
-        document.getElementById('login-form').addEventListener('submit', (e) => {
+        // --- LOGIN LOGIC ---
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = e.target.querySelector('button');
+            const btn = document.getElementById('submit-btn');
             btn.innerText = "AUTHENTICATING...";
+            btn.disabled = true;
             
             const name = document.getElementById('name').value;
             const matric = document.getElementById('matric').value;
             const dept = document.getElementById('dept').value;
 
-            let userId = localStorage.getItem('biu_user_id') || ('user_' + Math.random().toString(36).substr(2, 9));
+            let currentId = localStorage.getItem('biu_user_id') || ('user_' + Math.random().toString(36).substr(2, 9));
             
-            localStorage.setItem('biu_user_id', userId);
-            localStorage.setItem('biu_user_name', name);
-            localStorage.setItem('biu_user_dept', dept);
-            localStorage.setItem('biu_user_matric', matric);
+            try {
+                // Final Check if user is banned before logging entry
+                const banCheck = await get(ref(db, `banned_users/${currentId}`));
+                if (banCheck.exists()) {
+                    alert("🚫 Access Denied: Account Suspended.");
+                    btn.innerText = "ENTER VAULT";
+                    btn.disabled = false;
+                    return;
+                }
 
-            // Log to Firebase
-            push(ref(db, "logs"), { 
-                userId: userId,
-                name: name,
-                matric: matric, 
-                dept: dept, 
-                timestamp: new Date().toLocaleString() 
-            }).then(() => {
+                localStorage.setItem('biu_user_id', currentId);
+                localStorage.setItem('biu_user_name', name);
+                localStorage.setItem('biu_user_dept', dept);
+                localStorage.setItem('biu_user_matric', matric);
+
+                await push(ref(db, "logs"), { 
+                    userId: currentId,
+                    name: name,
+                    matric: matric, 
+                    dept: dept, 
+                    timestamp: Date.now() 
+                });
+
                 window.location.href = 'index.html';
-            });
+
+            } catch (error) {
+                alert("Connection Error.");
+                btn.innerText = "ENTER VAULT";
+                btn.disabled = false;
+            }
         });
     </script>
 </body>
