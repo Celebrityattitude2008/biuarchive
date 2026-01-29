@@ -24,11 +24,12 @@
         th { background: #f1f1f1; color: var(--primary); padding: 12px; text-align: left; position: sticky; top: 0; }
         td { padding: 10px 12px; border-bottom: 1px solid #eee; font-size: 13px; }
 
-        .btn { padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn { padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; display: inline-block; }
         .btn-broadcast { background: var(--info); color: white; width: 100%; margin-top: 10px; }
         .btn-sync { background: var(--success); color: white; width: 100%; margin-top: 10px; }
         .btn-streak { background: #6f42c1; color: white; padding: 5px 10px; font-size: 11px; }
         .btn-ban { background: #000; color: white; padding: 5px 10px; font-size: 11px; }
+        .btn-clear { background: #666; color: white; width: 100%; margin-top: 5px; font-size: 12px; }
         
         .sync-stamp { font-size: 11px; color: #666; margin-top: 5px; display: block; }
     </style>
@@ -38,9 +39,10 @@
     <div id="admin-content" class="admin-container" style="display:none;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
              <h1 style="color: var(--primary); margin:0;">Celebrity's Control Room</h1>
-             <div>
-                <button onclick="nuclearClear()" style="background:none; border:1px solid #ccc; color:red; font-size:10px; cursor:pointer; padding:5px;">☢️ Nuclear Wipe</button>
-                <a href="leaderboard.html" style="text-decoration:none; font-weight:bold; color:var(--info); margin-left:10px;">🏆 View Leaderboard</a>
+             <div style="display:flex; gap:10px; align-items:center;">
+                <button onclick="nuclearClear()" style="background:none; border:1px solid #ccc; color:red; font-size:10px; cursor:pointer; padding:5px; border-radius:5px;">☢️ Nuclear Wipe Logs</button>
+                <button onclick="clearChat()" style="background:none; border:1px solid #ccc; color:orange; font-size:10px; cursor:pointer; padding:5px; border-radius:5px;">💬 Clear Chat</button>
+                <a href="index.html" style="text-decoration:none; font-weight:bold; color:var(--info); font-size:13px;">🏠 Student Portal</a>
              </div>
         </div>
         <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
@@ -48,7 +50,7 @@
         <div class="maintenance-card">
             <div>
                 <h3 style="margin:0">🛠️ System Lock</h3>
-                <p style="margin:5px 0 0 0; font-size: 12px; opacity:0.8;">Block access for all students.</p>
+                <p style="margin:5px 0 0 0; font-size: 12px; opacity:0.8;">Instantly block all students from the archive.</p>
             </div>
             <button id="m-toggle-btn" class="btn" onclick="toggleMaintenance()">Loading...</button>
         </div>
@@ -62,23 +64,27 @@
 
         <div class="tool-grid">
             <div class="tool-card">
-                <h3 style="margin:0">📢 Global Broadcast</h3>
-                <p style="font-size: 12px; color: #666;">Send a popup alert to all active students.</p>
-                <input type="text" id="alert-msg" placeholder="Enter message..." style="width:100%; padding:10px; margin-top:10px; border:1px solid #ddd; border-radius:8px; box-sizing: border-box;">
-                <button class="btn btn-broadcast" onclick="sendGlobalAlert()">Push Alert to All Users</button>
+                <h3 style="margin:0">📢 Global Broadcast (Upgraded)</h3>
+                <p style="font-size: 12px; color: #666;">Students will hear a <b>"Ding"</b> notification sound.</p>
+                <input type="text" id="alert-msg" placeholder="Type announcement here..." style="width:100%; padding:10px; margin-top:10px; border:1px solid #ddd; border-radius:8px; box-sizing: border-box;">
+                <button class="btn btn-broadcast" onclick="sendGlobalAlert()">🚀 Push & Sound Alert</button>
+                <button class="btn btn-clear" onclick="clearBroadcast()">Remove Alert from Screens</button>
             </div>
 
             <div class="tool-card">
                 <h3 style="margin:0">📊 Sheet Sync Status</h3>
-                <p style="font-size: 12px; color: #666;">Mark when you last updated the Google Sheet.</p>
+                <p style="font-size: 12px; color: #666;">Track your spreadsheet updates.</p>
                 <span id="sync-time" class="sync-stamp">Last Sync: Never</span>
                 <button class="btn btn-sync" onclick="markSheetSynced()">Confirm Spreadsheet Update</button>
+                <a href="https://docs.google.com/spreadsheets/d/1RDC9EBFjF2a9sSMakA5JzMgIBZ9p0oz0/edit" target="_blank" style="display:block; margin-top:10px; font-size:11px; color:var(--info);">🔗 Open Admin Google Sheet</a>
             </div>
         </div>
 
         <div style="background: #fff; border:1px solid #ddd; padding:20px; border-radius:15px;">
-            <h3>Live Activity Feed</h3>
-            <input type="text" id="admin-search" placeholder="Search students..." onkeyup="filterTable()" style="width:100%; padding:12px; border-radius:10px; border:1px solid #ddd; box-sizing:border-box; margin-bottom:15px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3 style="margin:0">Live Activity Feed</h3>
+                <input type="text" id="admin-search" placeholder="Search by name or matric..." onkeyup="filterTable()" style="width:40%; padding:8px; border-radius:8px; border:1px solid #ddd;">
+            </div>
             <div class="table-wrapper">
                 <table>
                     <thead>
@@ -113,7 +119,7 @@
         else { document.getElementById('admin-content').style.display = 'block'; startAdmin(); }
 
         function startAdmin() {
-            // Maintenance
+            // Maintenance Mode
             onValue(ref(db, "maintenance_mode"), (s) => {
                 window.isMaint = s.val() || false;
                 const btn = document.getElementById('m-toggle-btn');
@@ -160,27 +166,38 @@
             onValue(ref(db, "users"), (s) => {
                 const users = s.val() || {};
                 const now = Date.now();
-                const active = Object.values(users).filter(u => now - (u.lastSeen || 0) < 60000).length;
+                const active = Object.values(users).filter(u => now - (u.lastActive || 0) < 60000).length;
                 document.getElementById('online-count').innerText = active;
                 
                 const streaks = Object.values(users).map(u => u.streak || 0);
-                document.getElementById('top-streak').innerText = Math.max(...streaks, 0);
+                document.getElementById('top-streak').innerText = streaks.length > 0 ? Math.max(...streaks) : 0;
             });
-
-            // AUTO CLEANUP (Older than 30 days)
-            const thirtyDays = Date.now() - (30 * 24 * 60 * 60 * 1000);
-            onValue(ref(db, "logs"), (s) => {
-                const logs = s.val();
-                if(logs) Object.entries(logs).forEach(([k, v]) => { if(v.timestamp < thirtyDays) remove(ref(db, `logs/${k}`)); });
-            }, { onlyOnce: true });
         }
 
         // --- GLOBAL ACTIONS ---
+
         window.sendGlobalAlert = () => {
             const msg = document.getElementById('alert-msg').value;
             if(!msg) return alert("Enter a message!");
-            set(ref(db, "broadcast"), { message: msg, timestamp: Date.now() })
-                .then(() => { alert("Alert Sent!"); document.getElementById('alert-msg').value = ""; });
+            set(ref(db, "broadcast"), { 
+                message: msg, 
+                timestamp: Date.now() 
+            }).then(() => { 
+                alert("Broadcast Pushed with Sound!"); 
+                document.getElementById('alert-msg').value = ""; 
+            });
+        };
+
+        window.clearBroadcast = () => {
+            if(confirm("Remove the announcement from all student screens?")) {
+                set(ref(db, "broadcast"), null);
+            }
+        };
+
+        window.clearChat = () => {
+            if(confirm("DANGEROUS: Delete all messages in Live Discussion?")) {
+                remove(ref(db, "messages")).then(() => alert("Chat cleared."));
+            }
         };
 
         window.markSheetSynced = () => {
@@ -189,7 +206,7 @@
 
         window.toggleMaintenance = () => set(ref(db, "maintenance_mode"), !window.isMaint);
         
-        window.resetStreak = (uid) => confirm("Reset streak to 1?") && update(ref(db, `users/${uid}`), { streak: 1, lastLoginDate: new Date().toISOString().split('T')[0] });
+        window.resetStreak = (uid) => confirm("Reset streak to 1?") && update(ref(db, `users/${uid}`), { streak: 1 });
 
         window.toggleBan = (uid, status) => confirm("Change ban status?") && set(ref(db, `banned_users/${uid}`), status ? null : true);
 
