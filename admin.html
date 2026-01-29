@@ -99,8 +99,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, set, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
+        import { getDatabase, ref, onValue, set, remove, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    
         const firebaseConfig = {
             apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
             authDomain: "biu-archive.firebaseapp.com",
@@ -110,108 +110,91 @@
             messagingSenderId: "245967347998",
             appId: "1:245967347998:web:a8feb5ad0ef9650946a90f"
         };
-
+    
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby5R8wF2fO7-Sa0bjWoDXxbrocOBAsZqtAD-ddyXNdSAx48L1mgK5Hiep64QzcrusTr/exec";
-
-        // Security
+    
+        // Security Check
         const pass = prompt("Enter Celebrity Access Key:");
-        if (pass !== "BIU2026") { window.location.href = "index.html"; } 
-        else { document.getElementById('admin-content').style.display = 'block'; startAdmin(); }
-
+        if (pass !== "BIU2026") { 
+            window.location.href = "index.html"; 
+        } else { 
+            document.getElementById('admin-content').style.display = 'block'; 
+            startAdmin(); 
+        }
+    
         function startAdmin() {
-            onValue(ref(db, "maintenance_mode"), (s) => {
-                window.isMaint = s.val() || false;
-                const btn = document.getElementById('m-toggle-btn');
-                btn.innerText = window.isMaint ? "RE-OPEN ARCHIVE" : "SHUTDOWN SYSTEM";
-                btn.style.background = window.isMaint ? "var(--success)" : "var(--danger)";
-            });
-
-            onValue(ref(db, "system/last_sync"), (s) => {
-                if(s.val()) document.getElementById('sync-time').innerText = "Last Sync: " + new Date(s.val()).toLocaleString();
-            });
-
-            onValue(ref(db, "logs"), (snapshot) => {
-                const logs = snapshot.val();
+            // 1. BROADCAST FIX: Ensure the student side is listening to this EXACT path
+            window.sendGlobalAlert = () => {
+                const msg = document.getElementById('alert-msg').value;
+                if(!msg) return alert("Enter a message!");
+                
+                // Setting the broadcast at the root "broadcast" node
+                set(ref(db, "broadcast"), {
+                    message: msg,
+                    timestamp: serverTimestamp() // Using server time for accuracy
+                }).then(() => {
+                    alert("🚀 Broadcast is now LIVE on student screens!");
+                    document.getElementById('alert-msg').value = "";
+                });
+            };
+    
+            // 2. LIVE FEED FIX: Listening to "users" instead of "logs" for real-time status
+            onValue(ref(db, "users"), (snapshot) => {
+                const users = snapshot.val();
                 const list = document.getElementById('log-list');
-                if(!logs) { list.innerHTML = "<tr><td colspan='5'>No logs.</td></tr>"; return; }
+                const logCount = document.getElementById('count');
                 
-                document.getElementById('count').innerText = Object.keys(logs).length;
-                const entries = Object.entries(logs).reverse().slice(0, 100);
-                
+                if(!users) {
+                    list.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>No student activity detected yet.</td></tr>";
+                    return;
+                }
+    
+                const entries = Object.entries(users);
+                logCount.innerText = entries.length;
+    
                 onValue(ref(db, "banned_users"), (bSnap) => {
                     const banned = bSnap.val() || {};
-                    document.getElementById('banned-count').innerText = Object.keys(banned).length;
-                    list.innerHTML = entries.map(([id, item]) => {
-                        const isBanned = banned[item.userId] === true;
-                        return `<tr>
-                            <td><strong>${item.name}</strong></td>
-                            <td>${item.matric}</td>
-                            <td style="color:#ff5e00; font-weight:bold;">🔥 ${item.streak || 0}</td>
-                            <td>${new Date(item.timestamp).toLocaleTimeString()}</td>
+                    
+                    // Sort by last active time so newest appears at top
+                    const sortedUsers = entries.sort((a, b) => (b[1].lastActive || 0) - (a[1].lastActive || 0));
+    
+                    list.innerHTML = sortedUsers.map(([uid, data]) => {
+                        const isBanned = banned[uid] === true;
+                        const lastSeen = data.lastActive ? new Date(data.lastActive).toLocaleTimeString() : "Unknown";
+                        
+                        return `
+                        <tr>
+                            <td><strong>${data.name || 'Anonymous'}</strong></td>
+                            <td>${data.matric || 'N/A'}</td>
+                            <td style="color:#ff5e00; font-weight:bold;">🔥 ${data.streak || 1}</td>
+                            <td>${lastSeen}</td>
                             <td>
-                                <button class="btn btn-streak" onclick="resetStreak('${item.userId}')">Reset</button>
-                                <button class="btn btn-ban" onclick="toggleBan('${item.userId}', ${isBanned})">${isBanned ? 'Unban' : 'Ban'}</button>
+                                <button class="btn btn-streak" onclick="resetStreak('${uid}')">Reset</button>
+                                <button class="btn btn-ban" onclick="toggleBan('${uid}', ${isBanned})">
+                                    ${isBanned ? '✅ Unban' : '🚫 Ban'}
+                                </button>
                             </td>
                         </tr>`;
                     }).join('');
                 });
             });
-
+    
+            // Online Count Estimator (Active in last 5 minutes)
             onValue(ref(db, "users"), (s) => {
                 const users = s.val() || {};
                 const now = Date.now();
-                const active = Object.values(users).filter(u => now - (u.lastActive || 0) < 60000).length;
+                const active = Object.values(users).filter(u => (now - (u.lastActive || 0)) < 300000).length;
                 document.getElementById('online-count').innerText = active;
-                const streaks = Object.values(users).map(u => u.streak || 0);
-                document.getElementById('top-streak').innerText = streaks.length > 0 ? Math.max(...streaks) : 0;
             });
         }
-
-        // --- GLOBAL ACTIONS ---
-
-        window.markSheetSynced = async () => {
-            if(!confirm("Push update to Google Sheet?")) return;
-            
-            const btn = document.getElementById('sync-btn');
-            btn.innerText = "Syncing... Please wait";
-            btn.classList.add('loading-sync');
-
-            try {
-                // We use 'no-cors' because Apps Script redirects can sometimes trigger CORS errors
-                // even when the script actually runs.
-                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors' });
-                
-                set(ref(db, "system/last_sync"), Date.now());
-                alert("Spreadsheet sync triggered successfully!");
-            } catch (error) {
-                console.error("Sync Error:", error);
-                alert("Communication with Google Sheet failed, but timestamp updated.");
-                set(ref(db, "system/last_sync"), Date.now());
-            } finally {
-                btn.innerText = "Confirm Spreadsheet Update";
-                btn.classList.remove('loading-sync');
-            }
-        };
-
-        window.sendGlobalAlert = () => {
-            const msg = document.getElementById('alert-msg').value;
-            if(!msg) return alert("Enter a message!");
-            set(ref(db, "broadcast"), { message: msg, timestamp: Date.now() })
-            .then(() => { alert("Broadcast Pushed!"); document.getElementById('alert-msg').value = ""; });
-        };
-
-        window.clearBroadcast = () => confirm("Remove announcement?") && set(ref(db, "broadcast"), null);
-        window.clearChat = () => confirm("Wipe chat?") && remove(ref(db, "messages"));
-        window.toggleMaintenance = () => set(ref(db, "maintenance_mode"), !window.isMaint);
-        window.resetStreak = (uid) => confirm("Reset streak?") && update(ref(db, `users/${uid}`), { streak: 1 });
-        window.toggleBan = (uid, status) => confirm("Toggle Ban?") && set(ref(db, `banned_users/${uid}`), status ? null : true);
-        window.nuclearClear = () => prompt("Type 'WIPE' to delete logs") === "WIPE" && remove(ref(db, "logs"));
-        window.filterTable = () => {
-            let q = document.getElementById("admin-search").value.toLowerCase();
-            document.querySelectorAll("#log-list tr").forEach(r => r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none");
-        };
+    
+        // Define Global Actions for Buttons
+        window.clearBroadcast = () => confirm("Stop the broadcast?") && set(ref(db, "broadcast"), null);
+        window.toggleBan = (uid, status) => confirm("Change access for this student?") && set(ref(db, `banned_users/${uid}`), status ? null : true);
+        window.resetStreak = (uid) => confirm("Reset this student's streak to 1?") && update(ref(db, `users/${uid}`), { streak: 1 });
+        window.clearChat = () => confirm("Delete all chat messages?") && remove(ref(db, "messages"));
     </script>
 </body>
 </html>

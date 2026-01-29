@@ -8,7 +8,7 @@
     <style>
         :root {
             --primary: #002147; --accent: #FFD700; --light: #f4f4f4;
-            --white: #ffffff; --text: #333; --info: #17a2b8;
+            --white: #ffffff; --text: #333; --info: #17a2b8; --online: #28a745;
         }
         [data-theme="dark"] {
             --primary: #FFD700; --accent: #002147; --light: #121212;
@@ -30,14 +30,23 @@
         .entry { display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-bottom: 10px; background: rgba(128,128,128,0.05); border-radius: 10px; border: 1px solid rgba(0,0,0,0.05); transition: 0.2s; }
         .entry-info { display: flex; align-items: center; gap: 15px; }
         
-        /* Rank Medal Styling */
+        /* Level Tags */
+        .level-tag { font-size: 9px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; font-weight: bold; margin-left: 5px; }
+        .lvl-bronze { background: #cd7f32; color: white; }
+        .lvl-silver { background: #c0c0c0; color: #333; }
+        .lvl-gold { background: #ffd700; color: #002147; }
+        .lvl-diamond { background: #b9f2ff; color: #005f73; }
+
+        /* Online Status */
+        .online-dot { width: 8px; height: 8px; background: var(--online); border-radius: 50%; display: inline-block; margin-right: 5px; box-shadow: 0 0 8px var(--online); animation: pulse-online 2s infinite; }
+        @keyframes pulse-online { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
         .rank-emoji { font-size: 1.4rem; width: 35px; text-align: center; }
         .rank-number { font-weight: bold; color: var(--primary); width: 35px; text-align: center; display: inline-block; }
         
         .name { font-weight: 600; font-size: 1.05rem; }
         .streak { font-weight: bold; color: #ff5e00; }
 
-        /* Animated Fire Glow for Rank #1 */
         @keyframes fireGlow {
             0% { box-shadow: 0 0 10px rgba(255, 69, 0, 0.4); border-color: #ff4500; }
             50% { box-shadow: 0 0 25px rgba(255, 140, 0, 0.6); border-color: #ffd700; }
@@ -62,7 +71,7 @@
     <div class="container">
         <div class="header">
             <a href="index.html" class="back-btn">← Back</a>
-            <h2 style="margin:0;">🏆 Top 10 Scholars</h2>
+            <h2 style="margin:0;">🏆 Top Scholars</h2>
             <div style="width:60px;"></div>
         </div>
 
@@ -106,6 +115,14 @@
 
         if (localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
 
+        function getLevelInfo(streak) {
+            if (streak >= 30) return { title: "Diamond", class: "lvl-diamond" };
+            if (streak >= 15) return { title: "Gold", class: "lvl-gold" };
+            if (streak >= 7) return { title: "Silver", class: "lvl-silver" };
+            if (streak >= 3) return { title: "Bronze", class: "lvl-bronze" };
+            return { title: "Novice", class: "" };
+        }
+
         onValue(ref(db, "users"), (snapshot) => {
             const data = snapshot.val();
             loadingDiv.style.display = 'none';
@@ -119,7 +136,7 @@
                 .filter(u => u.name)
                 .sort((a, b) => (b.streak || 0) - (a.streak || 0));
 
-            renderList(allUsers.slice(0, 10));
+            renderList(allUsers);
 
             const currentUserId = localStorage.getItem('biu_user_id');
             const myIndex = allUsers.findIndex(u => u.id === currentUserId);
@@ -132,15 +149,15 @@
                 let trendHTML = `<span style="font-size:10px; opacity:0.6;">SYNCED</span>`;
                 if (lastRank) {
                     const diff = parseInt(lastRank) - myCurrentRank;
-                    if (diff > 0) trendHTML = `<span class="trend-up">▲ ${diff} Up</span>`;
-                    else if (diff < 0) trendHTML = `<span class="trend-down">▼ ${Math.abs(diff)} Down</span>`;
+                    if (diff > 0) trendHTML = `<span class="trend-up">▲ ${diff} Rank Jump!</span>`;
+                    else if (diff < 0) trendHTML = `<span class="trend-down">▼ ${Math.abs(diff)} Dropped</span>`;
                 }
                 localStorage.setItem('biu_last_rank', myCurrentRank);
 
                 personalDiv.innerHTML = `
                     <div id="capture-card" class="my-rank-card">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                            <span style="font-size: 9px; letter-spacing:1px; opacity:0.8;">BIU OFFICIAL RANK</span>
+                            <span style="font-size: 9px; letter-spacing:1px; opacity:0.8;">BIU OFFICIAL RANK CARD</span>
                             ${trendHTML}
                         </div>
                         <div style="font-size: 19px; font-weight: bold;">${myData.name}</div>
@@ -149,14 +166,18 @@
                             <span style="font-size: 14px;">🔥 ${myData.streak || 0} Streak</span>
                         </div>
                     </div>
-                    <span class="sync-time">⏱️ Updated: ${new Date().toLocaleTimeString()}</span>
+                    <span class="sync-time">⏱️ Verified: ${new Date().toLocaleTimeString()}</span>
                 `;
-                shareArea.innerHTML = `<button class="share-btn" onclick="captureRank()">📸 Save Rank Image</button>`;
+                shareArea.innerHTML = `<button class="share-btn" onclick="captureRank()">📸 Save Achievement Image</button>`;
             }
         });
 
         function renderList(users) {
+            const now = Date.now();
             leaderboardDiv.innerHTML = users.map((user, index) => {
+                const level = getLevelInfo(user.streak || 0);
+                const isOnline = (now - (user.lastActive || 0)) < 60000; // Active within 60s
+                
                 let rankLabel = `<span class="rank-number">#${index + 1}</span>`;
                 let rankClass = "";
                 if (index === 0) { rankLabel = `<span class="rank-emoji">🥇</span>`; rankClass = "rank-1"; }
@@ -167,7 +188,10 @@
                     <div class="entry ${rankClass}" data-name="${user.name.toLowerCase()}">
                         <div class="entry-info">
                             ${rankLabel}
-                            <span class="name">${user.name}</span>
+                            <div>
+                                <span class="name">${isOnline ? '<span class="online-dot"></span>' : ''}${user.name}</span>
+                                <span class="level-tag ${level.class}">${level.title}</span>
+                            </div>
                         </div>
                         <span class="streak">🔥 ${user.streak || 0}</span>
                     </div>
@@ -191,13 +215,13 @@
         window.captureRank = function() {
             const btn = document.querySelector('.share-btn');
             const target = document.getElementById('capture-card');
-            btn.innerText = "Generating...";
-            html2canvas(target, { backgroundColor: null, scale: 2 }).then(canvas => {
+            btn.innerText = "Processing Image...";
+            html2canvas(target, { backgroundColor: null, scale: 3 }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = 'BIU-Scholar-Rank.png';
+                link.download = 'BIU-Archive-Rank.png';
                 link.href = canvas.toDataURL();
                 link.click();
-                btn.innerText = "📸 Save Rank Image";
+                btn.innerText = "📸 Save Achievement Image";
             });
         };
     </script>

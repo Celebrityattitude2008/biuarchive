@@ -15,7 +15,7 @@
             --white: #1e1e1e; --text: #f4f4f4;
         }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--light); color: var(--text); margin: 0; display: flex; justify-content: center; padding: 20px; transition: 0.3s; }
-        .container { background: var(--white); padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 850px; text-align: center; position: relative; }
+        .container { background: var(--white); padding: 2.5rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 850px; text-align: center; position: relative; }
         .hidden { display: none !important; }
         
         #ban-screen { position: fixed; top:0; left:0; width:100%; height:100%; background: #900; color:white; z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px; box-sizing:border-box; }
@@ -39,9 +39,8 @@
         
         @keyframes glow { 0% { box-shadow: 0 0 5px #b9f2ff; } 50% { box-shadow: 0 0 15px #b9f2ff; } 100% { box-shadow: 0 0 5px #b9f2ff; } }
         
-        /* BROADCAST ANIMATION */
-        @keyframes pulse-alert { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
         #broadcast-bar { background: #FFD700; color: #002147; padding: 12px; border-radius: 10px; margin-top: 50px; margin-bottom: 15px; font-weight: bold; border-left: 5px solid #002147; display: flex; justify-content: space-between; align-items: center; font-size: 14px; animation: pulse-alert 2s infinite; }
+        @keyframes pulse-alert { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
 
         .leaderboard-section { margin-top: 30px; background: rgba(128,128,128,0.05); padding: 15px; border-radius: 15px; text-align: left; border: 1px solid rgba(0,0,0,0.1); }
         .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
@@ -53,6 +52,7 @@
         .chat-section { margin-top: 30px; background: rgba(0,0,0,0.03); padding: 20px; border-radius: 15px; text-align: left; }
         #chat-display { height: 180px; overflow-y: auto; background: var(--white); border-radius: 8px; padding: 10px; border: 1px solid rgba(0,0,0,0.1); font-size: 13px; }
         
+        .greeting-time { font-size: 14px; color: var(--info); font-weight: bold; margin-bottom: 5px; display: block; }
         footer { margin-top: 40px; font-size: 12px; opacity: 0.8; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.1); }
     </style>
 </head>
@@ -88,8 +88,10 @@
             <button onclick="this.parentElement.classList.add('hidden')" style="background:none; border:none; cursor:pointer; font-weight:bold; padding:5px; color:inherit;">✕</button>
         </div>
 
-        <h1 style="margin-top: 60px;">BIU Archive</h1>
-        <p>Welcome, <span id="display-name" style="color:var(--info); font-weight:bold;">Student</span></p>
+        <div style="margin-top: 60px;">
+            <span id="time-greeting" class="greeting-time">Good Day,</span>
+            <h1 style="margin-top: 0; color: var(--primary);">BIU Archive Portal</h1>
+        </div>
 
         <div class="leaderboard-section">
             <h4 style="margin: 0 0 10px 0; color: var(--primary);">🏆 Top Scholars</h4>
@@ -142,31 +144,51 @@
 
         const name = localStorage.getItem('biu_user_name');
         const userId = localStorage.getItem('biu_user_id');
+        const userMatric = localStorage.getItem('biu_user_matric');
 
         if(!name || !userId) { 
             window.location.href = 'login.html'; 
-        } else {
-            document.getElementById('display-name').innerText = name;
         }
 
-        // UPGRADED BROADCAST LOGIC WITH SOUND
-        let currentAlertText = "";
+        // GREETING LOGIC
+        function setGreeting() {
+            const hour = new Date().getHours();
+            let greet = "Good Night";
+            if (hour < 12) greet = "Good Morning";
+            else if (hour < 17) greet = "Good Afternoon";
+            else if (hour < 21) greet = "Good Evening";
+            
+            document.getElementById('time-greeting').innerText = `${greet}, ${name.split(' ')[0]} ✨`;
+        }
+        setGreeting();
+
+        // HEARTBEAT (Update status for Admin Feed every 30 seconds)
+        function updateStatus() {
+            update(ref(db, `users/${userId}`), {
+                name: name,
+                matric: userMatric || "Unknown",
+                lastActive: serverTimestamp()
+            });
+        }
+        updateStatus();
+        setInterval(updateStatus, 30000);
+
+        // BROADCAST LOGIC
+        let currentAlertTimestamp = 0;
         onValue(ref(db, "broadcast"), (s) => {
             const d = s.val();
             const bar = document.getElementById('broadcast-bar');
             const audio = document.getElementById('notif-sound');
             
             if(d && d.message) {
-                // If it's a NEW message, play sound
-                if (d.message !== currentAlertText) {
-                    currentAlertText = d.message;
-                    audio.play().catch(e => console.log("Sound blocked by browser policy"));
+                if (d.timestamp > currentAlertTimestamp) {
+                    currentAlertTimestamp = d.timestamp;
+                    audio.play().catch(e => {});
                 }
                 document.getElementById('live-broadcast-text').innerText = d.message;
                 bar.classList.remove('hidden');
             } else {
                 bar.classList.add('hidden');
-                currentAlertText = "";
             }
         });
 
@@ -193,31 +215,26 @@
         }
 
         function processStreak() {
-            const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-            const lastLogin = parseInt(localStorage.getItem('biu_last_login_date') || 0);
-            let currentStreak = parseInt(localStorage.getItem('biu_streak') || 1);
+            const today = new Date().toLocaleDateString();
+            const lastDate = localStorage.getItem('biu_last_date');
+            let streak = parseInt(localStorage.getItem('biu_streak') || 1);
 
-            if (lastLogin !== 0) {
-                const diffDays = (today - lastLogin) / (1000 * 60 * 60 * 24);
-                if (diffDays === 1) currentStreak++; 
-                else if (diffDays > 1) currentStreak = 1; 
+            if (lastDate && lastDate !== today) {
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                if (lastDate === yesterday.toLocaleDateString()) streak++;
+                else streak = 1;
             }
 
-            const level = getLevelInfo(currentStreak);
-            document.getElementById('streak-count').innerText = currentStreak;
-            const tag = document.getElementById('user-level-tag');
-            tag.innerText = level.title;
-            tag.className = "level-tag " + level.class;
+            localStorage.setItem('biu_streak', streak);
+            localStorage.setItem('biu_last_date', today);
+            
+            const level = getLevelInfo(streak);
+            document.getElementById('streak-count').innerText = streak;
+            document.getElementById('user-level-tag').innerText = level.title;
+            document.getElementById('user-level-tag').className = "level-tag " + level.class;
 
-            localStorage.setItem('biu_streak', currentStreak);
-            localStorage.setItem('biu_last_login_date', today);
-
-            update(ref(db, `users/${userId}`), {
-                name: name,
-                streak: currentStreak,
-                lastActive: serverTimestamp()
-            });
+            update(ref(db, `users/${userId}`), { streak: streak });
         }
         processStreak();
 
@@ -255,31 +272,14 @@
             disp.scrollTop = disp.scrollHeight;
         });
 
-        // UTILS
-        window.enterAdmin = () => {
-            const pass = prompt("Enter Admin Access Code:");
-            if(pass === "BIU2026") window.location.href = 'admin.html';
-            else alert("Incorrect Code.");
-        };
-
         window.toggleDropdown = () => document.getElementById("myDropdown").classList.toggle("show");
-        
         window.toggleTheme = () => {
             const theme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             document.body.setAttribute('data-theme', theme);
             localStorage.setItem('theme', theme);
         };
-
         window.logout = () => { localStorage.clear(); window.location.href = 'login.html'; };
         window.contactAdmin = () => window.location.href = "mailto:pauladamu600@gmail.com";
-
-        window.onclick = function(event) {
-            if (!event.target.matches('.nav-btn')) {
-                const dropdowns = document.getElementsByClassName("dropdown-content");
-                for (let d of dropdowns) if (d.classList.contains('show')) d.classList.remove('show');
-            }
-        }
-
         if (localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
     </script>
 </body>
