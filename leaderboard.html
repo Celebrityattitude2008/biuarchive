@@ -20,26 +20,41 @@
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
         .back-btn, .share-btn { padding: 8px 15px; border-radius: 20px; border: none; cursor: pointer; background: var(--primary); color: var(--white); font-weight: bold; text-decoration: none; font-size: 12px; transition: 0.2s; }
         .share-btn { background: var(--info); margin-top: 10px; width: 100%; display: block; }
-        .share-btn:active { transform: scale(0.98); }
 
         .search-box { width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); background: var(--light); color: var(--text); box-sizing: border-box; outline: none; }
 
-        /* UPGRADE: SPINNER ANIMATION */
         .loader { width: 30px; height: 30px; border: 3px solid #ddd; border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .leaderboard-list { text-align: left; min-height: 50px; }
         .entry { display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-bottom: 10px; background: rgba(128,128,128,0.05); border-radius: 10px; border: 1px solid rgba(0,0,0,0.05); transition: 0.2s; }
         .entry-info { display: flex; align-items: center; gap: 15px; }
-        .rank { font-weight: bold; color: var(--primary); width: 35px; }
+        
+        /* Rank Medal Styling */
+        .rank-emoji { font-size: 1.4rem; width: 35px; text-align: center; }
+        .rank-number { font-weight: bold; color: var(--primary); width: 35px; text-align: center; display: inline-block; }
+        
         .name { font-weight: 600; font-size: 1.05rem; }
         .streak { font-weight: bold; color: #ff5e00; }
 
-        .rank-1 { background: rgba(255, 215, 0, 0.15); border: 1px solid #FFD700; }
-        .my-rank-card { margin-top: 25px; padding: 20px; background: var(--primary); color: var(--white); border-radius: 12px; text-align: left; position: relative; overflow: hidden; }
+        /* Animated Fire Glow for Rank #1 */
+        @keyframes fireGlow {
+            0% { box-shadow: 0 0 10px rgba(255, 69, 0, 0.4); border-color: #ff4500; }
+            50% { box-shadow: 0 0 25px rgba(255, 140, 0, 0.6); border-color: #ffd700; }
+            100% { box-shadow: 0 0 10px rgba(255, 69, 0, 0.4); border-color: #ff4500; }
+        }
+        .rank-1 { animation: fireGlow 2s infinite alternate; background: linear-gradient(90deg, rgba(255, 215, 0, 0.15), transparent) !important; }
+        .rank-2 { border: 1px solid #C0C0C0 !important; background: linear-gradient(90deg, rgba(192, 192, 192, 0.1), transparent) !important; }
+        .rank-3 { border: 1px solid #CD7F32 !important; background: linear-gradient(90deg, rgba(205, 127, 50, 0.1), transparent) !important; }
+
+        .my-rank-card { margin-top: 25px; padding: 20px; background: var(--primary); color: var(--white); border-radius: 12px; text-align: left; position: relative; overflow: hidden; border-bottom: 5px solid var(--accent); }
         .my-rank-card::after { content: 'BIU'; position: absolute; right: -10px; bottom: -10px; font-size: 50px; font-weight: 900; opacity: 0.1; }
-        .match-highlight { border: 2px solid var(--primary); background: rgba(0, 33, 71, 0.05); transform: scale(1.02); }
-        .empty-msg { padding: 20px; opacity: 0.6; font-style: italic; }
+        
+        .trend-up { color: #28a745; font-size: 11px; font-weight: bold; }
+        .trend-down { color: #dc3545; font-size: 11px; font-weight: bold; }
+        .sync-time { font-size: 10px; opacity: 0.6; margin-top: 10px; display: block; }
+
+        .match-highlight { border: 2px solid var(--primary) !important; background: rgba(0, 33, 71, 0.1) !important; }
     </style>
 </head>
 <body>
@@ -84,66 +99,85 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        const currentUserId = localStorage.getItem('biu_user_id');
-        if (localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
-
         const leaderboardDiv = document.getElementById('leaderboard-full');
         const personalDiv = document.getElementById('personal-rank-container');
         const loadingDiv = document.getElementById('loading');
         const shareArea = document.getElementById('share-area');
 
-        // Logic Corrected: Keeping all code INSIDE the listener
+        if (localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
+
         onValue(ref(db, "users"), (snapshot) => {
             const data = snapshot.val();
             loadingDiv.style.display = 'none';
             
             if (!data) {
-                leaderboardDiv.innerHTML = '<div class="empty-msg">No student data found in database.</div>';
+                leaderboardDiv.innerHTML = '<div style="text-align:center; opacity:0.5;">No scholars found yet.</div>';
                 return;
             }
 
             const allUsers = Object.entries(data).map(([id, val]) => ({ id, ...val }))
+                .filter(u => u.name)
                 .sort((a, b) => (b.streak || 0) - (a.streak || 0));
 
             renderList(allUsers.slice(0, 10));
 
+            const currentUserId = localStorage.getItem('biu_user_id');
             const myIndex = allUsers.findIndex(u => u.id === currentUserId);
+
             if (myIndex !== -1) {
                 const myData = allUsers[myIndex];
-                const myRank = myIndex + 1;
+                const myCurrentRank = myIndex + 1;
+                const lastRank = localStorage.getItem('biu_last_rank');
+                
+                let trendHTML = `<span style="font-size:10px; opacity:0.6;">SYNCED</span>`;
+                if (lastRank) {
+                    const diff = parseInt(lastRank) - myCurrentRank;
+                    if (diff > 0) trendHTML = `<span class="trend-up">▲ ${diff} Up</span>`;
+                    else if (diff < 0) trendHTML = `<span class="trend-down">▼ ${Math.abs(diff)} Down</span>`;
+                }
+                localStorage.setItem('biu_last_rank', myCurrentRank);
+
                 personalDiv.innerHTML = `
                     <div id="capture-card" class="my-rank-card">
-                        <div style="font-size: 10px; text-transform: uppercase; opacity: 0.8; letter-spacing: 1px;">BIU Archive Scholar</div>
-                        <div style="font-size: 18px; font-weight: bold; margin: 5px 0;">${myData.name}</div>
-                        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                            <span style="font-size: 22px; font-weight: 900; color: var(--accent);">Rank #${myRank}</span>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                            <span style="font-size: 9px; letter-spacing:1px; opacity:0.8;">BIU OFFICIAL RANK</span>
+                            ${trendHTML}
+                        </div>
+                        <div style="font-size: 19px; font-weight: bold;">${myData.name}</div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top:5px;">
+                            <span style="font-size: 24px; font-weight: 900; color: var(--accent);">Rank #${myCurrentRank}</span>
                             <span style="font-size: 14px;">🔥 ${myData.streak || 0} Streak</span>
                         </div>
                     </div>
+                    <span class="sync-time">⏱️ Updated: ${new Date().toLocaleTimeString()}</span>
                 `;
                 shareArea.innerHTML = `<button class="share-btn" onclick="captureRank()">📸 Save Rank Image</button>`;
             }
-        }, (error) => {
-            console.error(error);
-            loadingDiv.innerHTML = "❌ Permission Denied. Check Firebase Rules.";
         });
 
         function renderList(users) {
-            leaderboardDiv.innerHTML = users.map((user, index) => `
-                <div class="entry ${index === 0 ? 'rank-1' : ''}" data-name="${user.name.toLowerCase()}">
-                    <div class="entry-info">
-                        <span class="rank">#${index + 1}</span>
-                        <span class="name">${user.name}</span>
+            leaderboardDiv.innerHTML = users.map((user, index) => {
+                let rankLabel = `<span class="rank-number">#${index + 1}</span>`;
+                let rankClass = "";
+                if (index === 0) { rankLabel = `<span class="rank-emoji">🥇</span>`; rankClass = "rank-1"; }
+                if (index === 1) { rankLabel = `<span class="rank-emoji">🥈</span>`; rankClass = "rank-2"; }
+                if (index === 2) { rankLabel = `<span class="rank-emoji">🥉</span>`; rankClass = "rank-3"; }
+
+                return `
+                    <div class="entry ${rankClass}" data-name="${user.name.toLowerCase()}">
+                        <div class="entry-info">
+                            ${rankLabel}
+                            <span class="name">${user.name}</span>
+                        </div>
+                        <span class="streak">🔥 ${user.streak || 0}</span>
                     </div>
-                    <span class="streak">🔥 ${user.streak || 0}</span>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         window.filterLeaderboard = function() {
             const term = document.getElementById('searchBar').value.toLowerCase();
-            const entries = document.querySelectorAll('.entry');
-            entries.forEach(item => {
+            document.querySelectorAll('.entry').forEach(item => {
                 const name = item.getAttribute('data-name');
                 if (name.includes(term)) {
                     item.style.display = 'flex';
@@ -157,12 +191,10 @@
         window.captureRank = function() {
             const btn = document.querySelector('.share-btn');
             const target = document.getElementById('capture-card');
-            if(!target) return;
-            
             btn.innerText = "Generating...";
             html2canvas(target, { backgroundColor: null, scale: 2 }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = 'My-BIU-Rank.png';
+                link.download = 'BIU-Scholar-Rank.png';
                 link.href = canvas.toDataURL();
                 link.click();
                 btn.innerText = "📸 Save Rank Image";
