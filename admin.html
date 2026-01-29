@@ -69,6 +69,10 @@
                 <p>Total Logins</p>
                 <button onclick="clearLogs()" class="clear-btn">Clear All Logs</button>
             </div>
+            <div class="stat-card" style="background: var(--info);">
+                <h2 id="online-count">0</h2>
+                <p>Users Online Now</p>
+            </div>
             <div class="stat-card" style="background: #ffc107; color: #333;">
                 <h2 id="pending-pay-count">0</h2>
                 <p>Pending Payments</p>
@@ -91,7 +95,11 @@
         </div>
 
         <div class="stat-card" style="background: white; border: 2px solid #eee; text-align: left; margin-bottom: 25px;">
-            <h3 style="color: var(--primary); margin-top:0; border-bottom: 1px solid #eee; padding-bottom: 10px;">💳 Payment Requests</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                 <h3 style="color: var(--primary); margin:0;">💳 Payment Requests</h3>
+                 <input type="text" id="pay-search" placeholder="Filter payments..." onkeyup="filterPayments()" style="padding:5px 10px; border-radius:5px; border:1px solid #ddd;">
+            </div>
+            <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
             <div id="payment-list">
                 <p style="color: #666;">No pending requests...</p>
             </div>
@@ -132,7 +140,7 @@
                         <th>Matric</th>
                         <th>Department</th>
                         <th>Time</th>
-                        <th>Actions & Streak Recovery</th>
+                        <th>Actions & Recovery</th>
                     </tr>
                 </thead>
                 <tbody id="log-list"></tbody>
@@ -142,7 +150,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, set, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue, set, remove, update, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
@@ -167,6 +175,7 @@
         }
 
         function startListeners() {
+            // Maintenance mode listener
             onValue(ref(db, "maintenance_mode"), (s) => {
                 window.currentMaintenanceState = s.val() || false;
                 const statusTxt = document.getElementById('m-status-text');
@@ -178,6 +187,17 @@
                 btn.style.color = "white";
             });
 
+            // Online Users Listener (assuming users have a lastSeen node)
+            onValue(ref(db, "users"), (snapshot) => {
+                const users = snapshot.val();
+                if(users) {
+                    const now = Date.now();
+                    const online = Object.values(users).filter(u => now - (u.lastSeen || 0) < 300000).length; // Active in last 5 mins
+                    document.getElementById('online-count').innerText = online;
+                }
+            });
+
+            // Payment requests listener
             onValue(ref(db, "payment_requests"), (snapshot) => {
                 const data = snapshot.val();
                 const list = document.getElementById('payment-list');
@@ -187,7 +207,7 @@
                     countBadge.innerText = Object.keys(data).length;
                     Object.keys(data).forEach(key => {
                         const req = data[key];
-                        list.innerHTML += `<div class="payment-request-card">
+                        list.innerHTML += `<div class="payment-request-card" data-search="${req.name.toLowerCase()} ${req.matric.toLowerCase()}">
                             <div><strong>${req.name}</strong><br><small>${req.matric}</small></div>
                             <div>
                                 <button class="btn-approve" onclick="approvePayment('${key}', '${req.userId}')">Approve ✅</button>
@@ -198,11 +218,13 @@
                 } else { countBadge.innerText = "0"; list.innerHTML = "<p>No pending requests...</p>"; }
             });
 
+            // Chat counter
             onValue(ref(db, "messages"), (s) => {
                 const data = s.val();
                 document.getElementById('live-chat-count').innerText = data ? Object.keys(data).length : 0;
             });
 
+            // Banned list manager
             onValue(ref(db, "banned_users"), (snapshot) => {
                 const data = snapshot.val();
                 const container = document.getElementById('banned-list-content');
@@ -214,7 +236,9 @@
                 } else { badge.innerText = "0"; container.innerHTML = "<p>No users banned.</p>"; }
             });
 
-            onValue(ref(db, "logs"), (snapshot) => {
+            // Logs listener (shows last 100 for speed)
+            const logsQuery = query(ref(db, "logs"), limitToLast(100));
+            onValue(logsQuery, (snapshot) => {
                 const logs = snapshot.val();
                 const list = document.getElementById('log-list');
                 if (!logs) { list.innerHTML = "<tr><td colspan='5'>No activity.</td></tr>"; return; }
@@ -230,9 +254,9 @@
                             <td>${item.name || 'Unknown'}</td>
                             <td>${item.matric || 'N/A'}</td>
                             <td>${item.dept || 'General'}</td>
-                            <td>${item.timestamp ? new Date(item.timestamp).toLocaleString() : 'N/A'}</td>
+                            <td>${item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : 'N/A'}</td>
                             <td>
-                                <button class="btn-streak" onclick="restoreStreak('${item.userId}')">Restore Streak 🔥</button>
+                                <button class="btn-streak" onclick="restoreStreak('${item.userId}')">Reset 🔥</button>
                                 <button class="${isBanned ? 'btn-unban' : 'btn-ban'}" onclick="toggleBan('${item.userId}', ${isBanned})">${isBanned ? 'Unban' : 'Ban'}</button>
                                 <button onclick="deleteLog('${key}')" style="border:none; background:none; cursor:pointer;">🗑️</button>
                             </td>
@@ -243,14 +267,16 @@
         }
 
         // --- CORE ACTIONS ---
+        window.filterPayments = () => {
+            let q = document.getElementById("pay-search").value.toLowerCase();
+            document.querySelectorAll(".payment-request-card").forEach(c => c.style.display = c.getAttribute('data-search').includes(q) ? "flex" : "none");
+        };
+
         window.restoreStreak = (uid) => {
             if(!uid || uid === 'undefined') return alert("Invalid User ID");
-            if(confirm("Restore this user's streak to 1 and fix their timer?")) {
-                const today = new Date().toISOString().split('T')[0];
-                update(ref(db, `users/${uid}`), {
-                    streak: 1,
-                    lastLoginDate: today
-                }).then(() => alert("Streak Restored!"));
+            if(confirm("Force user streak to 1? (Fixes timer issues)")) {
+                const todayStr = new Date().toISOString().split('T')[0];
+                update(ref(db, `users/${uid}`), { streak: 1, lastLoginDate: todayStr }).then(() => alert("Streak Fixed!"));
             }
         };
 
@@ -266,39 +292,34 @@
         window.approvePayment = (rid, uid) => set(ref(db, "paid_users/" + uid), true).then(() => remove(ref(db, "payment_requests/" + rid)));
         window.rejectPayment = (rid) => remove(ref(db, "payment_requests/" + rid));
         window.deleteLog = (id) => confirm("Delete log?") && remove(ref(db, "logs/" + id));
-        window.clearLogs = () => confirm("Are you sure you want to clear ALL login logs?") && remove(ref(db, "logs"));
-        window.clearChat = () => confirm("Are you sure you want to wipe ALL chat messages?") && remove(ref(db, "messages"));
-        
+        window.clearLogs = () => confirm("Clear ALL login logs?") && remove(ref(db, "logs"));
+        window.clearChat = () => confirm("Wipe ALL chat messages?") && remove(ref(db, "messages"));
         window.sendBroadcast = () => {
             const t = document.getElementById('broadcast-input').value;
-            if(t) set(ref(db, "broadcast"), { text: t, timestamp: Date.now() }).then(() => { alert("Sent!"); document.getElementById('broadcast-input').value = ""; });
+            if(t) set(ref(db, "broadcast"), { text: t, timestamp: Date.now() }).then(() => { alert("Broadcast Live!"); document.getElementById('broadcast-input').value = ""; });
         };
-        
-        window.clearBroadcast = () => confirm("Remove current broadcast?") && remove(ref(db, "broadcast"));
-        
+        window.clearBroadcast = () => confirm("Remove broadcast?") && remove(ref(db, "broadcast"));
         window.updateAd = (slot) => {
             const t = document.getElementById('ad-title').value;
             const d = document.getElementById('ad-desc').value;
             const l = document.getElementById('ad-link').value;
             if(!t) return alert("Title required");
-            update(ref(db, `marketplace/${slot}`), { title: t, desc: d, link: l || "#" }).then(() => alert("Ad Updated!"));
+            update(ref(db, `marketplace/${slot}`), { title: t, desc: d, link: l || "#" }).then(() => alert("Marketplace Updated!"));
         };
-
         window.filterTable = () => {
             let q = document.getElementById("admin-search").value.toLowerCase();
             document.querySelectorAll("#log-list tr").forEach(r => r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none");
         };
-
         window.exportToExcel = () => {
-            let csv = Array.from(document.querySelectorAll("tr")).map(r => Array.from(r.cells).map(c => `"${c.innerText}"`).join(",")).join("\n");
+            let rows = Array.from(document.querySelectorAll("tr"));
+            let csv = rows.map(r => Array.from(r.cells).map(c => `"${c.innerText}"`).join(",")).join("\n");
             let a = document.createElement("a");
             a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
-            a.download = "BIU_Logs.csv"; a.click();
+            a.download = "BIU_Admin_Logs.csv"; a.click();
         };
-
         window.toggleBannedManager = () => {
             const el = document.getElementById('banned-manager');
-            el.style.display = el.style.display === 'block' ? 'none' : 'block';
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
         };
     </script>
 </body>
