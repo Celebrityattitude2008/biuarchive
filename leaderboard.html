@@ -19,12 +19,16 @@
         
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
         .back-btn, .share-btn { padding: 8px 15px; border-radius: 20px; border: none; cursor: pointer; background: var(--primary); color: var(--white); font-weight: bold; text-decoration: none; font-size: 12px; transition: 0.2s; }
-        .share-btn { background: var(--info); margin-top: 10px; width: 100%; }
+        .share-btn { background: var(--info); margin-top: 10px; width: 100%; display: block; }
         .share-btn:active { transform: scale(0.98); }
 
         .search-box { width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); background: var(--light); color: var(--text); box-sizing: border-box; outline: none; }
 
-        .leaderboard-list { text-align: left; }
+        /* UPGRADE: SPINNER ANIMATION */
+        .loader { width: 30px; height: 30px; border: 3px solid #ddd; border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .leaderboard-list { text-align: left; min-height: 50px; }
         .entry { display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-bottom: 10px; background: rgba(128,128,128,0.05); border-radius: 10px; border: 1px solid rgba(0,0,0,0.05); transition: 0.2s; }
         .entry-info { display: flex; align-items: center; gap: 15px; }
         .rank { font-weight: bold; color: var(--primary); width: 35px; }
@@ -35,6 +39,7 @@
         .my-rank-card { margin-top: 25px; padding: 20px; background: var(--primary); color: var(--white); border-radius: 12px; text-align: left; position: relative; overflow: hidden; }
         .my-rank-card::after { content: 'BIU'; position: absolute; right: -10px; bottom: -10px; font-size: 50px; font-weight: 900; opacity: 0.1; }
         .match-highlight { border: 2px solid var(--primary); background: rgba(0, 33, 71, 0.05); transform: scale(1.02); }
+        .empty-msg { padding: 20px; opacity: 0.6; font-style: italic; }
     </style>
 </head>
 <body>
@@ -48,9 +53,12 @@
 
         <input type="text" id="searchBar" class="search-box" placeholder="Search student name..." onkeyup="filterLeaderboard()">
 
-        <div id="loading">Loading rankings...</div>
+        <div id="loading">
+            <div class="loader"></div>
+            <p style="font-size: 12px; opacity: 0.6;">Fetching live rankings...</p>
+        </div>
+        
         <div id="leaderboard-full" class="leaderboard-list"></div>
-
         <div id="personal-rank-container"></div>
         <div id="share-area"></div>
 
@@ -84,33 +92,40 @@
         const loadingDiv = document.getElementById('loading');
         const shareArea = document.getElementById('share-area');
 
+        // Logic Corrected: Keeping all code INSIDE the listener
         onValue(ref(db, "users"), (snapshot) => {
             const data = snapshot.val();
-            if (!data) return;
+            loadingDiv.style.display = 'none';
+            
+            if (!data) {
+                leaderboardDiv.innerHTML = '<div class="empty-msg">No student data found in database.</div>';
+                return;
+            }
 
             const allUsers = Object.entries(data).map(([id, val]) => ({ id, ...val }))
                 .sort((a, b) => (b.streak || 0) - (a.streak || 0));
 
-            const myIndex = allUsers.findIndex(u => u.id === currentUserId);
-            const myRank = myIndex + 1;
-            const myData = allUsers[myIndex];
-
-            loadingDiv.style.display = 'none';
             renderList(allUsers.slice(0, 10));
 
-            if (myData) {
+            const myIndex = allUsers.findIndex(u => u.id === currentUserId);
+            if (myIndex !== -1) {
+                const myData = allUsers[myIndex];
+                const myRank = myIndex + 1;
                 personalDiv.innerHTML = `
                     <div id="capture-card" class="my-rank-card">
-                        <div style="font-size: 12px; text-transform: uppercase; opacity: 0.8; letter-spacing: 1px;">BIU Archive Scholar</div>
-                        <div style="font-size: 20px; font-weight: bold; margin: 5px 0;">${myData.name}</div>
+                        <div style="font-size: 10px; text-transform: uppercase; opacity: 0.8; letter-spacing: 1px;">BIU Archive Scholar</div>
+                        <div style="font-size: 18px; font-weight: bold; margin: 5px 0;">${myData.name}</div>
                         <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                            <span style="font-size: 24px; font-weight: 900; color: var(--accent);">Rank #${myRank}</span>
-                            <span style="font-size: 16px;">🔥 ${myData.streak || 0} Streak</span>
+                            <span style="font-size: 22px; font-weight: 900; color: var(--accent);">Rank #${myRank}</span>
+                            <span style="font-size: 14px;">🔥 ${myData.streak || 0} Streak</span>
                         </div>
                     </div>
                 `;
                 shareArea.innerHTML = `<button class="share-btn" onclick="captureRank()">📸 Save Rank Image</button>`;
             }
+        }, (error) => {
+            console.error(error);
+            loadingDiv.innerHTML = "❌ Permission Denied. Check Firebase Rules.";
         });
 
         function renderList(users) {
@@ -127,7 +142,8 @@
 
         window.filterLeaderboard = function() {
             const term = document.getElementById('searchBar').value.toLowerCase();
-            document.querySelectorAll('.entry').forEach(item => {
+            const entries = document.querySelectorAll('.entry');
+            entries.forEach(item => {
                 const name = item.getAttribute('data-name');
                 if (name.includes(term)) {
                     item.style.display = 'flex';
@@ -140,13 +156,13 @@
 
         window.captureRank = function() {
             const btn = document.querySelector('.share-btn');
+            const target = document.getElementById('capture-card');
+            if(!target) return;
+            
             btn.innerText = "Generating...";
-            html2canvas(document.getElementById('capture-card'), {
-                backgroundColor: null,
-                scale: 2
-            }).then(canvas => {
+            html2canvas(target, { backgroundColor: null, scale: 2 }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = 'BIU-Archive-Rank.png';
+                link.download = 'My-BIU-Rank.png';
                 link.href = canvas.toDataURL();
                 link.click();
                 btn.innerText = "📸 Save Rank Image";

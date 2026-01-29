@@ -18,10 +18,8 @@
         .container { background: var(--white); padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 850px; text-align: center; position: relative; }
         .hidden { display: none !important; }
         
-        /* BAN SCREEN */
         #ban-screen { position: fixed; top:0; left:0; width:100%; height:100%; background: #900; color:white; z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px; box-sizing:border-box; }
 
-        /* NAV SYSTEM */
         .top-nav { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 100; align-items: center; }
         .nav-btn { padding: 8px 12px; border-radius: 20px; border: none; cursor: pointer; font-size: 11px; font-weight: bold; background: var(--primary); color: var(--white); transition: 0.2s; }
         
@@ -33,17 +31,12 @@
 
         .streak-badge { background: linear-gradient(135deg, #ff9d00, #ff5e00); color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; display: flex; align-items: center; gap: 4px; }
         
-        /* LEVEL TAGS */
         .level-tag { font-size: 9px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; font-weight: bold; margin-left: 5px; background: #eee; color: #666; }
         .lvl-bronze { background: #cd7f32; color: white; }
         .lvl-silver { background: #c0c0c0; color: #333; }
         .lvl-gold { background: #ffd700; color: #002147; }
         .lvl-diamond { background: #b9f2ff; color: #005f73; animation: glow 2s infinite; }
         @keyframes glow { 0% { box-shadow: 0 0 5px #b9f2ff; } 50% { box-shadow: 0 0 15px #b9f2ff; } 100% { box-shadow: 0 0 5px #b9f2ff; } }
-
-        /* LEVEL UP NOTIFICATION */
-        #level-up-toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(150px); background: var(--primary); color: white; padding: 15px 25px; border-radius: 50px; border: 2px solid var(--accent); box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 10001; transition: 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55); display: flex; align-items: center; gap: 10px; pointer-events: none; }
-        #level-up-toast.active { transform: translateX(-50%) translateY(0); }
 
         #broadcast-bar { background: #FFD700; color: #002147; padding: 12px; border-radius: 10px; margin-top: 50px; margin-bottom: 15px; font-weight: bold; border-left: 5px solid #002147; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
         
@@ -61,11 +54,6 @@
     </style>
 </head>
 <body>
-
-    <div id="level-up-toast">
-        <span style="font-size: 20px;">🎉</span> 
-        <span>Level Up! New Rank: <strong><span id="toast-level-name"></span></strong></span>
-    </div>
 
     <div id="ban-screen" class="hidden">
         <h1 style="font-size: 4rem;">🚫</h1>
@@ -98,12 +86,12 @@
         </div>
 
         <h1 style="margin-top: 60px;">BIU Archive</h1>
-        <p><span id="greeting-text">Welcome</span>, <span id="display-name" style="color:var(--info); font-weight:bold;"></span></p>
+        <p>Welcome, <span id="display-name" style="color:var(--info); font-weight:bold;">Student</span></p>
 
         <div class="leaderboard-section">
             <h4 style="margin: 0 0 10px 0; color: var(--primary);">🏆 Top Scholars</h4>
             <div id="leaderboard-list">
-                <div class="skeleton" style="height:30px; margin-bottom:5px;"></div>
+                <p style="font-size:12px; opacity:0.6;">Loading rankings...</p>
             </div>
         </div>
 
@@ -132,7 +120,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded, onValue, set, update, serverTimestamp, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, push, onChildAdded, onValue, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
@@ -149,39 +137,33 @@
 
         const name = localStorage.getItem('biu_user_name');
         const userId = localStorage.getItem('biu_user_id');
-        if(!name || !userId) { window.location.href = 'login.html'; }
 
-        // --- UPGRADE: MAINTENANCE REDIRECT ---
+        if(!name || !userId) { 
+            window.location.href = 'login.html'; 
+        } else {
+            document.getElementById('display-name').innerText = name;
+        }
+
+        // MAINTENANCE & BAN (Upgraded to handle real-time changes better)
         onValue(ref(db, "maintenance_mode"), (snapshot) => {
-            if (snapshot.val() === true) {
-                window.location.href = 'maintenance.html';
-            }
+            if (snapshot.val() === true) window.location.href = 'maintenance.html';
         });
 
-        // --- UPGRADE: REAL-TIME BAN KICK ---
         onValue(ref(db, `banned_users/${userId}`), (snapshot) => {
-            if (snapshot.exists()) {
+            if (snapshot.exists() && snapshot.val() === true) {
                 document.getElementById('ban-screen').classList.remove('hidden');
                 document.getElementById('main-archive').classList.add('hidden');
                 localStorage.clear();
             }
         });
 
-        // --- SCHOLAR SYSTEM & STREAK ---
+        // STREAK LOGIC (Cleaned up)
         function getLevelInfo(streak) {
             if (streak >= 30) return { title: "Diamond", class: "lvl-diamond" };
             if (streak >= 15) return { title: "Gold", class: "lvl-gold" };
             if (streak >= 7) return { title: "Silver", class: "lvl-silver" };
             if (streak >= 3) return { title: "Bronze", class: "lvl-bronze" };
             return { title: "Novice", class: "level-tag" };
-        }
-
-        function updateStreakUI(streak) {
-            const level = getLevelInfo(streak);
-            document.getElementById('streak-count').innerText = streak;
-            const tag = document.getElementById('user-level-tag');
-            tag.innerText = level.title;
-            tag.className = "level-tag " + level.class;
         }
 
         function processStreak() {
@@ -196,7 +178,12 @@
                 else if (diffDays > 1) currentStreak = 1; 
             }
 
-            updateStreakUI(currentStreak);
+            const level = getLevelInfo(currentStreak);
+            document.getElementById('streak-count').innerText = currentStreak;
+            const tag = document.getElementById('user-level-tag');
+            tag.innerText = level.title;
+            tag.className = "level-tag " + level.class;
+
             localStorage.setItem('biu_streak', currentStreak);
             localStorage.setItem('biu_last_login_date', today);
 
@@ -208,7 +195,18 @@
         }
         processStreak();
 
-        // --- LEADERBOARD ---
+        // BROADCAST & LEADERBOARD
+        onValue(ref(db, "broadcast"), (s) => {
+            const d = s.val();
+            const bar = document.getElementById('broadcast-bar');
+            if(d && d.text) {
+                document.getElementById('live-broadcast-text').innerText = d.text;
+                bar.classList.remove('hidden');
+            } else {
+                bar.classList.add('hidden');
+            }
+        });
+
         onValue(ref(db, "users"), (snapshot) => {
             const data = snapshot.val();
             if (!data) return;
@@ -223,56 +221,53 @@
             }).join('');
         });
 
-        // --- BROADCAST ---
-        onValue(ref(db, "broadcast"), (s) => {
-            const d = s.val();
-            if(d && d.text) {
-                document.getElementById('live-broadcast-text').innerText = d.text;
-                document.getElementById('broadcast-bar').classList.remove('hidden');
-            } else {
-                document.getElementById('broadcast-bar').classList.add('hidden');
-            }
-        });
-
-        // --- CHAT ---
-        const chatRef = ref(db, "messages");
+        // CHAT (Optimized)
         window.sendChat = function() {
             const i = document.getElementById('chat-msg');
             if (i.value.trim()) {
-                push(chatRef, { sender: name.split(' ')[0], message: i.value, timestamp: serverTimestamp() });
+                push(ref(db, "messages"), { sender: name.split(' ')[0], message: i.value, timestamp: serverTimestamp() });
                 i.value = "";
             }
         };
-        onChildAdded(chatRef, (s) => {
+
+        onChildAdded(ref(db, "messages"), (s) => {
             const d = s.val();
             const disp = document.getElementById('chat-display');
             if (disp.innerHTML.includes('Connecting')) disp.innerHTML = '';
-            disp.innerHTML += `<div><strong>${d.sender}:</strong> ${d.message}</div>`;
+            const msgDiv = document.createElement('div');
+            msgDiv.innerHTML = `<strong>${d.sender}:</strong> ${d.message}`;
+            disp.appendChild(msgDiv);
             disp.scrollTop = disp.scrollHeight;
         });
 
-        // --- UTILS & SECURITY ---
-        document.getElementById('display-name').innerText = name;
-        
-        // Admin entrance function
+        // WINDOW FUNCTIONS (For Global Accessibility)
         window.enterAdmin = () => {
             const pass = prompt("Enter Admin Access Code:");
-            if(pass === "BIU2026") {
-                window.location.href = 'admin.html';
-            } else {
-                alert("Incorrect Code. Access Denied.");
-            }
+            if(pass === "BIU2026") window.location.href = 'admin.html';
+            else alert("Incorrect Code.");
         };
 
-        if (localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
         window.toggleDropdown = () => document.getElementById("myDropdown").classList.toggle("show");
+        
         window.toggleTheme = () => {
             const theme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             document.body.setAttribute('data-theme', theme);
             localStorage.setItem('theme', theme);
         };
+
         window.logout = () => { localStorage.clear(); window.location.href = 'login.html'; };
+        
         window.contactAdmin = () => window.location.href = "mailto:pauladamu600@gmail.com";
+
+        // Auto-close dropdown
+        window.onclick = function(event) {
+            if (!event.target.matches('.nav-btn')) {
+                const dropdowns = document.getElementsByClassName("dropdown-content");
+                for (let d of dropdowns) if (d.classList.contains('show')) d.classList.remove('show');
+            }
+        }
+
+        if (localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
     </script>
 </body>
 </html>
