@@ -32,6 +32,7 @@
         .btn-clear { background: #666; color: white; width: 100%; margin-top: 5px; font-size: 12px; }
         
         .sync-stamp { font-size: 11px; color: #666; margin-top: 5px; display: block; }
+        .loading-sync { background: #888 !important; cursor: not-allowed; opacity: 0.7; }
     </style>
 </head>
 <body>
@@ -73,10 +74,10 @@
 
             <div class="tool-card">
                 <h3 style="margin:0">📊 Sheet Sync Status</h3>
-                <p style="font-size: 12px; color: #666;">Track your spreadsheet updates.</p>
+                <p style="font-size: 12px; color: #666;">This triggers your Google Apps Script.</p>
                 <span id="sync-time" class="sync-stamp">Last Sync: Never</span>
-                <button class="btn btn-sync" onclick="markSheetSynced()">Confirm Spreadsheet Update</button>
-                <a href="https://docs.google.com/spreadsheets/d/1RDC9EBFjF2a9sSMakA5JzMgIBZ9p0oz0/edit" target="_blank" style="display:block; margin-top:10px; font-size:11px; color:var(--info);">🔗 Open Admin Google Sheet</a>
+                <button id="sync-btn" class="btn btn-sync" onclick="markSheetSynced()">Confirm Spreadsheet Update</button>
+                <a href="https://docs.google.com/spreadsheets/d/1RDC9EBFjF2a9sSMakA5JzMgIBZ9p0oz0/edit" target="_blank" style="display:block; margin-top:10px; font-size:11px; color:var(--info);">🔗 Open Google Sheet</a>
             </div>
         </div>
 
@@ -112,6 +113,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby5R8wF2fO7-Sa0bjWoDXxbrocOBAsZqtAD-ddyXNdSAx48L1mgK5Hiep64QzcrusTr/exec";
 
         // Security
         const pass = prompt("Enter Celebrity Access Key:");
@@ -119,21 +121,17 @@
         else { document.getElementById('admin-content').style.display = 'block'; startAdmin(); }
 
         function startAdmin() {
-            // Maintenance Mode
             onValue(ref(db, "maintenance_mode"), (s) => {
                 window.isMaint = s.val() || false;
                 const btn = document.getElementById('m-toggle-btn');
                 btn.innerText = window.isMaint ? "RE-OPEN ARCHIVE" : "SHUTDOWN SYSTEM";
                 btn.style.background = window.isMaint ? "var(--success)" : "var(--danger)";
-                btn.style.color = "white";
             });
 
-            // Sync Time
             onValue(ref(db, "system/last_sync"), (s) => {
                 if(s.val()) document.getElementById('sync-time').innerText = "Last Sync: " + new Date(s.val()).toLocaleString();
             });
 
-            // Logs & Activity
             onValue(ref(db, "logs"), (snapshot) => {
                 const logs = snapshot.val();
                 const list = document.getElementById('log-list');
@@ -145,7 +143,6 @@
                 onValue(ref(db, "banned_users"), (bSnap) => {
                     const banned = bSnap.val() || {};
                     document.getElementById('banned-count').innerText = Object.keys(banned).length;
-                    
                     list.innerHTML = entries.map(([id, item]) => {
                         const isBanned = banned[item.userId] === true;
                         return `<tr>
@@ -162,13 +159,11 @@
                 });
             });
 
-            // Online Estimator
             onValue(ref(db, "users"), (s) => {
                 const users = s.val() || {};
                 const now = Date.now();
                 const active = Object.values(users).filter(u => now - (u.lastActive || 0) < 60000).length;
                 document.getElementById('online-count').innerText = active;
-                
                 const streaks = Object.values(users).map(u => u.streak || 0);
                 document.getElementById('top-streak').innerText = streaks.length > 0 ? Math.max(...streaks) : 0;
             });
@@ -176,42 +171,43 @@
 
         // --- GLOBAL ACTIONS ---
 
+        window.markSheetSynced = async () => {
+            if(!confirm("Push update to Google Sheet?")) return;
+            
+            const btn = document.getElementById('sync-btn');
+            btn.innerText = "Syncing... Please wait";
+            btn.classList.add('loading-sync');
+
+            try {
+                // We use 'no-cors' because Apps Script redirects can sometimes trigger CORS errors
+                // even when the script actually runs.
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors' });
+                
+                set(ref(db, "system/last_sync"), Date.now());
+                alert("Spreadsheet sync triggered successfully!");
+            } catch (error) {
+                console.error("Sync Error:", error);
+                alert("Communication with Google Sheet failed, but timestamp updated.");
+                set(ref(db, "system/last_sync"), Date.now());
+            } finally {
+                btn.innerText = "Confirm Spreadsheet Update";
+                btn.classList.remove('loading-sync');
+            }
+        };
+
         window.sendGlobalAlert = () => {
             const msg = document.getElementById('alert-msg').value;
             if(!msg) return alert("Enter a message!");
-            set(ref(db, "broadcast"), { 
-                message: msg, 
-                timestamp: Date.now() 
-            }).then(() => { 
-                alert("Broadcast Pushed with Sound!"); 
-                document.getElementById('alert-msg').value = ""; 
-            });
+            set(ref(db, "broadcast"), { message: msg, timestamp: Date.now() })
+            .then(() => { alert("Broadcast Pushed!"); document.getElementById('alert-msg').value = ""; });
         };
 
-        window.clearBroadcast = () => {
-            if(confirm("Remove the announcement from all student screens?")) {
-                set(ref(db, "broadcast"), null);
-            }
-        };
-
-        window.clearChat = () => {
-            if(confirm("DANGEROUS: Delete all messages in Live Discussion?")) {
-                remove(ref(db, "messages")).then(() => alert("Chat cleared."));
-            }
-        };
-
-        window.markSheetSynced = () => {
-            if(confirm("Confirm you have updated the Google Sheet?")) set(ref(db, "system/last_sync"), Date.now());
-        };
-
+        window.clearBroadcast = () => confirm("Remove announcement?") && set(ref(db, "broadcast"), null);
+        window.clearChat = () => confirm("Wipe chat?") && remove(ref(db, "messages"));
         window.toggleMaintenance = () => set(ref(db, "maintenance_mode"), !window.isMaint);
-        
-        window.resetStreak = (uid) => confirm("Reset streak to 1?") && update(ref(db, `users/${uid}`), { streak: 1 });
-
-        window.toggleBan = (uid, status) => confirm("Change ban status?") && set(ref(db, `banned_users/${uid}`), status ? null : true);
-
-        window.nuclearClear = () => prompt("Type 'WIPE' to delete ALL logs") === "WIPE" && remove(ref(db, "logs"));
-
+        window.resetStreak = (uid) => confirm("Reset streak?") && update(ref(db, `users/${uid}`), { streak: 1 });
+        window.toggleBan = (uid, status) => confirm("Toggle Ban?") && set(ref(db, `banned_users/${uid}`), status ? null : true);
+        window.nuclearClear = () => prompt("Type 'WIPE' to delete logs") === "WIPE" && remove(ref(db, "logs"));
         window.filterTable = () => {
             let q = document.getElementById("admin-search").value.toLowerCase();
             document.querySelectorAll("#log-list tr").forEach(r => r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none");
