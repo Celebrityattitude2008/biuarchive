@@ -18,40 +18,35 @@
         .container { background: var(--white); padding: 2.5rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 850px; text-align: center; position: relative; }
         .hidden { display: none !important; }
         
-        #ban-screen { position: fixed; top:0; left:0; width:100%; height:100%; background: #900; color:white; z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px; box-sizing:border-box; }
+        /* IDS Test Result Styling */
+        .ids-result-card { background: linear-gradient(135deg, var(--primary), #003366); color: white; padding: 20px; border-radius: 12px; margin-top: 20px; text-align: left; border-left: 6px solid var(--accent); position: relative; overflow: hidden; }
+        .ids-result-card::after { content: 'IDS'; position: absolute; right: -10px; bottom: -10px; font-size: 60px; font-weight: 900; opacity: 0.1; }
+        .score-badge { background: var(--accent); color: var(--primary); padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 1.2rem; float: right; }
 
+        #ban-screen { position: fixed; top:0; left:0; width:100%; height:100%; background: #900; color:white; z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px; box-sizing:border-box; }
         .top-nav { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 100; align-items: center; }
         .nav-btn { padding: 8px 12px; border-radius: 20px; border: none; cursor: pointer; font-size: 11px; font-weight: bold; background: var(--primary); color: var(--white); transition: 0.2s; }
-        
         .dropdown { position: relative; display: inline-block; }
         .dropdown-content { display: none; position: absolute; right: 0; top: 40px; background-color: var(--dark-menu); min-width: 180px; box-shadow: 0px 8px 16px rgba(0,0,0,0.3); border-radius: 10px; overflow: hidden; z-index: 101; }
         .dropdown-content button { color: white; padding: 12px 16px; display: block; width: 100%; border: none; background: none; text-align: left; font-size: 13px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .dropdown-content button:hover { background-color: #333; }
         .show { display: block !important; }
-
         .streak-badge { background: linear-gradient(135deg, #ff9d00, #ff5e00); color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; display: flex; align-items: center; gap: 4px; }
-        
         .level-tag { font-size: 9px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; font-weight: bold; margin-left: 5px; background: #eee; color: #666; }
         .lvl-bronze { background: #cd7f32; color: white; }
         .lvl-silver { background: #c0c0c0; color: #333; }
         .lvl-gold { background: #ffd700; color: #002147; }
         .lvl-diamond { background: #b9f2ff; color: #005f73; animation: glow 2s infinite; }
-        
         @keyframes glow { 0% { box-shadow: 0 0 5px #b9f2ff; } 50% { box-shadow: 0 0 15px #b9f2ff; } 100% { box-shadow: 0 0 5px #b9f2ff; } }
-        
         #broadcast-bar { background: #FFD700; color: #002147; padding: 12px; border-radius: 10px; margin-top: 50px; margin-bottom: 15px; font-weight: bold; border-left: 5px solid #002147; display: flex; justify-content: space-between; align-items: center; font-size: 14px; animation: pulse-alert 2s infinite; }
         @keyframes pulse-alert { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
-
         .leaderboard-section { margin-top: 30px; background: rgba(128,128,128,0.05); padding: 15px; border-radius: 15px; text-align: left; border: 1px solid rgba(0,0,0,0.1); }
         .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
         .rank-circle { width: 22px; height: 22px; background: var(--primary); color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; margin-right: 8px; font-weight: bold; }
-
         .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 25px 0; }
         .timetable-box, .study-advice { background: rgba(128, 128, 128, 0.05); border: 1px solid rgba(0,0,0,0.1); padding: 15px; border-radius: 12px; text-align: left; }
-        
         .chat-section { margin-top: 30px; background: rgba(0,0,0,0.03); padding: 20px; border-radius: 15px; text-align: left; }
         #chat-display { height: 180px; overflow-y: auto; background: var(--white); border-radius: 8px; padding: 10px; border: 1px solid rgba(0,0,0,0.1); font-size: 13px; }
-        
         .greeting-time { font-size: 14px; color: var(--info); font-weight: bold; margin-bottom: 5px; display: block; }
         footer { margin-top: 40px; font-size: 12px; opacity: 0.8; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.1); }
     </style>
@@ -71,7 +66,7 @@
             <div class="dropdown">
                 <button class="nav-btn" onclick="toggleDropdown()">☰ Menu</button>
                 <div id="myDropdown" class="dropdown-content">
-                    <button onclick="enterAdmin()" style="background: rgba(255, 215, 0, 0.1); color: #FFD700; border-left: 3px solid #FFD700;">⚙️ Admin Dashboard</button>
+                    <button onclick="enterAdmin()">⚙️ Admin Dashboard</button>
                     <button onclick="window.location.href='leaderboard.html'">🏆 View Leaderboard</button>
                     <button onclick="window.location.href='profile.html'">👤 My Profile</button>
                     <button onclick="window.location.href='pq.html'">📄 Past Questions</button>
@@ -91,6 +86,17 @@
         <div style="margin-top: 60px;">
             <span id="time-greeting" class="greeting-time">Good Day,</span>
             <h1 style="margin-top: 0; color: var(--primary);">BIU Archive Portal</h1>
+        </div>
+
+        <div id="ids-result-container" class="hidden">
+            <div class="ids-result-card">
+                <span id="ids-score" class="score-badge">0/20</span>
+                <h3 style="margin:0; color:var(--accent);">IDS 102 TEST RESULT</h3>
+                <p style="margin:5px 0 0 0; font-size:14px; opacity:0.9;">
+                    <span id="ids-name">Student Name</span><br>
+                    <small id="ids-matric">Matric Number</small>
+                </p>
+            </div>
         </div>
 
         <div class="leaderboard-section">
@@ -157,12 +163,37 @@
             if (hour < 12) greet = "Good Morning";
             else if (hour < 17) greet = "Good Afternoon";
             else if (hour < 21) greet = "Good Evening";
-            
             document.getElementById('time-greeting').innerText = `${greet}, ${name.split(' ')[0]} ✨`;
         }
         setGreeting();
 
-        // HEARTBEAT (Update status for Admin Feed every 30 seconds)
+        // IDS TEST RESULT FETCH (SPREADSHEET SYNC)
+        async function fetchIDSResult() {
+            const sheetId = '11Ka9v6t85uzJhW1WUGYM3AG8LKc1z2jl';
+            const base = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+            
+            try {
+                const response = await fetch(base);
+                const text = await response.text();
+                const json = JSON.parse(text.substr(47).slice(0, -2));
+                const rows = json.table.rows;
+                
+                // Search for the user by matric number
+                const studentData = rows.find(row => 
+                    row.c[1] && row.c[1].v.toString().toLowerCase() === userMatric.toLowerCase()
+                );
+
+                if (studentData) {
+                    document.getElementById('ids-result-container').classList.remove('hidden');
+                    document.getElementById('ids-name').innerText = studentData.c[0].v;
+                    document.getElementById('ids-matric').innerText = studentData.c[1].v;
+                    document.getElementById('ids-score').innerText = studentData.c[2].v + "/20";
+                }
+            } catch (e) { console.error("Result fetch error:", e); }
+        }
+        if(userMatric) fetchIDSResult();
+
+        // HEARTBEAT
         function updateStatus() {
             update(ref(db, `users/${userId}`), {
                 name: name,
@@ -173,30 +204,25 @@
         updateStatus();
         setInterval(updateStatus, 30000);
 
-        // BROADCAST LOGIC
+        // BROADCAST
         let currentAlertTimestamp = 0;
         onValue(ref(db, "broadcast"), (s) => {
             const d = s.val();
             const bar = document.getElementById('broadcast-bar');
-            const audio = document.getElementById('notif-sound');
-            
             if(d && d.message) {
                 if (d.timestamp > currentAlertTimestamp) {
                     currentAlertTimestamp = d.timestamp;
-                    audio.play().catch(e => {});
+                    document.getElementById('notif-sound').play().catch(e => {});
                 }
                 document.getElementById('live-broadcast-text').innerText = d.message;
                 bar.classList.remove('hidden');
-            } else {
-                bar.classList.add('hidden');
-            }
+            } else { bar.classList.add('hidden'); }
         });
 
         // MAINTENANCE & BAN
         onValue(ref(db, "maintenance_mode"), (snapshot) => {
             if (snapshot.val() === true) window.location.href = 'maintenance.html';
         });
-
         onValue(ref(db, `banned_users/${userId}`), (snapshot) => {
             if (snapshot.exists() && snapshot.val() === true) {
                 document.getElementById('ban-screen').classList.remove('hidden');
@@ -213,27 +239,21 @@
             if (streak >= 3) return { title: "Bronze", class: "lvl-bronze" };
             return { title: "Novice", class: "level-tag" };
         }
-
         function processStreak() {
             const today = new Date().toLocaleDateString();
             const lastDate = localStorage.getItem('biu_last_date');
             let streak = parseInt(localStorage.getItem('biu_streak') || 1);
-
             if (lastDate && lastDate !== today) {
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
                 if (lastDate === yesterday.toLocaleDateString()) streak++;
                 else streak = 1;
             }
-
             localStorage.setItem('biu_streak', streak);
             localStorage.setItem('biu_last_date', today);
-            
             const level = getLevelInfo(streak);
             document.getElementById('streak-count').innerText = streak;
             document.getElementById('user-level-tag').innerText = level.title;
             document.getElementById('user-level-tag').className = "level-tag " + level.class;
-
             update(ref(db, `users/${userId}`), { streak: streak });
         }
         processStreak();
@@ -261,7 +281,6 @@
                 i.value = "";
             }
         };
-
         onChildAdded(ref(db, "messages"), (s) => {
             const d = s.val();
             const disp = document.getElementById('chat-display');
@@ -278,7 +297,6 @@
             if(pass === "BIU2026") window.location.href = 'admin.html';
             else alert("Incorrect Code.");
         };
-
         window.toggleDropdown = () => document.getElementById("myDropdown").classList.toggle("show");
         window.toggleTheme = () => {
             const theme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
