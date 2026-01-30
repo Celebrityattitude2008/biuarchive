@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The BIU Archive | Student Portal</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
             --primary: #002147; --accent: #FFD700; --light: #f4f4f4;
@@ -18,7 +19,6 @@
         .container { background: var(--white); padding: 2.5rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 850px; text-align: center; position: relative; }
         .hidden { display: none !important; }
         
-        /* IDS Test Result Styling */
         .ids-result-card { background: linear-gradient(135deg, var(--primary), #003366); color: white; padding: 20px; border-radius: 12px; margin-top: 20px; text-align: left; border-left: 6px solid var(--accent); position: relative; overflow: hidden; }
         .ids-result-card::after { content: 'IDS'; position: absolute; right: -10px; bottom: -10px; font-size: 60px; font-weight: 900; opacity: 0.1; }
         .score-badge { background: var(--accent); color: var(--primary); padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 1.2rem; float: right; }
@@ -89,13 +89,46 @@
         </div>
 
         <div id="ids-result-container" class="hidden">
-            <div class="ids-result-card">
+            <div id="ids-card-to-export" class="ids-result-card">
                 <span id="ids-score" class="score-badge">0/20</span>
-                <h3 style="margin:0; color:var(--accent);">IDS 111 TEST RESULT</h3>
-                <p style="margin:5px 0 0 0; font-size:14px; opacity:0.9;">
-                    <span id="ids-name">Student Name</span><br>
-                    <small id="ids-matric">Matric Number</small>
-                </p>
+                <h3 style="margin:0; color:var(--accent);">IDS 111 TEST RESULT <span id="ids-grade" style="margin-left:10px; font-size: 0.8em; opacity: 0.8;"></span></h3>
+                
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 15px; margin-bottom: 15px;">
+                    <p style="margin:5px 0 0 0; font-size:14px; opacity:0.9;">
+                        <span id="ids-name" style="font-weight: bold; font-size: 16px;">Student Name</span><br>
+                        <small id="ids-matric">Matric Number</small>
+                    </p>
+                    
+                    <div style="display: flex; gap: 10px; font-size: 10px; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px;">
+                        <div style="text-align: center; border-right: 1px solid rgba(255,255,255,0.2); padding-right: 10px;">
+                            <div style="opacity: 0.7; text-transform: uppercase;">Class Avg</div>
+                            <div id="class-avg" style="font-weight: bold; font-size: 12px; color: var(--accent);">0.0</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="opacity: 0.7; text-transform: uppercase;">Highest</div>
+                            <div id="class-high" style="font-weight: bold; font-size: 12px; color: #00ff88;">0/20</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="togglePublicResults()" class="nav-btn" style="flex: 1; background: rgba(255,255,255,0.2); border: 1px dashed white;">📊 Class List</button>
+                    <button onclick="downloadResultPDF()" class="nav-btn" style="flex: 1; background: var(--success); border: none;">📥 My Result PDF</button>
+                </div>
+                
+                <div id="public-results-list" class="hidden" style="margin-top: 15px; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px;">
+                    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                        <input type="text" id="resultSearch" placeholder="Search..." onkeyup="filterResultsTable()"
+                               style="flex: 1; padding: 10px; border-radius: 5px; border: none; font-size: 12px; outline: none; background: white;">
+                        <button onclick="downloadAllResultsPDF()" title="Download Full List" 
+                                style="padding: 0 15px; border-radius: 5px; border: none; background: var(--info); color: white; cursor: pointer; font-size: 12px; font-weight: bold;">📥 All</button>
+                    </div>
+                    <div id="all-results-pdf-area" style="max-height: 250px; overflow-y: auto; font-size: 12px; background: rgba(255,255,255,0.05); border-radius: 5px; padding: 5px;">
+                        <table style="width: 100%; border-collapse: collapse;" id="resultsTable">
+                            <tbody id="public-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -156,6 +189,42 @@
             window.location.href = 'login.html'; 
         }
 
+        // IDS HELPERS
+        function getGrade(score) {
+            const p = (score / 20) * 100;
+            if (p >= 70) return { l: 'A', c: '#00ff88' };
+            if (p >= 60) return { l: 'B', c: '#ccff00' };
+            if (p >= 50) return { l: 'C', c: '#ffd700' };
+            if (p >= 45) return { l: 'D', c: '#ff9900' };
+            if (p >= 40) return { l: 'E', c: '#ff6600' };
+            return { l: 'F', c: '#ff4444' };
+        }
+        function maskName(name) {
+            return name.split(' ').map(n => n[0] + '*'.repeat(n.length > 1 ? n.length - 1 : 0)).join(' ');
+        }
+        window.togglePublicResults = () => document.getElementById('public-results-list').classList.toggle('hidden');
+        
+        window.downloadResultPDF = () => {
+            const element = document.getElementById('ids-card-to-export');
+            const opt = { margin: 0.5, filename: 'My-IDS111-Result.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
+            html2pdf().set(opt).from(element).save();
+        };
+
+        window.downloadAllResultsPDF = () => {
+            const element = document.getElementById('all-results-pdf-area');
+            const opt = { margin: 0.2, filename: 'IDS111-Class-Results.pdf', html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } };
+            html2pdf().set(opt).from(element).save();
+        };
+
+        window.filterResultsTable = () => {
+            const filter = document.getElementById("resultSearch").value.toUpperCase();
+            const rows = document.getElementById("public-table-body").getElementsByTagName("tr");
+            for (let i = 0; i < rows.length; i++) {
+                const td = rows[i].getElementsByTagName("td")[0];
+                if (td) rows[i].style.display = td.innerText.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+            }
+        };
+
         // GREETING LOGIC
         function setGreeting() {
             const hour = new Date().getHours();
@@ -167,62 +236,63 @@
         }
         setGreeting();
 
-        // IDS TEST RESULT FETCH (SPREADSHEET SYNC)
+        // IDS TEST RESULT FETCH
         async function fetchIDSResult() {
             const sheetId = '11Ka9v6t85uzJhW1WUGYM3AG8LKc1z2jl';
             const base = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
-            
             try {
                 const response = await fetch(base);
                 const text = await response.text();
                 const json = JSON.parse(text.substr(47).slice(0, -2));
                 const rows = json.table.rows;
-                
-                // Search for the user by matric number
-                const studentData = rows.find(row => 
-                    row.c[1] && row.c[1].v.toString().toLowerCase() === userMatric.toLowerCase()
-                );
+                let total = 0, high = 0, count = 0, myRow = null, tableHTML = '';
 
-                if (studentData) {
+                rows.forEach(row => {
+                    if (row.c[2] && row.c[2].v !== null) {
+                        const score = parseFloat(row.c[2].v);
+                        const grade = getGrade(score);
+                        total += score; count++;
+                        if (score > high) high = score;
+
+                        tableHTML += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: white;">
+                            <td style="padding: 10px 5px;">${maskName(row.c[0].v)}</td>
+                            <td style="font-weight:bold;">${score}/20</td>
+                            <td style="color: ${grade.c}; font-weight: bold;">${grade.l}</td>
+                        </tr>`;
+
+                        if (row.c[1] && row.c[1].v.toString().toLowerCase() === userMatric.toLowerCase()) myRow = row;
+                    }
+                });
+
+                document.getElementById('public-table-body').innerHTML = tableHTML;
+                document.getElementById('class-avg').innerText = (total / count).toFixed(1);
+                document.getElementById('class-high').innerText = high + "/20";
+
+                if (myRow) {
                     document.getElementById('ids-result-container').classList.remove('hidden');
-                    document.getElementById('ids-name').innerText = studentData.c[0].v;
-                    document.getElementById('ids-matric').innerText = studentData.c[1].v;
-                    document.getElementById('ids-score').innerText = studentData.c[2].v + "/20";
+                    document.getElementById('ids-name').innerText = myRow.c[0].v;
+                    document.getElementById('ids-matric').innerText = myRow.c[1].v;
+                    document.getElementById('ids-score').innerText = myRow.c[2].v + "/20";
+                    const g = getGrade(myRow.c[2].v);
+                    document.getElementById('ids-grade').innerText = `[GRADE: ${g.l}]`;
+                    document.getElementById('ids-grade').style.color = g.c;
                 }
-            } catch (e) { console.error("Result fetch error:", e); }
+            } catch (e) { console.error(e); }
         }
         if(userMatric) fetchIDSResult();
 
-        // HEARTBEAT
-        function updateStatus() {
-            update(ref(db, `users/${userId}`), {
-                name: name,
-                matric: userMatric || "Unknown",
-                lastActive: serverTimestamp()
-            });
-        }
-        updateStatus();
-        setInterval(updateStatus, 30000);
+        function updateStatus() { update(ref(db, `users/${userId}`), { name, matric: userMatric || "Unknown", lastActive: serverTimestamp() }); }
+        updateStatus(); setInterval(updateStatus, 30000);
 
-        // BROADCAST
-        let currentAlertTimestamp = 0;
         onValue(ref(db, "broadcast"), (s) => {
-            const d = s.val();
-            const bar = document.getElementById('broadcast-bar');
-            if(d && d.message) {
-                if (d.timestamp > currentAlertTimestamp) {
-                    currentAlertTimestamp = d.timestamp;
-                    document.getElementById('notif-sound').play().catch(e => {});
-                }
-                document.getElementById('live-broadcast-text').innerText = d.message;
-                bar.classList.remove('hidden');
-            } else { bar.classList.add('hidden'); }
+            const d = s.val(); const bar = document.getElementById('broadcast-bar');
+            if(d && d.message) { 
+                document.getElementById('live-broadcast-text').innerText = d.message; 
+                bar.classList.remove('hidden'); 
+            } else bar.classList.add('hidden');
         });
 
-        // MAINTENANCE & BAN
-        onValue(ref(db, "maintenance_mode"), (snapshot) => {
-            if (snapshot.val() === true) window.location.href = 'maintenance.html';
-        });
+        onValue(ref(db, "maintenance_mode"), (snapshot) => { if (snapshot.val() === true) window.location.href = 'maintenance.html'; });
         onValue(ref(db, `banned_users/${userId}`), (snapshot) => {
             if (snapshot.exists() && snapshot.val() === true) {
                 document.getElementById('ban-screen').classList.remove('hidden');
@@ -231,7 +301,6 @@
             }
         });
 
-        // STREAK LOGIC
         function getLevelInfo(streak) {
             if (streak >= 30) return { title: "Diamond", class: "lvl-diamond" };
             if (streak >= 15) return { title: "Gold", class: "lvl-gold" };
@@ -245,63 +314,42 @@
             let streak = parseInt(localStorage.getItem('biu_streak') || 1);
             if (lastDate && lastDate !== today) {
                 const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-                if (lastDate === yesterday.toLocaleDateString()) streak++;
-                else streak = 1;
+                if (lastDate === yesterday.toLocaleDateString()) streak++; else streak = 1;
             }
-            localStorage.setItem('biu_streak', streak);
-            localStorage.setItem('biu_last_date', today);
+            localStorage.setItem('biu_streak', streak); localStorage.setItem('biu_last_date', today);
             const level = getLevelInfo(streak);
             document.getElementById('streak-count').innerText = streak;
             document.getElementById('user-level-tag').innerText = level.title;
             document.getElementById('user-level-tag').className = "level-tag " + level.class;
-            update(ref(db, `users/${userId}`), { streak: streak });
+            update(ref(db, `users/${userId}`), { streak });
         }
         processStreak();
 
-        // LEADERBOARD
         onValue(ref(db, "users"), (snapshot) => {
-            const data = snapshot.val();
-            if (!data) return;
+            const data = snapshot.val(); if (!data) return;
             const sorted = Object.values(data).sort((a,b) => (b.streak||0) - (a.streak||0)).slice(0, 5);
-            const list = document.getElementById('leaderboard-list');
-            list.innerHTML = sorted.map((u, i) => {
+            document.getElementById('leaderboard-list').innerHTML = sorted.map((u, i) => {
                 const lvl = getLevelInfo(u.streak || 1);
-                return `<div class="leaderboard-item">
-                    <span><span class="rank-circle">${i+1}</span><strong>${u.name}</strong> <span class="level-tag ${lvl.class}">${lvl.title}</span></span>
-                    <span>🔥 ${u.streak || 1}</span>
-                </div>`;
+                return `<div class="leaderboard-item"><span><span class="rank-circle">${i+1}</span><strong>${u.name}</strong> <span class="level-tag ${lvl.class}">${lvl.title}</span></span><span>🔥 ${u.streak || 1}</span></div>`;
             }).join('');
         });
 
-        // CHAT
         window.sendChat = function() {
             const i = document.getElementById('chat-msg');
-            if (i.value.trim()) {
-                push(ref(db, "messages"), { sender: name.split(' ')[0], message: i.value, timestamp: serverTimestamp() });
-                i.value = "";
-            }
+            if (i.value.trim()) { push(ref(db, "messages"), { sender: name.split(' ')[0], message: i.value, timestamp: serverTimestamp() }); i.value = ""; }
         };
         onChildAdded(ref(db, "messages"), (s) => {
-            const d = s.val();
-            const disp = document.getElementById('chat-display');
+            const d = s.val(); const disp = document.getElementById('chat-display');
             if (disp.innerHTML.includes('Connecting')) disp.innerHTML = '';
-            const msgDiv = document.createElement('div');
-            msgDiv.innerHTML = `<strong>${d.sender}:</strong> ${d.message}`;
-            disp.appendChild(msgDiv);
-            disp.scrollTop = disp.scrollHeight;
+            const msgDiv = document.createElement('div'); msgDiv.innerHTML = `<strong>${d.sender}:</strong> ${d.message}`;
+            disp.appendChild(msgDiv); disp.scrollTop = disp.scrollHeight;
         });
 
-        // UTILS
-        window.enterAdmin = () => {
-            const pass = prompt("Enter Admin Access Code:");
-            if(pass === "BIU2026") window.location.href = 'admin.html';
-            else alert("Incorrect Code.");
-        };
+        window.enterAdmin = () => { const pass = prompt("Admin Code:"); if(pass === "BIU2026") window.location.href = 'admin.html'; else alert("Incorrect."); };
         window.toggleDropdown = () => document.getElementById("myDropdown").classList.toggle("show");
         window.toggleTheme = () => {
             const theme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            document.body.setAttribute('data-theme', theme);
-            localStorage.setItem('theme', theme);
+            document.body.setAttribute('data-theme', theme); localStorage.setItem('theme', theme);
         };
         window.logout = () => { localStorage.clear(); window.location.href = 'login.html'; };
         window.contactAdmin = () => window.location.href = "mailto:pauladamu600@gmail.com";
