@@ -2,64 +2,182 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>My Profile | The BIU Archive</title>
     <style>
         :root {
-            --primary: #002147; --accent: #FFD700; --bg: #f4f4f4;
-            --white: #ffffff; --text: #333; --success: #28a745; --danger: #dc3545;
+            --primary: #002147; 
+            --accent: #FFD700; 
+            --bg: #f8f9fa;
+            --white: #ffffff; 
+            --text: #333; 
+            --success: #28a745; 
+            --danger: #dc3545;
+            --radius: 20px;
+            --shadow: 0 10px 30px rgba(0,0,0,0.08);
         }
 
         [data-theme="dark"] {
-            --primary: #FFD700; --accent: #002147; --bg: #0a0a0a;
-            --white: #1a1a1a; --text: #f4f4f4;
+            --primary: #FFD700; 
+            --accent: #002147; 
+            --bg: #121212;
+            --white: #1e1e1e; 
+            --text: #f4f4f4;
+            --shadow: 0 10px 30px rgba(0,0,0,0.4);
         }
 
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; transition: 0.3s; }
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            padding: 15px; 
+            transition: 0.3s; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
         
-        .profile-container { max-width: 500px; margin: 40px auto; background: var(--white); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
+        .profile-container { 
+            width: 100%;
+            max-width: 450px; 
+            background: var(--white); 
+            padding: 40px 25px; 
+            border-radius: var(--radius); 
+            box-shadow: var(--shadow); 
+            text-align: center; 
+            box-sizing: border-box;
+            position: relative;
+        }
         
-        .avatar { width: 80px; height: 80px; background: var(--primary); color: var(--white); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: bold; margin: 0 auto 15px; border: 4px solid var(--accent); }
+        /* AVATAR STYLE */
+        .avatar { 
+            width: 90px; 
+            height: 90px; 
+            background: linear-gradient(135deg, var(--primary), #004080); 
+            color: var(--white); 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 36px; 
+            font-weight: 800; 
+            margin: 0 auto 20px; 
+            border: 4px solid var(--accent); 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
         
-        .info-card { background: rgba(128,128,128,0.05); padding: 15px; border-radius: 12px; margin: 10px 0; text-align: left; border-left: 5px solid var(--primary); }
+        .info-card { 
+            background: rgba(128,128,128,0.04); 
+            padding: 16px; 
+            border-radius: 14px; 
+            margin: 12px 0; 
+            text-align: left; 
+            border-left: 5px solid var(--primary); 
+            transition: transform 0.2s;
+        }
         
-        .status-badge { display: inline-block; padding: 6px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; margin-top: 10px; }
-        .verified { background: var(--success); color: white; }
-        .unverified { background: #666; color: white; }
+        .status-badge { 
+            display: inline-block; 
+            padding: 8px 18px; 
+            border-radius: 25px; 
+            font-weight: 800; 
+            font-size: 13px; 
+            margin-top: 5px; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .verified { 
+            background: var(--success); 
+            color: white; 
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+        .unverified { 
+            background: #666; 
+            color: white; 
+            opacity: 0.8;
+        }
 
-        .btn-action { width: 100%; padding: 12px; margin-top: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-logout { background: #333; color: white; }
-        .btn-back { background: var(--primary); color: var(--white); }
+        /* BUTTONS */
+        .btn-action { 
+            width: 100%; 
+            padding: 15px; 
+            margin-top: 15px; 
+            border-radius: 12px; 
+            border: none; 
+            font-weight: 800; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            font-size: 15px;
+        }
+        .btn-logout { 
+            background: #f0f0f0; 
+            color: #333; 
+        }
+        [data-theme="dark"] .btn-logout {
+            background: #333;
+            color: white;
+        }
+        .btn-back { 
+            background: var(--primary); 
+            color: var(--white); 
+            box-shadow: 0 4px 15px rgba(0, 33, 71, 0.2);
+        }
+        .btn-action:active { transform: scale(0.97); }
         
-        .nav-links { margin-top: 20px; font-size: 14px; }
-        .nav-links a { color: var(--primary); text-decoration: none; font-weight: bold; }
+        .nav-links { margin-top: 25px; font-size: 14px; }
+        .nav-links a { 
+            color: var(--primary); 
+            text-decoration: none; 
+            font-weight: bold; 
+            opacity: 0.7;
+            transition: 0.2s;
+        }
+        .nav-links a:hover { opacity: 1; }
+
+        /* MOBILE SPECIFIC */
+        @media (max-width: 400px) {
+            .profile-container { padding: 30px 20px; }
+            .avatar { width: 75px; height: 75px; font-size: 30px; }
+            h2 { font-size: 1.4rem; }
+        }
     </style>
 </head>
 <body>
 
     <div class="profile-container">
         <div class="avatar" id="user-initial">?</div>
-        <h2 id="user-name" style="margin: 0;">Student Name</h2>
-        <p id="user-dept" style="opacity: 0.7; margin: 5px 0;">Department</p>
+        <h2 id="user-name" style="margin: 0; font-weight: 800; color: var(--primary);">Student Name</h2>
+        <p id="user-dept" style="opacity: 0.6; margin: 5px 0; font-weight: 600;">Department</p>
         
-        <div id="status-area">
+        <div id="status-area" style="margin-bottom: 20px;">
             <span class="status-badge unverified">Checking Status...</span>
         </div>
 
         <div class="info-card">
-            <strong>Matric Number:</strong> <span id="display-matric">Loading...</span>
+            <div style="font-size: 11px; text-transform: uppercase; opacity: 0.5; font-weight: 800; margin-bottom: 4px;">Matric Number</div>
+            <strong id="display-matric" style="font-size: 16px;">Loading...</strong>
         </div>
 
         <div class="info-card">
-            <strong>Account ID:</strong> <small id="display-id" style="font-family: monospace;">Loading...</small>
+            <div style="font-size: 11px; text-transform: uppercase; opacity: 0.5; font-weight: 800; margin-bottom: 4px;">Account ID</div>
+            <small id="display-id" style="font-family: monospace; font-size: 13px;">Loading...</small>
         </div>
 
-        <button class="btn-action btn-back" onclick="window.location.href='index.html'">Go to Vault</button>
-        <button class="btn-action btn-logout" onclick="logout()">Log Out</button>
+        <div style="margin-top: 30px;">
+            <button class="btn-action btn-back" onclick="window.location.href='index.html'">Go to Vault</button>
+            <button class="btn-action btn-logout" onclick="logout()">Log Out</button>
+        </div>
 
         <div class="nav-links">
             <a href="index.html">← Return to Archive</a>
         </div>
+        
+        <footer style="margin-top: 30px; font-size: 10px; opacity: 0.4; letter-spacing: 1px; font-weight: bold;">
+            BIU STUDENT ARCHIVE 2026
+        </footer>
     </div>
 
     <script type="module">
@@ -79,9 +197,8 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Load Theme
         if (localStorage.getItem('theme') === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
+            document.body.setAttribute('data-theme', 'dark');
         }
 
         const name = localStorage.getItem('biu_user_name');
@@ -98,7 +215,6 @@
             document.getElementById('display-id').innerText = userId;
             document.getElementById('user-initial').innerText = name.charAt(0).toUpperCase();
 
-            // 1. REAL-TIME PAYMENT CHECK
             onValue(ref(db, "paid_users/" + userId), (snapshot) => {
                 const statusArea = document.getElementById('status-area');
                 if (snapshot.exists() && snapshot.val() === true) {
@@ -108,7 +224,6 @@
                 }
             });
 
-            // 2. REAL-TIME BAN CHECK (In case they are banned while on profile page)
             onValue(ref(db, "banned_users/" + userId), (snapshot) => {
                 if (snapshot.exists()) {
                     localStorage.clear();

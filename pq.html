@@ -2,43 +2,165 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Past Questions | BIU Archive</title>
     <style>
         :root {
-            --primary: #002147; --accent: #FFD700; --light: #f4f4f4;
-            --white: #ffffff; --text: #333; --success: #28a745; --info: #17a2b8;
+            --primary: #002147; 
+            --accent: #FFD700; 
+            --light: #f8f9fa;
+            --white: #ffffff; 
+            --text: #333; 
+            --success: #28a745; 
+            --info: #17a2b8;
+            --radius: 16px;
         }
         [data-theme="dark"] {
-            --primary: #FFD700; --accent: #002147; --light: #121212;
-            --white: #1e1e1e; --text: #f4f4f4;
+            --primary: #FFD700; 
+            --accent: #002147; 
+            --light: #121212;
+            --white: #1e1e1e; 
+            --text: #f4f4f4;
         }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--light); color: var(--text); margin: 0; display: flex; justify-content: center; padding: 20px; transition: 0.3s; }
-        .container { background: var(--white); padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 850px; text-align: center; position: relative; }
+        body { 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            background-color: var(--light); 
+            color: var(--text); 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            padding: 15px; 
+            transition: 0.3s; 
+            min-height: 100vh;
+        }
+        .container { 
+            background: var(--white); 
+            padding: 2rem; 
+            border-radius: var(--radius); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
+            width: 100%; 
+            max-width: 850px; 
+            text-align: center; 
+            position: relative; 
+            box-sizing: border-box;
+        }
         .hidden { display: none !important; }
         
-        .top-nav { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 10; }
-        .nav-btn { padding: 8px 12px; border-radius: 20px; border: none; cursor: pointer; font-size: 11px; font-weight: bold; background: var(--primary); color: var(--white); transition: 0.2s; }
+        /* NAVIGATION */
+        .top-nav { 
+            position: absolute; 
+            top: 20px; 
+            right: 20px; 
+            display: flex; 
+            gap: 10px; 
+            z-index: 10; 
+        }
+        .nav-btn { 
+            padding: 10px 15px; 
+            border-radius: 12px; 
+            border: none; 
+            cursor: pointer; 
+            font-size: 12px; 
+            font-weight: 800; 
+            background: var(--primary); 
+            color: var(--white); 
+            transition: 0.2s; 
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .nav-btn:active { transform: scale(0.95); }
         
-        /* SEARCH BAR STYLE */
-        .search-container { margin: 20px 0 10px 0; width: 100%; }
-        #courseSearch { width: 100%; padding: 12px 15px; border-radius: 10px; border: 1.5px solid var(--primary); background: var(--white); color: var(--text); font-size: 14px; box-sizing: border-box; outline: none; }
+        /* SEARCH BAR */
+        .search-container { margin: 30px 0 15px 0; width: 100%; }
+        #courseSearch { 
+            width: 100%; 
+            padding: 15px 20px; 
+            border-radius: 12px; 
+            border: 1.5px solid rgba(0,0,0,0.1); 
+            background: var(--light); 
+            color: var(--text); 
+            font-size: 16px; 
+            box-sizing: border-box; 
+            outline: none; 
+            transition: 0.3s;
+        }
+        #courseSearch:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 33, 71, 0.1); }
 
-        .tab-container { display: flex; justify-content: center; gap: 8px; margin: 10px 0 20px 0; flex-wrap: wrap; }
-        .tab-btn { background: rgba(0,0,0,0.05); padding: 8px 16px; border-radius: 20px; border: none; cursor: pointer; font-size: 13px; color: var(--text); }
-        .tab-btn.active { background: var(--primary); color: var(--white); font-weight: bold; }
+        /* TABS */
+        .tab-container { 
+            display: flex; 
+            justify-content: center; 
+            gap: 8px; 
+            margin: 10px 0 25px 0; 
+            overflow-x: auto; 
+            padding-bottom: 5px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .tab-btn { 
+            background: rgba(0,0,0,0.05); 
+            padding: 10px 20px; 
+            border-radius: 25px; 
+            border: none; 
+            cursor: pointer; 
+            font-size: 13px; 
+            color: var(--text); 
+            white-space: nowrap;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        .tab-btn.active { background: var(--primary); color: var(--white); }
 
-        .course-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-top: 20px; }
-        .course-card { border: 1.5px solid var(--primary); padding: 18px; border-radius: 12px; text-align: left; background: var(--white); transition: 0.3s; position: relative; }
-        .course-card h3 { margin: 0; font-size: 1.1rem; }
-        .download-btn { width: 100%; padding: 10px; background: var(--primary); color: var(--white); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 12px; }
+        /* GRID & CARDS */
+        .course-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+            gap: 15px; 
+            margin-top: 20px; 
+        }
+        .course-card { 
+            border: 1px solid rgba(0,0,0,0.05); 
+            padding: 20px; 
+            border-radius: 14px; 
+            text-align: left; 
+            background: var(--light); 
+            transition: 0.3s; 
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .course-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .course-card h3 { margin: 0; font-size: 1.1rem; font-weight: 800; color: var(--primary); }
+        .course-card p { margin: 5px 0; font-size: 0.9rem; opacity: 0.7; font-weight: 600; }
+        
+        .download-btn { 
+            width: 100%; 
+            padding: 12px; 
+            background: var(--primary); 
+            color: var(--white); 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: 800; 
+            margin-top: 15px; 
+            font-size: 13px;
+        }
 
-        #toast { visibility: hidden; min-width: 250px; background: var(--primary); color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border-bottom: 4px solid var(--accent); }
+        /* TOAST */
+        #toast { visibility: hidden; min-width: 250px; background: var(--primary); color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-bottom: 4px solid var(--accent); font-weight: bold; }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
         
-        footer { margin-top: 40px; font-size: 12px; opacity: 0.8; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 20px; }
+        footer { margin-top: 50px; font-size: 11px; opacity: 0.5; letter-spacing: 1px; font-weight: bold; text-transform: uppercase; }
+
+        @media (max-width: 480px) {
+            .container { padding: 1.5rem; border-radius: 0; }
+            .top-nav { position: relative; top: 0; right: 0; margin-bottom: 20px; justify-content: center; }
+            h1 { font-size: 1.5rem !important; margin-top: 10px !important; }
+            .course-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -50,11 +172,11 @@
             <button class="nav-btn" onclick="toggleTheme()">🌓 Theme</button>
         </div>
 
-        <h1 style="margin-top: 50px;">Past Questions Bank</h1>
-        <p>Accessing as: <span id="display-name" style="color:var(--info); font-weight:bold;"></span></p>
+        <h1 style="margin-top: 50px; font-weight: 900;">PQ Bank</h1>
+        <p style="font-weight: 600; opacity: 0.8;">Scholar: <span id="display-name" style="color:var(--info);">...</span></p>
 
         <div class="search-container">
-            <input type="text" id="courseSearch" placeholder="🔍 Search course code or name (e.g. GST 111)..." onkeyup="filterCourses()">
+            <input type="text" id="courseSearch" placeholder="Search course code..." onkeyup="filterCourses()">
         </div>
 
         <div class="tab-container">
@@ -66,64 +188,66 @@
 
         <div class="course-grid" id="course-list">
             <div class="course-card cat-gst">
-                <h3>GST 111</h3><p>Communication English</p>
+                <div>
+                    <h3>GST 111</h3><p>Communication English</p>
+                </div>
                 <button class="download-btn" onclick="handleDownload('GST 111','https://docs.google.com/document/d/1cICV9V2Wtywaofp_1cA84ItLXu-vve-p/edit')">View PQ</button>
             </div>
             <div class="course-card cat-gst">
-                <h3>GST 112</h3><p>People and Culture</p>
+                <div>
+                    <h3>GST 112</h3><p>People and Culture</p>
+                </div>
                 <button class="download-btn" onclick="handleDownload('GST 112','https://drive.google.com/file/d/1o290W5ofDBxyoik0WC-y-VdjyHUqylJN/view')">View PQ</button>
             </div>
             <div class="course-card cat-gst">
-                <h3>IDS 111</h3><p>Rudiments of Faith</p>
+                <div>
+                    <h3>IDS 111</h3><p>Rudiments of Faith</p>
+                </div>
                 <button class="download-btn" onclick="handleDownload('IDS 111','https://docs.google.com/document/d/1dYTcgJQBICb8L5ZNvX4z_nb6H2d7Pd_M/edit')">View PQ</button>
             </div>
-
             <div class="course-card cat-sci">
-                <h3>MTH 111</h3><p>General Mathematics</p>
+                <div>
+                    <h3>MTH 111</h3><p>General Mathematics</p>
+                </div>
                 <button class="download-btn" onclick="handleDownload('MTH 111','https://docs.google.com/document/d/1IHjwn7HRnlUoypBEOJL2-k_u0ptZ8GEq/edit')">View PQ</button>
             </div>
-            <div class="course-card cat-sci dept-eng hidden">
-                <h3>MTH 112</h3><p>Elementary Statistics (ENG)</p>
+            <div class="course-card cat-sci">
+                <div>
+                    <h3>MTH 112</h3><p>Elementary Statistics</p>
+                </div>
                 <button class="download-btn" onclick="handleDownload('MTH 112','https://docs.google.com/document/d/1IHjwn7HRnlUoypBEOJL2-k_u0ptZ8GEq/edit')">View PQ</button>
             </div>
-            <div class="course-card cat-sci dept-med hidden">
-                <h3>CHM 111</h3><p>General Chemistry I</p>
+            <div class="course-card cat-sci">
+                <div>
+                    <h3>CHM 111</h3><p>General Chemistry I</p>
+                </div>
                 <button class="download-btn" onclick="handleDownload('CHM 111','https://drive.google.com/file/d/1w8e61Q8bRlr3mnwR_ELex5n-tTeOsi8k/view')">View PQ</button>
             </div>
-
-            <div class="course-card cat-dept dept-csc hidden">
-                <h3>CSC 111</h3><p>Intro to Computer Science</p>
+            <div class="course-card cat-dept">
+                <div>
+                    <h3>CSC 111</h3><p>Intro to Computer Science</p>
+                </div>
                 <button class="download-btn" onclick="handleDownload('CSC 111','https://docs.google.com/document/d/1tGh6b6NQTMQoF_IpiMb6HY-xQ5HrsPyf/view')">View PQ</button>
             </div>
         </div>
 
         <footer>
-            <strong>The BIU Archive</strong><br>
-            Past Questions Repository
+            The BIU Archive &copy; 2026
         </footer>
     </div>
 
     <script>
         const name = localStorage.getItem('biu_user_name');
-        const dept = localStorage.getItem('biu_user_dept');
         let currentCategory = 'all';
 
         if(!name) { window.location.href = 'login.html'; }
         document.getElementById('display-name').innerText = name;
 
-        function applyAccess(userDept) {
-            if (userDept === 'ENG') {
-                document.querySelectorAll('.dept-eng').forEach(el => el.classList.remove('hidden'));
-                document.querySelectorAll('.dept-csc').forEach(el => el.classList.remove('hidden'));
-            }
-            if (userDept === 'Nursing' || userDept === 'MLS') {
-                document.querySelectorAll('.dept-med').forEach(el => el.classList.remove('hidden'));
-            }
-            if (userDept === 'CSC') {
-                document.querySelectorAll('.dept-csc').forEach(el => el.classList.remove('hidden'));
-            }
+        // ALL PQ'S OPEN FOR EVERYONE: REMOVED HIDDEN CLASS LOGIC
+        function applyAccess() {
+            document.querySelectorAll('.course-card').forEach(el => el.classList.remove('hidden'));
         }
-        applyAccess(dept);
+        applyAccess();
 
         window.handleDownload = function(t, u) { 
             const toast = document.getElementById('toast');
@@ -137,12 +261,11 @@
             document.querySelectorAll('.course-card').forEach(card => {
                 const title = card.querySelector('h3').innerText.toLowerCase();
                 const desc = card.querySelector('p').innerText.toLowerCase();
-                const isHiddenByDept = card.classList.contains('hidden');
                 const matchesCategory = (currentCategory === 'all' || card.classList.contains(currentCategory));
                 const matchesSearch = title.includes(query) || desc.includes(query);
 
-                if (!isHiddenByDept && matchesCategory && matchesSearch) {
-                    card.style.display = 'block';
+                if (matchesCategory && matchesSearch) {
+                    card.style.display = 'flex';
                 } else {
                     card.style.display = 'none';
                 }
@@ -160,7 +283,10 @@
             const body = document.body;
             const current = body.getAttribute('data-theme');
             body.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+            localStorage.setItem('theme', current === 'dark' ? 'light' : 'dark');
         };
+        
+        if (localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
     </script>
 </body>
 </html>
