@@ -59,7 +59,6 @@
         .hidden { display: none !important; }
         .show { display: block !important; }
 
-        /* NAVIGATION & MENU */
         .top-nav { 
             position: absolute; 
             top: 20px; 
@@ -113,7 +112,6 @@
         }
         .dropdown-content button:hover { background-color: #333; }
 
-        /* BADGES & TAGS */
         .streak-badge { 
             background: linear-gradient(135deg, #ff9d00, #ff5e00); 
             color: white; 
@@ -127,16 +125,8 @@
             box-shadow: 0 4px 10px rgba(255,157,0,0.2);
         }
         .level-tag { font-size: 10px; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; font-weight: bold; margin-left: 5px; background: #eee; color: #666; }
-        .lvl-bronze { background: #cd7f32; color: white; }
-        .lvl-silver { background: #c0c0c0; color: #333; }
-        .lvl-gold { background: #ffd700; color: #002147; }
-        .lvl-diamond { background: #b9f2ff; color: #005f73; animation: glow 2s infinite; }
-        @keyframes glow { 0% { box-shadow: 0 0 5px #b9f2ff; } 50% { box-shadow: 0 0 15px #b9f2ff; } 100% { box-shadow: 0 0 5px #b9f2ff; } }
-
-        /* Blue Tick Badge Style */
         .blue-tick { color: var(--blue-tick); font-size: 14px; margin-left: 4px; vertical-align: middle; }
 
-        /* BROADCAST BAR */
         #broadcast-bar { 
             background: var(--accent); 
             color: #002147; 
@@ -166,13 +156,9 @@
             position: relative; 
             overflow: hidden; 
         }
-        .ids-result-card::after { content: 'IDS'; position: absolute; right: -10px; bottom: -10px; font-size: 60px; font-weight: 900; opacity: 0.1; }
         .score-badge { background: var(--accent); color: var(--primary); padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 1.2rem; float: right; }
 
         .leaderboard-section { margin-top: 30px; background: rgba(128,128,128,0.05); padding: 20px; border-radius: 15px; text-align: left; border: 1px solid rgba(0,0,0,0.05); }
-        .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .rank-circle { width: 24px; height: 24px; background: var(--primary); color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; margin-right: 10px; font-weight: bold; }
-
         .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 25px 0; }
         .timetable-box, .study-advice { background: rgba(128, 128, 128, 0.05); border: 1px solid rgba(0,0,0,0.05); padding: 20px; border-radius: 15px; text-align: left; }
 
@@ -189,10 +175,8 @@
             .container { padding: 1.2rem; margin-top: 10px; }
             .top-nav { width: calc(100% - 40px); justify-content: space-between; top: 15px; }
             .ids-result-card { padding: 15px; }
-            .score-badge { float: none; display: inline-block; margin-bottom: 10px; }
             .info-grid { grid-template-columns: 1fr; }
             h1 { font-size: 1.6rem !important; }
-            #broadcast-bar { flex-direction: column; gap: 10px; text-align: center; font-size: 12px; }
         }
     </style>
 </head>
@@ -212,6 +196,7 @@
                 <button class="nav-btn" onclick="toggleDropdown()">☰ Menu</button>
                 <div id="myDropdown" class="dropdown-content">
                     <button onclick="enterAdmin()">⚙️ Admin Dashboard</button>
+                    <button onclick="enterMod()" style="background: #2a2a2a; border-left: 4px solid var(--accent);">🛡️ Moderator Panel</button>
                     <button onclick="window.location.href='leaderboard.html'">🏆 View Leaderboard</button>
                     <button onclick="window.location.href='profile.html'">👤 My Profile</button>
                     <button style="color: var(--blue-tick); font-weight: bold;" onclick="requestVerification()">💎 Request Blue Badge</button>
@@ -238,13 +223,11 @@
             <div id="ids-card-to-export" class="ids-result-card">
                 <span id="ids-score" class="score-badge">0/20</span>
                 <h3 style="margin:0; color:var(--accent);">IDS 111 TEST RESULT <span id="ids-grade" style="margin-left:10px; font-size: 0.8em; opacity: 0.8;"></span></h3>
-                
                 <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 15px; margin-bottom: 15px;">
                     <p style="margin:5px 0 0 0; font-size:14px; opacity:0.9;">
                         <span id="ids-name" style="font-weight: bold; font-size: 16px;">Student Name</span><br>
                         <small id="ids-matric">Matric Number</small>
                     </p>
-                    
                     <div style="display: flex; gap: 10px; font-size: 10px; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px;">
                         <div style="text-align: center; border-right: 1px solid rgba(255,255,255,0.2); padding-right: 10px;">
                             <div style="opacity: 0.7; text-transform: uppercase;">Class Avg</div>
@@ -256,33 +239,16 @@
                         </div>
                     </div>
                 </div>
-
                 <div style="display: flex; gap: 10px;">
                     <button onclick="togglePublicResults()" class="nav-btn" style="flex: 1; background: rgba(255,255,255,0.2); border: 1px dashed white;">📊 Class List</button>
                     <button onclick="downloadResultPDF()" class="nav-btn" style="flex: 1; background: var(--success); border: none;">📥 My Result PDF</button>
-                </div>
-                
-                <div id="public-results-list" class="hidden" style="margin-top: 15px; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px;">
-                    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                        <input type="text" id="resultSearch" placeholder="Search..." onkeyup="filterResultsTable()"
-                               style="flex: 1; padding: 10px; border-radius: 5px; border: none; font-size: 12px; outline: none; background: white;">
-                        <button onclick="downloadAllResultsPDF()" title="Download Full List" 
-                                style="padding: 0 15px; border-radius: 5px; border: none; background: var(--info); color: white; cursor: pointer; font-size: 12px; font-weight: bold;">📥 All</button>
-                    </div>
-                    <div id="all-results-pdf-area" style="max-height: 250px; overflow-y: auto; font-size: 12px; background: rgba(255,255,255,0.05); border-radius: 5px; padding: 5px;">
-                        <table style="width: 100%; border-collapse: collapse;" id="resultsTable">
-                            <tbody id="public-table-body"></tbody>
-                        </table>
-                    </div>
                 </div>
             </div>
         </div>
 
         <div class="leaderboard-section">
             <h4 style="margin: 0 0 10px 0; color: var(--primary);">🏆 Top Scholars</h4>
-            <div id="leaderboard-list">
-                <p style="font-size:12px; opacity:0.6;">Loading rankings...</p>
-            </div>
+            <div id="leaderboard-list"><p style="font-size:12px; opacity:0.6;">Loading rankings...</p></div>
         </div>
 
         <div class="info-grid">
@@ -304,19 +270,12 @@
                 <button class="nav-btn" onclick="sendChat()">Send</button>
             </div>
         </div>
-
         <footer><strong>The BIU Archive © 2026</strong></footer>
     </div>
 
-    <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
-
     <script type="module">
-        if (localStorage.getItem('theme') === 'dark') {
-            document.body.setAttribute('data-theme', 'dark');
-        }
-
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, push, set, onChildAdded, onValue, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, push, set, onChildAdded, onValue, update, serverTimestamp, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
@@ -334,147 +293,75 @@
         const name = localStorage.getItem('biu_user_name');
         const userId = localStorage.getItem('biu_user_id');
         const userMatric = localStorage.getItem('biu_user_matric');
-        const userDept = localStorage.getItem('biu_user_dept');
 
-        if(!name || !userId) { 
-            window.location.href = 'login.html'; 
-        }
+        if(!name || !userId) window.location.href = 'login.html';
 
-        // --- BLUE BADGE SYSTEM ---
-        let isUserVerified = false;
-        onValue(ref(db, `users/${userId}`), (snap) => {
-            const data = snap.val();
-            if(data && data.isVerified) {
-                if(!isUserVerified) {
-                    if(localStorage.getItem('biu_verified') !== 'true') {
-                        alert("🎉 Congratulations! Your Blue Badge has been activated.");
-                        localStorage.setItem('biu_verified', 'true');
-                    }
-                }
-                isUserVerified = true;
-                document.getElementById('header-blue-tick').innerHTML = '<span class="blue-tick">✓</span>';
-            }
-        });
+        if (localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
 
-        window.requestVerification = () => {
-            if(isUserVerified) return alert("You are already verified!");
-            const confirmReq = confirm("Request a Verification Badge?\n\nFee: ₦500\nBank: Opay\nAcct Name: Paul Adamu\nAcct Number: 7041795388\n\nOnly proceed if you have paid.");
-            if(confirmReq) {
-                set(ref(db, `verification_requests/${userId}`), {
-                    userId, name, matric: userMatric, timestamp: serverTimestamp()
-                }).then(() => alert("Request sent successfully!"));
-            }
-        };
-
-        // --- RESULT FETCHING LOGIC ---
-        async function fetchIDSResult() {
-            const sheetId = '11Ka9v6t85uzJhW1WUGYM3AG8LKc1z2jl';
-            const base = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
-            try {
-                const response = await fetch(base);
-                const text = await response.text();
-                const json = JSON.parse(text.substr(47).slice(0, -2));
-                const rows = json.table.rows;
-                let total = 0, high = 0, count = 0, myRow = null, tableHTML = '';
-                
-                // Compare matric numbers
-                const cleanUserMatric = userMatric ? userMatric.trim().toLowerCase() : "";
-
-                rows.forEach(row => {
-                    if (row.c && row.c[2] && row.c[2].v !== null) {
-                        const score = parseFloat(row.c[2].v);
-                        const rowMatric = row.c[1] ? row.c[1].v.toString().trim().toLowerCase() : "";
-                        const rowName = row.c[0] ? row.c[0].v.toString() : "Unknown";
-                        const grade = getGrade(score);
-
-                        total += score; count++;
-                        if (score > high) high = score;
-
-                        tableHTML += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: white;">
-                            <td style="padding: 10px 5px;">${maskName(rowName)}</td>
-                            <td style="font-weight:bold;">${score}/20</td>
-                            <td style="color: ${grade.c}; font-weight: bold;">${grade.l}</td>
-                        </tr>`;
-
-                        // Match logic
-                        if (rowMatric === cleanUserMatric && cleanUserMatric !== "") {
-                            myRow = row;
-                        }
-                    }
+        // --- SECURITY LISTENERS ---
+        onValue(ref(db, "maintenance_mode"), (snap) => {
+            if (snap.val() === true) {
+                get(ref(db, `moderators/${userId}`)).then((modSnap) => {
+                    if (!modSnap.exists()) window.location.href = 'maintenance.html';
                 });
-
-                document.getElementById('public-table-body').innerHTML = tableHTML;
-                document.getElementById('class-avg').innerText = count > 0 ? (total / count).toFixed(1) : "0.0";
-                document.getElementById('class-high').innerText = high + "/20";
-
-                if (myRow) {
-                    document.getElementById('ids-result-container').classList.remove('hidden');
-                    document.getElementById('ids-name').innerText = myRow.c[0].v;
-                    document.getElementById('ids-matric').innerText = myRow.c[1].v;
-                    document.getElementById('ids-score').innerText = myRow.c[2].v + "/20";
-                    const g = getGrade(myRow.c[2].v);
-                    document.getElementById('ids-grade').innerText = `[GRADE: ${g.l}]`;
-                    document.getElementById('ids-grade').style.color = g.c;
-                }
-            } catch (e) { console.error("Score fetch error:", e); }
-        }
-        if(userMatric) fetchIDSResult();
-
-        // Helper Functions
-        function getGrade(score) {
-            const p = (score / 20) * 100;
-            if (p >= 70) return { l: 'A', c: '#00ff88' };
-            if (p >= 60) return { l: 'B', c: '#ccff00' };
-            if (p >= 50) return { l: 'C', c: '#ffd700' };
-            if (p >= 45) return { l: 'D', c: '#ff9900' };
-            if (p >= 40) return { l: 'E', c: '#ff6600' };
-            return { l: 'F', c: '#ff4444' };
-        }
-        function maskName(name) {
-            return name.split(' ').map(n => n[0] + '*'.repeat(n.length > 1 ? n.length - 1 : 0)).join(' ');
-        }
-        
-        // Broadcast and Maintenance
-        onValue(ref(db, "broadcast"), (snap) => {
-            const data = snap.val();
-            const bar = document.getElementById('broadcast-bar');
-            if (data && data.message) {
-                document.getElementById('live-broadcast-text').innerText = data.message;
-                bar.classList.remove('hidden');
-            } else bar.classList.add('hidden');
-        });
-
-        // Chat, Leaderboard, etc. (Preserved from your code)
-        window.sendChat = function() {
-            const i = document.getElementById('chat-msg');
-            if (i.value.trim()) { 
-                push(ref(db, "messages"), { sender: name.split(' ')[0], message: i.value, isVerified: isUserVerified, timestamp: serverTimestamp() }); 
-                i.value = ""; 
             }
-        };
-        onChildAdded(ref(db, "messages"), (s) => {
-            const d = s.val(); const disp = document.getElementById('chat-display');
-            if (disp.innerHTML.includes('Connecting')) disp.innerHTML = '';
-            const tick = d.isVerified ? '<span class="blue-tick">✓</span>' : '';
-            const msgDiv = document.createElement('div'); msgDiv.innerHTML = `<strong>${d.sender}${tick}:</strong> ${d.message}`;
-            disp.appendChild(msgDiv); disp.scrollTop = disp.scrollHeight;
         });
 
-        // Other UI methods
-        window.togglePublicResults = () => document.getElementById('public-results-list').classList.toggle('hidden');
+        onValue(ref(db, `banned_users/${userId}`), (snap) => {
+            if (snap.exists()) {
+                document.getElementById('main-archive').classList.add('hidden');
+                document.getElementById('ban-screen').classList.remove('hidden');
+            }
+        });
+
+        // --- MODERATOR UI TAG ---
+        get(ref(db, `moderators/${userId}`)).then((snap) => {
+            if (snap.exists()) {
+                document.getElementById('time-greeting').innerHTML += ` <span style="color:var(--accent); font-size:10px; border:1px solid var(--accent); padding:2px 5px; border-radius:4px; margin-left:5px;">MODERATOR</span>`;
+            }
+        });
+
+        // --- UPDATED NAVIGATION ---
+        window.enterAdmin = () => { if(prompt("Admin Code:") === "BIU2026") window.location.href = 'admin.html'; };
+        
+        window.enterMod = () => {
+            get(ref(db, `moderators/${userId}`)).then((snap) => {
+                if (snap.exists()) {
+                    window.location.href = 'mod.html';
+                } else {
+                    if(prompt("Enter Moderator Code:") === "BIU2026") {
+                        window.location.href = 'mod.html';
+                    } else {
+                        alert("Unauthorized Access.");
+                    }
+                }
+            });
+        };
+
+        // Standard helpers
         window.toggleDropdown = () => document.getElementById("myDropdown").classList.toggle("show");
         window.toggleTheme = () => {
             const theme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             document.body.setAttribute('data-theme', theme); localStorage.setItem('theme', theme);
         };
         window.logout = () => { localStorage.clear(); window.location.href = 'login.html'; };
-        window.enterAdmin = () => { if(prompt("Admin Code:") === "BIU2026") window.location.href = 'admin.html'; };
-
-        // Streak & Greeting
-        const today = new Date().toLocaleDateString();
-        let streak = parseInt(localStorage.getItem('biu_streak') || 1);
-        document.getElementById('streak-count').innerText = streak;
+        
         document.getElementById('time-greeting').innerText = `Welcome, ${name.split(' ')[0]} ✨`;
+        
+        // Chat Logic
+        window.sendChat = function() {
+            const i = document.getElementById('chat-msg');
+            if (i.value.trim()) { 
+                push(ref(db, "messages"), { sender: name.split(' ')[0], message: i.value, timestamp: serverTimestamp() }); 
+                i.value = ""; 
+            }
+        };
+        onChildAdded(ref(db, "messages"), (s) => {
+            const d = s.val(); const disp = document.getElementById('chat-display');
+            if (disp.innerHTML.includes('Connecting')) disp.innerHTML = '';
+            const msgDiv = document.createElement('div'); msgDiv.innerHTML = `<strong>${d.sender}:</strong> ${d.message}`;
+            disp.appendChild(msgDiv); disp.scrollTop = disp.scrollHeight;
+        });
 
     </script>
 </body>

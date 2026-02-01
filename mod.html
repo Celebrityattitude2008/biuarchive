@@ -3,121 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moderator Control | BIU Archive</title>
+    <title>BIU Archive | Staff Moderator</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #f0f2f5; color: #333; }
-        .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin: 5px; transition: opacity 0.2s; }
-        .btn:active { opacity: 0.8; }
-        .btn-ban { background: #ff4d4d; color: white; }
-        .btn-safe { background: #28a745; color: white; }
-        .btn-warn { background: #ffc107; color: black; }
-        .hidden { display: none !important; }
-        #auth-check { text-align: center; margin-top: 50px; font-weight: bold; }
+        :root {
+            --primary: #002147; 
+            --accent: #FFD700; 
+            --danger: #d9534f;
+            --success: #28a745;
+            --light: #f8f9fa;
+            --white: #ffffff; 
+            --text: #333; 
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background: var(--light); color: var(--text); margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: var(--white); padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        
+        .mod-header { border-bottom: 3px solid var(--accent); margin-bottom: 30px; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .tool-card { background: #fdfdfd; border: 1px solid #eee; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        .tool-card h3 { margin-top: 0; color: var(--primary); font-size: 1.2rem; }
+
+        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        
+        .btn { padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .status-badge { font-size: 12px; padding: 4px 8px; border-radius: 4px; background: #eee; }
+        #chat-logs { height: 150px; overflow-y: auto; background: #f4f4f4; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
-    <h2>🛡️ Moderator Dashboard</h2>
-    <div id="auth-check">Verifying credentials...</div>
 
-    <div id="mod-controls" class="hidden">
-        <div class="card">
-            <h3>⚙️ System Control</h3>
-            <button class="btn btn-warn" onclick="setMaintenance(true)">ON Maintenance</button>
-            <button class="btn btn-safe" onclick="setMaintenance(false)">OFF Maintenance</button>
-            <button class="btn" style="background:#333; color:white;" onclick="clearChat()">🗑️ Clear Chat</button>
-            <button class="btn" style="background:var(--primary); color:white;" onclick="window.location.href='index.html'">🏠 Back to Portal</button>
+<div class="container">
+    <div class="mod-header">
+        <div>
+            <h1 style="margin:0;">🛡️ Moderator Control</h1>
+            <p style="margin:0; opacity:0.7;">System Management & Governance</p>
         </div>
+        <button onclick="window.location.href='dashboard.html'" class="btn" style="background:#ddd;">Back to Dashboard</button>
+    </div>
 
-        <div class="card">
-            <h3>👥 User Management</h3>
-            <div id="user-list">Loading users...</div>
+    <div class="tool-card">
+        <h3>📢 Global Broadcast</h3>
+        <p style="font-size: 13px;">This message appears at the top of every student's dashboard.</p>
+        <input type="text" id="broadcast-input" placeholder="Enter emergency alert or announcement...">
+        <button class="btn btn-primary" onclick="updateBroadcast()">Push to All Users</button>
+    </div>
+
+    <div class="tool-card">
+        <h3>🚫 Access Control (Ban System)</h3>
+        <p style="font-size: 13px;">Enter the <strong>User ID</strong> of the student to revoke access.</p>
+        <input type="text" id="ban-user-id" placeholder="e.g. 1706789452331">
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-danger" onclick="manageUser(true)">Ban Account</button>
+            <button class="btn btn-success" onclick="manageUser(false)">Unban Account</button>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, set, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    <div class="tool-card">
+        <h3>💬 Chat Governance</h3>
+        <div id="chat-logs">Loading recent messages...</div>
+        <button class="btn btn-danger" onclick="clearAllChat()">Clear All Chat History</button>
+    </div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
-            authDomain: "biu-archive.firebaseapp.com",
-            databaseURL: "https://biu-archive-default-rtdb.firebaseio.com",
-            projectId: "biu-archive",
-            storageBucket: "biu-archive.firebasestorage.app",
-            messagingSenderId: "245967347998",
-            appId: "1:245967347998:web:a8feb5ad0ef9650946a90f"
-        };
+    <footer style="text-align: center; margin-top: 40px; font-size: 12px; opacity: 0.5;">
+        BIU ARCHIVE MODERATOR v2.0
+    </footer>
+</div>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const myId = localStorage.getItem('biu_user_id');
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue, remove, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // SECURITY CHECK: Is this user a moderator?
-        if (!myId) {
-            document.getElementById('auth-check').innerHTML = "<h1>⛔ Session Expired</h1><p>Please login again.</p>";
-        } else {
-            onValue(ref(db, `moderators/${myId}`), (snap) => {
-                if (snap.exists() && snap.val() === true) {
-                    document.getElementById('auth-check').classList.add('hidden');
-                    document.getElementById('mod-controls').classList.remove('hidden');
-                } else {
-                    document.getElementById('auth-check').innerHTML = "<h1>⛔ Access Denied</h1><p>You do not have moderator privileges.</p>";
-                }
-            });
-        }
+    const firebaseConfig = {
+        apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
+        authDomain: "biu-archive.firebaseapp.com",
+        databaseURL: "https://biu-archive-default-rtdb.firebaseio.com",
+        projectId: "biu-archive",
+        storageBucket: "biu-archive.firebasestorage.app",
+        messagingSenderId: "245967347998",
+        appId: "1:245967347998:web:a8feb5ad0ef9650946a90f"
+    };
 
-        // Toggle Maintenance
-        window.setMaintenance = (status) => {
-            set(ref(db, "maintenance_mode"), status);
-            alert("Maintenance mode set to: " + status);
-        };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const modName = localStorage.getItem('biu_user_name') || "Moderator";
 
-        // Clear Chat
-        window.clearChat = () => {
-            if(confirm("DANGER: Clear all chat messages permanently?")) {
-                remove(ref(db, "messages"));
-                alert("Chat database wiped.");
-            }
-        };
-
-        // User Management List
-        onValue(ref(db, "users"), (snap) => {
-            const users = snap.val();
-            const list = document.getElementById('user-list');
-            if (!users) {
-                list.innerHTML = "No users found.";
-                return;
-            }
-            
-            list.innerHTML = "";
-            Object.entries(users).forEach(([id, u]) => {
-                const div = document.createElement('div');
-                div.style = "border-bottom:1px solid #ddd; padding:15px; display:flex; justify-content:space-between; align-items:center;";
-                div.innerHTML = `
-                    <span>
-                        <strong>${u.name || 'Anonymous'}</strong><br>
-                        <small style="color:#666;">${u.matric || 'No Matric'} | ${u.dept || 'General'}</small>
-                    </span>
-                    <div>
-                        <button class="btn btn-ban" onclick="banUser('${id}')">Ban</button>
-                        <button class="btn btn-safe" onclick="unbanUser('${id}')">Unban</button>
-                    </div>
-                `;
-                list.appendChild(div);
-            });
-        });
-
-        window.banUser = (id) => { 
-            if(confirm("Ban this user? They will be kicked out immediately.")) {
-                set(ref(db, `banned_users/${id}`), true); 
-            }
-        };
+    // --- 1. UPDATE BROADCAST ---
+    window.updateBroadcast = () => {
+        const msg = document.getElementById('broadcast-input').value;
+        if(!msg) return alert("Enter a message");
         
-        window.unbanUser = (id) => { 
-            remove(ref(db, `banned_users/${id}`)); 
-            alert("User unbanned.");
-        };
-    </script>
+        set(ref(db, "broadcast_message"), {
+            text: msg,
+            updatedBy: modName,
+            time: Date.now()
+        }).then(() => alert("Broadcast updated successfully!"));
+    };
+
+    // --- 2. BAN / UNBAN SYSTEM ---
+    window.manageUser = (isBan) => {
+        const userId = document.getElementById('ban-user-id').value;
+        if(!userId) return alert("Please provide a User ID");
+
+        if(isBan) {
+            set(ref(db, `banned_users/${userId}`), {
+                reason: "Violation of portal rules",
+                bannedBy: modName,
+                timestamp: serverTimestamp()
+            }).then(() => alert("User " + userId + " has been BANNED."));
+        } else {
+            remove(ref(db, `banned_users/${userId}`))
+            .then(() => alert("User " + userId + " access restored."));
+        }
+    };
+
+    // --- 3. CHAT MODERATION ---
+    onValue(ref(db, "messages"), (snap) => {
+        const logs = document.getElementById('chat-logs');
+        logs.innerHTML = "";
+        snap.forEach((child) => {
+            const data = child.val();
+            logs.innerHTML += `<div><strong>${data.sender}:</strong> ${data.message}</div>`;
+        });
+        logs.scrollTop = logs.scrollHeight;
+    });
+
+    window.clearAllChat = () => {
+        if(confirm("This will delete the entire chat history for everyone. Proceed?")) {
+            remove(ref(db, "messages")).then(() => alert("Chat history cleared."));
+        }
+    };
+
+</script>
 </body>
 </html>
