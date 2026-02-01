@@ -347,7 +347,6 @@
             const data = snap.val();
             if(data && data.isVerified) {
                 if(!isUserVerified) {
-                    // Check if they were just verified to show congrats
                     if(localStorage.getItem('biu_verified') !== 'true') {
                         alert("🎉 Congratulations! Your Blue Badge has been activated.");
                         localStorage.setItem('biu_verified', 'true');
@@ -360,11 +359,15 @@
 
         window.requestVerification = () => {
             if(isUserVerified) return alert("You are already verified!");
-            const confirmReq = confirm("Request a Verification Badge?\n\nFee: ₦500\nAcct: 1475713437 (Access Bank)\n\nOnly proceed if you have paid. The Admin will verify your status.");
+            const confirmReq = confirm("Request a Verification Badge?\n\nFee: ₦500\nBank: Opay\nAcct Name: Paul Adamu\nAcct Number: 7041795388\n\nOnly proceed if you have paid. The Admin will verify your payment.");
             if(confirmReq) {
                 set(ref(db, `verification_requests/${userId}`), {
-                    userId, name, matric: userMatric, timestamp: serverTimestamp()
-                }).then(() => alert("Request sent successfully! Your badge will appear once approved."));
+                    userId, 
+                    name, 
+                    matric: userMatric, 
+                    accountDetails: "Opay - Paul Adamu - 7041795388",
+                    timestamp: serverTimestamp()
+                }).then(() => alert("Request sent successfully! Your badge will appear once Admin Paul verifies the payment."));
             }
         };
         // ------------------------------
