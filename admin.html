@@ -13,6 +13,7 @@
             --success: #28a745; 
             --info: #17a2b8; 
             --blue-tick: #00BFFF;
+            --mod-purple: #8A2BE2;
         }
         
         body { 
@@ -33,7 +34,6 @@
             box-sizing: border-box;
         }
         
-        /* Stats Section */
         .stats-row { 
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
@@ -51,7 +51,6 @@
         .stat-card h2 { margin: 0; font-size: 1.8rem; }
         .stat-card p { margin: 5px 0 0; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
 
-        /* Tool Grid */
         .tool-grid { 
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
@@ -80,7 +79,6 @@
             gap: 15px;
         }
         
-        /* Table Styles */
         .table-wrapper { 
             overflow-x: auto; 
             background: white; 
@@ -88,59 +86,37 @@
             margin-top: 10px; 
             border: 1px solid #eee;
         }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        table { width: 100%; border-collapse: collapse; min-width: 700px; }
         th { background: #f8f9fa; color: var(--primary); padding: 15px; text-align: left; font-size: 12px; text-transform: uppercase; border-bottom: 2px solid #eee; }
         td { padding: 12px 15px; border-bottom: 1px solid #f1f1f1; font-size: 13px; }
 
-        /* Buttons */
         .btn { 
-            padding: 12px 18px; 
-            border-radius: 10px; 
+            padding: 10px 14px; 
+            border-radius: 8px; 
             border: none; 
             cursor: pointer; 
             font-weight: bold; 
             transition: all 0.2s; 
-            display: inline-block; 
-            text-align: center;
+            font-size: 11px;
         }
         .btn:active { transform: scale(0.96); }
         .btn-broadcast { background: var(--info); color: white; width: 100%; margin-top: 10px; }
         .btn-sync { background: var(--success); color: white; width: 100%; margin-top: 10px; }
-        .btn-streak { background: #f1f1f1; color: #6f42c1; padding: 6px 12px; font-size: 11px; }
-        .btn-ban { background: #000; color: white; padding: 6px 12px; font-size: 11px; }
-        .btn-clear { background: #f8f9fa; color: #666; width: 100%; margin-top: 8px; font-size: 12px; border: 1px solid #ddd; }
+        .btn-mod { background: var(--mod-purple); color: white; }
+        .btn-revoke { background: #666; color: white; }
+        .btn-ban { background: #000; color: white; }
         
         input[type="text"] {
-            width: 100%; 
-            padding: 12px; 
-            border: 1.5px solid #eee; 
-            border-radius: 10px; 
-            box-sizing: border-box;
-            outline: none;
-            transition: border-color 0.2s;
+            width: 100%; padding: 12px; border: 1.5px solid #eee; border-radius: 10px; outline: none; box-sizing: border-box;
         }
-        input[type="text"]:focus { border-color: var(--info); }
 
-        /* Verification Request Card Style */
         .request-card {
-            background: #fff;
-            border: 1px solid #eee;
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background: #fff; border: 1px solid #eee; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
         }
 
-        /* Responsive Overrides */
         @media (max-width: 600px) {
             .admin-container { padding: 15px; border-radius: 0; margin: 0; }
-            .header-flex { flex-direction: column; gap: 15px; text-align: center; }
-            .header-btns { flex-wrap: wrap; justify-content: center; }
             .tool-grid { grid-template-columns: 1fr; }
-            .maintenance-card { text-align: center; justify-content: center; }
-            .maintenance-card div { width: 100%; }
         }
     </style>
 </head>
@@ -157,11 +133,19 @@
         </div>
         <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
 
-        <div class="tool-card" style="margin-bottom: 25px; border-left: 8px solid var(--blue-tick);">
-            <h3 style="margin:0">💎 Blue Tick Requests (₦500)</h3>
-            <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Approve after confirming payment in your bank app.</p>
-            <div id="verification-requests-list">
-                <p style="font-size: 13px; opacity: 0.5;">No pending requests.</p>
+        <div class="tool-grid">
+            <div class="tool-card" style="border-left: 8px solid var(--blue-tick);">
+                <h3 style="margin:0">💎 Blue Tick Requests</h3>
+                <div id="verification-requests-list" style="margin-top:15px;">
+                    <p style="font-size: 13px; opacity: 0.5;">No pending requests.</p>
+                </div>
+            </div>
+
+            <div class="tool-card" style="border-left: 8px solid var(--mod-purple);">
+                <h3 style="margin:0">🛡️ Current Moderators</h3>
+                <div id="active-mods-list" style="margin-top:15px; font-size: 13px;">
+                    <p style="opacity: 0.5;">No moderators assigned.</p>
+                </div>
             </div>
         </div>
 
@@ -176,37 +160,31 @@
         <div class="stats-row">
             <div class="stat-card"> <h2 id="count">0</h2> <p>Total Users</p> </div>
             <div class="stat-card" style="background: var(--info);"> <h2 id="online-count">0</h2> <p>Online Now</p> </div>
-            <div class="stat-card" style="background: #6f42c1;"> <h2 id="top-streak">0</h2> <p>High Streak</p> </div>
+            <div class="stat-card" style="background: var(--mod-purple);"> <h2 id="mod-count">0</h2> <p>Staff/Mods</p> </div>
             <div class="stat-card" style="background: var(--danger);"> <h2 id="banned-count">0</h2> <p>Banned</p> </div>
         </div>
 
         <div class="tool-grid">
             <div class="tool-card">
                 <h3 style="margin:0">📢 Global Broadcast</h3>
-                <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Students will receive a real-time alert bar.</p>
-                <input type="text" id="alert-msg" placeholder="Type announcement here...">
+                <input type="text" id="alert-msg" placeholder="Type announcement..." style="margin-top:10px;">
                 <button class="btn btn-broadcast" onclick="sendGlobalAlert()">🚀 Push Sound & Alert</button>
-                <button class="btn btn-clear" onclick="clearBroadcast()">Clear Live Screens</button>
+                <button class="btn" style="width:100%; margin-top:8px; background:#eee; color:#666;" onclick="clearBroadcast()">Clear Live Screens</button>
             </div>
 
             <div class="tool-card">
-                <h3 style="margin:0">📊 Sheet Sync Status</h3>
-                <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Refresh external data sources.</p>
-                <span id="sync-time" style="font-size: 11px; color: #999; display: block; margin-bottom: 5px;">Last Sync: Never</span>
-                <button id="sync-btn" class="btn btn-sync" onclick="markSheetSynced()">Confirm Update</button>
-                <a href="https://docs.google.com/spreadsheets/d/1RDC9EBFjF2a9sSMakA5JzMgIBZ9p0oz0/edit" target="_blank" style="display:block; text-align:center; margin-top:12px; font-size:11px; color:var(--info); text-decoration:none;">🔗 Open Google Sheet</a>
+                <h3 style="margin:0">📊 Sync & Activity</h3>
+                <p style="font-size: 12px; color:#666;">Filter live activity below.</p>
+                <input type="text" id="admin-search" placeholder="Search name or matric..." onkeyup="filterTable()">
             </div>
         </div>
 
         <div style="background: #fff; border:1px solid #eee; padding:20px; border-radius:15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap: wrap; gap: 10px;">
-                <h3 style="margin:0">Live Activity Feed</h3>
-                <input type="text" id="admin-search" placeholder="Search name or matric..." onkeyup="filterTable()" style="max-width:250px;">
-            </div>
+            <h3 style="margin:0 0 15px 0">Live Activity Feed</h3>
             <div class="table-wrapper">
                 <table id="adminTable">
                     <thead>
-                        <tr><th>Student</th><th>Matric</th><th>Streak</th><th>Time</th><th>Action</th></tr>
+                        <tr><th>Student</th><th>Matric</th><th>Streak</th><th>Last Seen</th><th>Actions</th></tr>
                     </thead>
                     <tbody id="log-list"></tbody>
                 </table>
@@ -231,7 +209,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
     
-        // Security Check
         const pass = prompt("Enter Celebrity Access Key:");
         if (pass !== "BIU2026") { 
             window.location.href = "index.html"; 
@@ -241,126 +218,114 @@
         }
     
         function startAdmin() {
-            // NEW: VERIFICATION LOGIC
+            // TICK REQUESTS
             onValue(ref(db, "verification_requests"), (snapshot) => {
                 const requests = snapshot.val();
                 const listDiv = document.getElementById('verification-requests-list');
-                if(!requests) {
-                    listDiv.innerHTML = "<p style='font-size: 13px; opacity: 0.5;'>No pending requests.</p>";
-                    return;
-                }
-
+                if(!requests) { listDiv.innerHTML = "<p style='font-size: 13px; opacity: 0.5;'>No pending requests.</p>"; return; }
                 listDiv.innerHTML = Object.entries(requests).map(([reqId, data]) => `
                     <div class="request-card">
-                        <div>
-                            <strong>${data.name}</strong> <span style="font-size:11px; color:#666;">(${data.matric})</span><br>
-                            <small style="color:var(--blue-tick); font-size:10px;">ID: ${data.userId}</small>
-                        </div>
-                        <button class="btn" style="background:var(--success); color:white; padding:8px 15px; font-size:11px;" onclick="approveTick('${data.userId}')">Approve ✓</button>
+                        <div style="font-size:12px;"><strong>${data.name}</strong></div>
+                        <button class="btn" style="background:var(--success); color:white;" onclick="approveTick('${data.userId}')">Approve</button>
                     </div>
                 `).join('');
             });
 
-            window.approveTick = (targetUid) => {
-                if(confirm("Confirm payment received and grant Blue Tick?")) {
-                    // Update user to verified
-                    update(ref(db, `users/${targetUid}`), { isVerified: true });
-                    // Remove request
-                    remove(ref(db, `verification_requests/${targetUid}`));
-                    alert("User Verified!");
-                }
-            };
-
-            // BROADCAST: Pushing to "broadcast" node for Index.html to see
-            window.sendGlobalAlert = () => {
-                const msg = document.getElementById('alert-msg').value;
-                if(!msg) return alert("Enter a message!");
-                
-                set(ref(db, "broadcast"), {
-                    message: msg,
-                    timestamp: serverTimestamp()
-                }).then(() => {
-                    alert("🚀 Broadcast Sent!");
-                    document.getElementById('alert-msg').value = "";
-                });
-            };
-
-            // Toggle Maintenance Mode
-            window.toggleMaintenance = () => {
-                const mRef = ref(db, "maintenance_mode");
-                onValue(mRef, (s) => {
-                    const current = s.val();
-                    set(mRef, !current);
-                }, { onlyOnce: true });
-            };
-
-            onValue(ref(db, "maintenance_mode"), (s) => {
-                const btn = document.getElementById('m-toggle-btn');
-                if(s.val() === true) {
-                    btn.innerText = "LOCKED";
-                    btn.style.background = "var(--danger)";
-                } else {
-                    btn.innerText = "ACTIVE";
-                    btn.style.background = "var(--success)";
-                }
+            // MODERATOR TRACKER
+            onValue(ref(db, "moderators"), (snapshot) => {
+                const mods = snapshot.val() || {};
+                const listDiv = document.getElementById('active-mods-list');
+                const entries = Object.entries(mods);
+                document.getElementById('mod-count').innerText = entries.length;
+                if(entries.length === 0) { listDiv.innerHTML = "No moderators assigned."; return; }
+                listDiv.innerHTML = entries.map(([id, data]) => `
+                    <div style="padding:5px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between;">
+                        <span>🛡️ ${data.name}</span>
+                        <span style="color:red; cursor:pointer;" onclick="toggleMod('${id}', '${data.name}', true)">Revoke</span>
+                    </div>
+                `).join('');
             });
 
-            // Feed & Table
-            onValue(ref(db, "users"), (snapshot) => {
-                const users = snapshot.val();
-                const list = document.getElementById('log-list');
-                if(!users) return list.innerHTML = "<tr><td colspan='5'>No users yet</td></tr>";
-
-                const entries = Object.entries(users);
-                document.getElementById('count').innerText = entries.length;
-
+            // MAIN TABLE LOGIC
+            onValue(ref(db, "users"), (uSnap) => {
+                const users = uSnap.val() || {};
                 onValue(ref(db, "banned_users"), (bSnap) => {
                     const banned = bSnap.val() || {};
-                    document.getElementById('banned-count').innerText = Object.keys(banned).length;
+                    onValue(ref(db, "moderators"), (mSnap) => {
+                        const mods = mSnap.val() || {};
+                        const list = document.getElementById('log-list');
+                        const entries = Object.entries(users);
+                        document.getElementById('count').innerText = entries.length;
+                        document.getElementById('banned-count').innerText = Object.keys(banned).length;
 
-                    const sorted = entries.sort((a,b) => (b[1].lastActive || 0) - (a[1].lastActive || 0));
-                    list.innerHTML = sorted.map(([uid, data]) => {
-                        const isBanned = banned[uid] === true;
-                        const hasTick = data.isVerified === true ? `<span style="color:var(--blue-tick);">✓</span>` : "";
-                        return `
-                        <tr>
-                            <td><strong>${data.name || 'User'}</strong> ${hasTick}</td>
-                            <td>${data.matric || 'N/A'}</td>
-                            <td>🔥 ${data.streak || 1}</td>
-                            <td>${data.lastActive ? new Date(data.lastActive).toLocaleTimeString() : '---'}</td>
-                            <td>
-                                <button class="btn btn-streak" onclick="resetStreak('${uid}')">Reset</button>
-                                <button class="btn btn-ban" style="background:${isBanned ? 'green':'black'}" onclick="toggleBan('${uid}', ${isBanned})">
-                                    ${isBanned ? 'Unban' : 'Ban'}
-                                </button>
-                            </td>
-                        </tr>`;
-                    }).join('');
+                        list.innerHTML = entries.sort((a,b) => (b[1].lastActive || 0) - (a[1].lastActive || 0)).map(([uid, data]) => {
+                            const isBanned = banned[uid] === true;
+                            const isMod = mods[uid] !== undefined;
+                            const hasTick = data.isVerified ? `<span style="color:var(--blue-tick);">✓</span>` : "";
+                            const modBadge = isMod ? `<span style="color:var(--mod-purple); font-weight:bold;">[M]</span>` : "";
+                            
+                            return `
+                            <tr>
+                                <td><strong>${data.name}</strong> ${modBadge} ${hasTick}</td>
+                                <td>${data.matric || 'N/A'}</td>
+                                <td>🔥 ${data.streak || 1}</td>
+                                <td>${data.lastActive ? new Date(data.lastActive).toLocaleTimeString() : '---'}</td>
+                                <td>
+                                    <button class="btn btn-ban" style="background:${isBanned ? 'green':'black'}" onclick="toggleBan('${uid}', ${isBanned})">${isBanned ? 'Unban':'Ban'}</button>
+                                    <button class="btn ${isMod ? 'btn-revoke':'btn-mod'}" onclick="toggleMod('${uid}', '${data.name}', ${isMod})">${isMod ? 'Revoke':'Make Mod'}</button>
+                                </td>
+                            </tr>`;
+                        }).join('');
+                    });
                 });
             });
 
-            // Online Estimator
+            // Online Estimator (5 min window)
             onValue(ref(db, "users"), (s) => {
                 const now = Date.now();
                 const active = Object.values(s.val() || {}).filter(u => (now - (u.lastActive || 0)) < 300000).length;
                 document.getElementById('online-count').innerText = active;
             });
         }
-    
-        window.clearBroadcast = () => set(ref(db, "broadcast"), null);
-        window.toggleBan = (uid, status) => set(ref(db, `banned_users/${uid}`), status ? null : true);
-        window.resetStreak = (uid) => update(ref(db, `users/${uid}`), { streak: 1 });
-        window.clearChat = () => confirm("Clear chat?") && remove(ref(db, "messages"));
-        window.nuclearClear = () => confirm("DANGER: Wipe all user logs?") && remove(ref(db, "users"));
 
+        // FUNCTIONS
+        window.approveTick = (uid) => {
+            update(ref(db, `users/${uid}`), { isVerified: true });
+            remove(ref(db, `verification_requests/${uid}`));
+        };
+
+        window.toggleMod = (uid, name, currentlyMod) => {
+            if (currentlyMod) {
+                if(confirm(`Remove ${name} from Moderator team?`)) remove(ref(db, `moderators/${uid}`));
+            } else {
+                if(confirm(`Grant ${name} Moderator access?`)) set(ref(db, `moderators/${uid}`), { name: name, level: 'mod' });
+            }
+        };
+
+        window.toggleBan = (uid, status) => set(ref(db, `banned_users/${uid}`), status ? null : true);
+        window.sendGlobalAlert = () => {
+            const msg = document.getElementById('alert-msg').value;
+            if(msg) set(ref(db, "broadcast"), { message: msg, timestamp: serverTimestamp() }).then(() => {
+                alert("Broadcast Pushed!");
+                document.getElementById('alert-msg').value = "";
+            });
+        };
+        window.clearBroadcast = () => set(ref(db, "broadcast"), null);
+        window.toggleMaintenance = () => {
+            onValue(ref(db, "maintenance_mode"), (s) => set(ref(db, "maintenance_mode"), !s.val()), { onlyOnce: true });
+        };
+        onValue(ref(db, "maintenance_mode"), (s) => {
+            const btn = document.getElementById('m-toggle-btn');
+            btn.innerText = s.val() ? "LOCKED" : "ACTIVE";
+            btn.style.background = s.val() ? "var(--danger)" : "var(--success)";
+        });
+        window.clearChat = () => confirm("Clear chat?") && remove(ref(db, "messages"));
+        window.nuclearClear = () => confirm("Wipe all user data?") && remove(ref(db, "users"));
         window.filterTable = () => {
             let input = document.getElementById("admin-search").value.toUpperCase();
             let rows = document.getElementById("log-list").getElementsByTagName("tr");
-            for (let i = 0; i < rows.length; i++) {
-                let text = rows[i].textContent || rows[i].innerText;
-                rows[i].style.display = text.toUpperCase().indexOf(input) > -1 ? "" : "none";
-            }
-        }
+            for (let row of rows) row.style.display = row.innerText.toUpperCase().includes(input) ? "" : "none";
+        };
     </script>
 </body>
 </html>

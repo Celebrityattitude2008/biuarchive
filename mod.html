@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderator Control | BIU Archive</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #f0f2f5; color: #333; }
+        .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin: 5px; transition: opacity 0.2s; }
+        .btn:active { opacity: 0.8; }
+        .btn-ban { background: #ff4d4d; color: white; }
+        .btn-safe { background: #28a745; color: white; }
+        .btn-warn { background: #ffc107; color: black; }
+        .hidden { display: none !important; }
+        #auth-check { text-align: center; margin-top: 50px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>🛡️ Moderator Dashboard</h2>
+    <div id="auth-check">Verifying credentials...</div>
+
+    <div id="mod-controls" class="hidden">
+        <div class="card">
+            <h3>⚙️ System Control</h3>
+            <button class="btn btn-warn" onclick="setMaintenance(true)">ON Maintenance</button>
+            <button class="btn btn-safe" onclick="setMaintenance(false)">OFF Maintenance</button>
+            <button class="btn" style="background:#333; color:white;" onclick="clearChat()">🗑️ Clear Chat</button>
+            <button class="btn" style="background:var(--primary); color:white;" onclick="window.location.href='index.html'">🏠 Back to Portal</button>
+        </div>
+
+        <div class="card">
+            <h3>👥 User Management</h3>
+            <div id="user-list">Loading users...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue, set, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
+            authDomain: "biu-archive.firebaseapp.com",
+            databaseURL: "https://biu-archive-default-rtdb.firebaseio.com",
+            projectId: "biu-archive",
+            storageBucket: "biu-archive.firebasestorage.app",
+            messagingSenderId: "245967347998",
+            appId: "1:245967347998:web:a8feb5ad0ef9650946a90f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const myId = localStorage.getItem('biu_user_id');
+
+        // SECURITY CHECK: Is this user a moderator?
+        if (!myId) {
+            document.getElementById('auth-check').innerHTML = "<h1>⛔ Session Expired</h1><p>Please login again.</p>";
+        } else {
+            onValue(ref(db, `moderators/${myId}`), (snap) => {
+                if (snap.exists() && snap.val() === true) {
+                    document.getElementById('auth-check').classList.add('hidden');
+                    document.getElementById('mod-controls').classList.remove('hidden');
+                } else {
+                    document.getElementById('auth-check').innerHTML = "<h1>⛔ Access Denied</h1><p>You do not have moderator privileges.</p>";
+                }
+            });
+        }
+
+        // Toggle Maintenance
+        window.setMaintenance = (status) => {
+            set(ref(db, "maintenance_mode"), status);
+            alert("Maintenance mode set to: " + status);
+        };
+
+        // Clear Chat
+        window.clearChat = () => {
+            if(confirm("DANGER: Clear all chat messages permanently?")) {
+                remove(ref(db, "messages"));
+                alert("Chat database wiped.");
+            }
+        };
+
+        // User Management List
+        onValue(ref(db, "users"), (snap) => {
+            const users = snap.val();
+            const list = document.getElementById('user-list');
+            if (!users) {
+                list.innerHTML = "No users found.";
+                return;
+            }
+            
+            list.innerHTML = "";
+            Object.entries(users).forEach(([id, u]) => {
+                const div = document.createElement('div');
+                div.style = "border-bottom:1px solid #ddd; padding:15px; display:flex; justify-content:space-between; align-items:center;";
+                div.innerHTML = `
+                    <span>
+                        <strong>${u.name || 'Anonymous'}</strong><br>
+                        <small style="color:#666;">${u.matric || 'No Matric'} | ${u.dept || 'General'}</small>
+                    </span>
+                    <div>
+                        <button class="btn btn-ban" onclick="banUser('${id}')">Ban</button>
+                        <button class="btn btn-safe" onclick="unbanUser('${id}')">Unban</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        });
+
+        window.banUser = (id) => { 
+            if(confirm("Ban this user? They will be kicked out immediately.")) {
+                set(ref(db, `banned_users/${id}`), true); 
+            }
+        };
+        
+        window.unbanUser = (id) => { 
+            remove(ref(db, `banned_users/${id}`)); 
+            alert("User unbanned.");
+        };
+    </script>
+</body>
+</html>

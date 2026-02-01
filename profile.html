@@ -14,6 +14,7 @@
             --success: #28a745; 
             --danger: #dc3545;
             --blue-tick: #00BFFF;
+            --mod-purple: #8A2BE2; /* Moderator Color */
             --radius: 20px;
             --shadow: 0 10px 30px rgba(0,0,0,0.08);
         }
@@ -55,7 +56,7 @@
 
         .hidden { display: none !important; }
 
-        /* BLUE TICK & BADGES */
+        /* BADGES */
         .verified-badge {
             display: inline-flex;
             align-items: center;
@@ -69,6 +70,21 @@
             margin-left: 6px;
             vertical-align: middle;
         }
+
+        .mod-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            background-color: var(--mod-purple);
+            color: white;
+            font-size: 10px;
+            border-radius: 4px;
+            margin-left: 6px;
+            vertical-align: middle;
+            border: 1px solid var(--accent);
+        }
         
         .status-badge { 
             display: inline-block; 
@@ -80,6 +96,7 @@
             text-transform: uppercase;
         }
         .verified-text { background: var(--success); color: white; }
+        .mod-text { background: var(--mod-purple); color: white; }
         .unverified { background: #666; color: white; opacity: 0.8; }
         .status-pending { background: #6c757d; color: white; animation: pulse-gray 2s infinite; }
         @keyframes pulse-gray { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
@@ -104,7 +121,6 @@
         }
         #verify-notif.show { bottom: 30px; }
 
-        /* AVATAR & CARDS */
         .avatar { 
             width: 90px; height: 90px; 
             background: linear-gradient(135deg, var(--primary), #004080); 
@@ -143,9 +159,8 @@
             <h3 style="color: var(--blue-tick);">Verification Payment</h3>
             <p style="font-size: 14px;">Transfer <b>₦500</b> to the admin account:</p>
             <div style="background: rgba(0,191,255,0.1); padding: 15px; border-radius: 12px; margin: 20px 0; border: 1px dashed var(--blue-tick);">
-                <small>OPAY / PALMPAY</small><br>
-                <strong style="font-size: 20px;">0123456789</strong><br>
-                <small>NAME: ADMIN SURNAME</small>
+                <small>OPAY</small><br>
+                <strong style="font-size: 20px;">7041795388</strong><br> <small>NAME: ADAMU PAUL</small>
             </div>
             <button class="btn-action" style="background: var(--success); color: white;" onclick="submitVerificationRequest()">I Have Paid - Notify Admin</button>
             <button class="btn-action" style="background: none; border: 1px solid #ccc; color: var(--text);" onclick="togglePaymentModal()">Cancel</button>
@@ -155,7 +170,7 @@
     <div class="profile-container">
         <div class="avatar" id="user-initial">?</div>
         <h2 style="margin: 0; font-weight: 800; color: var(--primary);">
-            <span id="user-name">Student Name</span><span id="blue-tick-placeholder"></span>
+            <span id="user-name">Student Name</span><span id="badge-placeholder"></span>
         </h2>
         <p id="user-dept" style="opacity: 0.6; margin: 5px 0; font-weight: 600;">Department</p>
         
@@ -163,8 +178,7 @@
             <span class="status-badge unverified">Checking Status...</span>
         </div>
 
-        <div id="request-tick-area" class="hidden">
-            </div>
+        <div id="request-tick-area" class="hidden"></div>
 
         <div class="info-card">
             <div style="font-size: 11px; text-transform: uppercase; opacity: 0.5; font-weight: 800;">Matric Number</div>
@@ -178,6 +192,7 @@
 
         <div style="margin-top: 30px;">
             <button class="btn-action btn-back" onclick="window.location.href='index.html'">Go to Vault</button>
+            <button id="mod-link" class="btn-action hidden" style="background: var(--mod-purple); color: white;" onclick="window.location.href='mod.html'">Moderator Panel</button>
             <button class="btn-action btn-logout" onclick="logout()">Log Out</button>
         </div>
     </div>
@@ -211,13 +226,23 @@
         document.getElementById('display-id').innerText = userId;
         document.getElementById('user-initial').innerText = name.charAt(0).toUpperCase();
 
-        // 1. VERIFICATION LISTENER
+        // 1. MODERATOR CHECKER
+        onValue(ref(db, "moderators/" + userId), (modSnap) => {
+            if (modSnap.exists()) {
+                document.getElementById('badge-placeholder').innerHTML = `<span class="mod-badge" title="Moderator">M</span>`;
+                document.getElementById('status-area').innerHTML = `<span class="status-badge mod-text">System Moderator 🛡️</span>`;
+                document.getElementById('mod-link').classList.remove('hidden');
+            }
+        });
+
+        // 2. VERIFICATION LISTENER
         onValue(ref(db, "users/" + userId), (snapshot) => {
             const userData = snapshot.val();
             const statusArea = document.getElementById('status-area');
-            const tickPlaceholder = document.getElementById('blue-tick-placeholder');
+            const badgePlaceholder = document.getElementById('badge-placeholder');
             const requestArea = document.getElementById('request-tick-area');
             
+            // If user is verified
             if (userData && userData.isVerified === true) {
                 if (!localStorage.getItem('notified_verified')) {
                     document.getElementById('verify-notif').classList.add('show');
@@ -225,21 +250,29 @@
                     setTimeout(() => document.getElementById('verify-notif').classList.remove('show'), 5000);
                 }
                 statusArea.innerHTML = `<span class="status-badge verified-text">Verified Scholar ✅</span>`;
-                tickPlaceholder.innerHTML = `<span class="verified-badge">✓</span>`;
+                // Keep mod badge if it exists, otherwise add tick
+                if(!badgePlaceholder.innerHTML.includes('mod-badge')) {
+                    badgePlaceholder.innerHTML = `<span class="verified-badge">✓</span>`;
+                }
                 requestArea.classList.add('hidden');
                 return;
             }
 
-            // 2. CHECK FOR PENDING REQUEST
+            // 3. CHECK FOR PENDING REQUEST
             onValue(ref(db, "verification_requests/" + userId), (reqSnap) => {
                 if (reqSnap.exists()) {
                     statusArea.innerHTML = `<span class="status-badge status-pending">Reviewing Payment... ⏳</span>`;
                     requestArea.innerHTML = `<p style="font-size:12px; opacity:0.7;">Request sent. Waiting for Admin confirmation.</p>`;
                     requestArea.classList.remove('hidden');
                 } else {
-                    statusArea.innerHTML = `<span class="status-badge unverified">Free Member 🔒</span>`;
-                    requestArea.innerHTML = `<button class="btn-action" style="background:var(--blue-tick); color:white;" onclick="togglePaymentModal()">Get Blue Tick (₦500)</button>`;
-                    requestArea.classList.remove('hidden');
+                    // Only show "Free Member" if they aren't a Moderator
+                    onValue(ref(db, "moderators/" + userId), (mSnap) => {
+                        if (!mSnap.exists()) {
+                            statusArea.innerHTML = `<span class="status-badge unverified">Free Member 🔒</span>`;
+                            requestArea.innerHTML = `<button class="btn-action" style="background:var(--blue-tick); color:white;" onclick="togglePaymentModal()">Get Blue Tick (₦500)</button>`;
+                            requestArea.classList.remove('hidden');
+                        }
+                    });
                 }
             });
         });
