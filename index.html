@@ -17,6 +17,7 @@
             --dark-menu: #1e1e1e;
             --radius: 16px;
             --shadow: 0 10px 25px rgba(0,0,0,0.08);
+            --blue-tick: #00BFFF;
         }
 
         [data-theme="dark"] {
@@ -132,6 +133,9 @@
         .lvl-diamond { background: #b9f2ff; color: #005f73; animation: glow 2s infinite; }
         @keyframes glow { 0% { box-shadow: 0 0 5px #b9f2ff; } 50% { box-shadow: 0 0 15px #b9f2ff; } 100% { box-shadow: 0 0 5px #b9f2ff; } }
 
+        /* Blue Tick Badge Style */
+        .blue-tick { color: var(--blue-tick); font-size: 14px; margin-left: 4px; vertical-align: middle; }
+
         /* BROADCAST BAR */
         #broadcast-bar { 
             background: var(--accent); 
@@ -210,6 +214,7 @@
                     <button onclick="enterAdmin()">⚙️ Admin Dashboard</button>
                     <button onclick="window.location.href='leaderboard.html'">🏆 View Leaderboard</button>
                     <button onclick="window.location.href='profile.html'">👤 My Profile</button>
+                    <button style="color: var(--blue-tick); font-weight: bold;" onclick="requestVerification()">💎 Request Blue Badge</button>
                     <button onclick="window.location.href='pq.html'">📄 Past Questions</button>
                     <button onclick="window.location.href='note.html'">📚 Course Notes</button>
                     <button onclick="contactAdmin()">📧 Contact Admin</button>
@@ -226,7 +231,7 @@
 
         <div style="margin-top: 60px;">
             <span id="time-greeting" class="greeting-time">Good Day,</span>
-            <h1 style="margin-top: 0; color: var(--primary);">BIU Archive Portal</h1>
+            <h1 style="margin-top: 0; color: var(--primary);">BIU Archive Portal <span id="header-blue-tick"></span></h1>
         </div>
 
         <div id="ids-result-container" class="hidden">
@@ -311,7 +316,7 @@
         }
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded, onValue, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, push, set, onChildAdded, onValue, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
@@ -334,6 +339,35 @@
         if(!name || !userId) { 
             window.location.href = 'login.html'; 
         }
+
+        // --- BLUE BADGE SYSTEM LOGIC ---
+        let isUserVerified = false;
+
+        onValue(ref(db, `users/${userId}`), (snap) => {
+            const data = snap.val();
+            if(data && data.isVerified) {
+                if(!isUserVerified) {
+                    // Check if they were just verified to show congrats
+                    if(localStorage.getItem('biu_verified') !== 'true') {
+                        alert("🎉 Congratulations! Your Blue Badge has been activated.");
+                        localStorage.setItem('biu_verified', 'true');
+                    }
+                }
+                isUserVerified = true;
+                document.getElementById('header-blue-tick').innerHTML = '<span class="blue-tick">✓</span>';
+            }
+        });
+
+        window.requestVerification = () => {
+            if(isUserVerified) return alert("You are already verified!");
+            const confirmReq = confirm("Request a Verification Badge?\n\nFee: ₦500\nAcct: 1475713437 (Access Bank)\n\nOnly proceed if you have paid. The Admin will verify your status.");
+            if(confirmReq) {
+                set(ref(db, `verification_requests/${userId}`), {
+                    userId, name, matric: userMatric, timestamp: serverTimestamp()
+                }).then(() => alert("Request sent successfully! Your badge will appear once approved."));
+            }
+        };
+        // ------------------------------
 
         onValue(ref(db, "broadcast"), (snapshot) => {
             const data = snapshot.val();
@@ -393,7 +427,6 @@
         }
         setGreeting();
 
-        // FIXED: IDS TEST RESULT FETCH FOR ALL USERS
         async function fetchIDSResult() {
             const sheetId = '11Ka9v6t85uzJhW1WUGYM3AG8LKc1z2jl';
             const base = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
@@ -403,30 +436,21 @@
                 const json = JSON.parse(text.substr(47).slice(0, -2));
                 const rows = json.table.rows;
                 let total = 0, high = 0, count = 0, myRow = null, tableHTML = '';
-
-                // Clean the matric from localStorage for accurate comparison
                 const cleanUserMatric = userMatric ? userMatric.trim().toLowerCase() : "";
 
                 rows.forEach(row => {
-                    // row.c[0] is Name, row.c[1] is Matric, row.c[2] is Score
                     if (row.c && row.c[2] && row.c[2].v !== null) {
                         const score = parseFloat(row.c[2].v);
                         const rowMatric = row.c[1] ? row.c[1].v.toString().trim().toLowerCase() : "";
                         const grade = getGrade(score);
-                        
                         total += score; count++;
                         if (score > high) high = score;
-
                         tableHTML += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: white;">
                             <td style="padding: 10px 5px;">${maskName(row.c[0].v.toString())}</td>
                             <td style="font-weight:bold;">${score}/20</td>
                             <td style="color: ${grade.c}; font-weight: bold;">${grade.l}</td>
                         </tr>`;
-
-                        // Match logic: Check if current row's matric matches the logged-in user
-                        if (rowMatric === cleanUserMatric && cleanUserMatric !== "") {
-                            myRow = row;
-                        }
+                        if (rowMatric === cleanUserMatric && cleanUserMatric !== "") myRow = row;
                     }
                 });
 
@@ -495,18 +519,29 @@
             const sorted = Object.values(data).sort((a,b) => (b.streak||0) - (a.streak||0)).slice(0, 5);
             document.getElementById('leaderboard-list').innerHTML = sorted.map((u, i) => {
                 const lvl = getLevelInfo(u.streak || 1);
-                return `<div class="leaderboard-item"><span><span class="rank-circle">${i+1}</span><strong>${u.name}</strong> <span class="level-tag ${lvl.class}">${lvl.title}</span></span><span>🔥 ${u.streak || 1}</span></div>`;
+                const tick = u.isVerified ? '<span class="blue-tick">✓</span>' : '';
+                return `<div class="leaderboard-item"><span><span class="rank-circle">${i+1}</span><strong>${u.name}${tick}</strong> <span class="level-tag ${lvl.class}">${lvl.title}</span></span><span>🔥 ${u.streak || 1}</span></div>`;
             }).join('');
         });
 
         window.sendChat = function() {
             const i = document.getElementById('chat-msg');
-            if (i.value.trim()) { push(ref(db, "messages"), { sender: name.split(' ')[0], message: i.value, timestamp: serverTimestamp() }); i.value = ""; }
+            if (i.value.trim()) { 
+                push(ref(db, "messages"), { 
+                    sender: name.split(' ')[0], 
+                    message: i.value, 
+                    isVerified: isUserVerified,
+                    timestamp: serverTimestamp() 
+                }); 
+                i.value = ""; 
+            }
         };
         onChildAdded(ref(db, "messages"), (s) => {
             const d = s.val(); const disp = document.getElementById('chat-display');
             if (disp.innerHTML.includes('Connecting')) disp.innerHTML = '';
-            const msgDiv = document.createElement('div'); msgDiv.innerHTML = `<strong>${d.sender}:</strong> ${d.message}`;
+            const tick = d.isVerified ? '<span class="blue-tick">✓</span>' : '';
+            const msgDiv = document.createElement('div'); 
+            msgDiv.innerHTML = `<strong>${d.sender}${tick}:</strong> ${d.message}`;
             disp.appendChild(msgDiv); disp.scrollTop = disp.scrollHeight;
         });
 

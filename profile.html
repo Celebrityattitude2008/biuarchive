@@ -13,6 +13,7 @@
             --text: #333; 
             --success: #28a745; 
             --danger: #dc3545;
+            --blue-tick: #00BFFF;
             --radius: 20px;
             --shadow: 0 10px 30px rgba(0,0,0,0.08);
         }
@@ -51,32 +52,22 @@
             box-sizing: border-box;
             position: relative;
         }
-        
-        /* AVATAR STYLE */
-        .avatar { 
-            width: 90px; 
-            height: 90px; 
-            background: linear-gradient(135deg, var(--primary), #004080); 
-            color: var(--white); 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 36px; 
-            font-weight: 800; 
-            margin: 0 auto 20px; 
-            border: 4px solid var(--accent); 
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-        }
-        
-        .info-card { 
-            background: rgba(128,128,128,0.04); 
-            padding: 16px; 
-            border-radius: 14px; 
-            margin: 12px 0; 
-            text-align: left; 
-            border-left: 5px solid var(--primary); 
-            transition: transform 0.2s;
+
+        .hidden { display: none !important; }
+
+        /* BLUE TICK & BADGES */
+        .verified-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            background-color: var(--blue-tick);
+            color: white;
+            font-size: 11px;
+            border-radius: 50%;
+            margin-left: 6px;
+            vertical-align: middle;
         }
         
         .status-badge { 
@@ -87,82 +78,101 @@
             font-size: 13px; 
             margin-top: 5px; 
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
-        .verified { 
-            background: var(--success); 
-            color: white; 
-            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-        }
-        .unverified { 
-            background: #666; 
-            color: white; 
-            opacity: 0.8;
-        }
+        .verified-text { background: var(--success); color: white; }
+        .unverified { background: #666; color: white; opacity: 0.8; }
+        .status-pending { background: #6c757d; color: white; animation: pulse-gray 2s infinite; }
+        @keyframes pulse-gray { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        /* BUTTONS */
-        .btn-action { 
-            width: 100%; 
-            padding: 15px; 
-            margin-top: 15px; 
-            border-radius: 12px; 
-            border: none; 
-            font-weight: 800; 
-            cursor: pointer; 
-            transition: 0.3s; 
-            font-size: 15px;
-        }
-        .btn-logout { 
-            background: #f0f0f0; 
-            color: #333; 
-        }
-        [data-theme="dark"] .btn-logout {
-            background: #333;
+        /* SUCCESS NOTIFICATION */
+        #verify-notif {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--blue-tick), #0078ff);
             color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: bold;
+            z-index: 9999;
+            transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .btn-back { 
-            background: var(--primary); 
-            color: var(--white); 
-            box-shadow: 0 4px 15px rgba(0, 33, 71, 0.2);
-        }
-        .btn-action:active { transform: scale(0.97); }
-        
-        .nav-links { margin-top: 25px; font-size: 14px; }
-        .nav-links a { 
-            color: var(--primary); 
-            text-decoration: none; 
-            font-weight: bold; 
-            opacity: 0.7;
-            transition: 0.2s;
-        }
-        .nav-links a:hover { opacity: 1; }
+        #verify-notif.show { bottom: 30px; }
 
-        /* MOBILE SPECIFIC */
-        @media (max-width: 400px) {
-            .profile-container { padding: 30px 20px; }
-            .avatar { width: 75px; height: 75px; font-size: 30px; }
-            h2 { font-size: 1.4rem; }
+        /* AVATAR & CARDS */
+        .avatar { 
+            width: 90px; height: 90px; 
+            background: linear-gradient(135deg, var(--primary), #004080); 
+            color: var(--white); 
+            border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 36px; font-weight: 800; margin: 0 auto 20px; 
+            border: 4px solid var(--accent); 
         }
+        
+        .info-card { 
+            background: rgba(128,128,128,0.04); 
+            padding: 16px; border-radius: 14px; margin: 12px 0; 
+            text-align: left; border-left: 5px solid var(--primary); 
+        }
+        
+        .btn-action { 
+            width: 100%; padding: 15px; margin-top: 15px; 
+            border-radius: 12px; border: none; font-weight: 800; 
+            cursor: pointer; transition: 0.3s; font-size: 15px;
+        }
+        .btn-logout { background: #f0f0f0; color: #333; }
+        [data-theme="dark"] .btn-logout { background: #333; color: white; }
+        .btn-back { background: var(--primary); color: var(--white); }
     </style>
 </head>
 <body>
 
+    <div id="verify-notif">
+        <span>🎊</span>
+        <span>Account Verified! Welcome to the Elite.</span>
+    </div>
+
+    <div id="payment-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px;">
+        <div style="background: var(--white); padding: 30px; border-radius: 20px; max-width: 400px; width: 100%; text-align: center; color: var(--text);">
+            <h3 style="color: var(--blue-tick);">Verification Payment</h3>
+            <p style="font-size: 14px;">Transfer <b>₦500</b> to the admin account:</p>
+            <div style="background: rgba(0,191,255,0.1); padding: 15px; border-radius: 12px; margin: 20px 0; border: 1px dashed var(--blue-tick);">
+                <small>OPAY / PALMPAY</small><br>
+                <strong style="font-size: 20px;">0123456789</strong><br>
+                <small>NAME: ADMIN SURNAME</small>
+            </div>
+            <button class="btn-action" style="background: var(--success); color: white;" onclick="submitVerificationRequest()">I Have Paid - Notify Admin</button>
+            <button class="btn-action" style="background: none; border: 1px solid #ccc; color: var(--text);" onclick="togglePaymentModal()">Cancel</button>
+        </div>
+    </div>
+
     <div class="profile-container">
         <div class="avatar" id="user-initial">?</div>
-        <h2 id="user-name" style="margin: 0; font-weight: 800; color: var(--primary);">Student Name</h2>
+        <h2 style="margin: 0; font-weight: 800; color: var(--primary);">
+            <span id="user-name">Student Name</span><span id="blue-tick-placeholder"></span>
+        </h2>
         <p id="user-dept" style="opacity: 0.6; margin: 5px 0; font-weight: 600;">Department</p>
         
         <div id="status-area" style="margin-bottom: 20px;">
             <span class="status-badge unverified">Checking Status...</span>
         </div>
 
+        <div id="request-tick-area" class="hidden">
+            </div>
+
         <div class="info-card">
-            <div style="font-size: 11px; text-transform: uppercase; opacity: 0.5; font-weight: 800; margin-bottom: 4px;">Matric Number</div>
+            <div style="font-size: 11px; text-transform: uppercase; opacity: 0.5; font-weight: 800;">Matric Number</div>
             <strong id="display-matric" style="font-size: 16px;">Loading...</strong>
         </div>
 
         <div class="info-card">
-            <div style="font-size: 11px; text-transform: uppercase; opacity: 0.5; font-weight: 800; margin-bottom: 4px;">Account ID</div>
+            <div style="font-size: 11px; text-transform: uppercase; opacity: 0.5; font-weight: 800;">Account ID</div>
             <small id="display-id" style="font-family: monospace; font-size: 13px;">Loading...</small>
         </div>
 
@@ -170,19 +180,11 @@
             <button class="btn-action btn-back" onclick="window.location.href='index.html'">Go to Vault</button>
             <button class="btn-action btn-logout" onclick="logout()">Log Out</button>
         </div>
-
-        <div class="nav-links">
-            <a href="index.html">← Return to Archive</a>
-        </div>
-        
-        <footer style="margin-top: 30px; font-size: 10px; opacity: 0.4; letter-spacing: 1px; font-weight: bold;">
-            BIU STUDENT ARCHIVE 2026
-        </footer>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
@@ -197,47 +199,63 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        if (localStorage.getItem('theme') === 'dark') {
-            document.body.setAttribute('data-theme', 'dark');
-        }
-
         const name = localStorage.getItem('biu_user_name');
-        const dept = localStorage.getItem('biu_user_dept');
-        const matric = localStorage.getItem('biu_user_matric');
         const userId = localStorage.getItem('biu_user_id');
+        const matric = localStorage.getItem('biu_user_matric');
 
-        if (!name || !userId) {
-            window.location.href = 'login.html';
-        } else {
-            document.getElementById('user-name').innerText = name;
-            document.getElementById('user-dept').innerText = dept;
-            document.getElementById('display-matric').innerText = matric || "Not Set";
-            document.getElementById('display-id').innerText = userId;
-            document.getElementById('user-initial').innerText = name.charAt(0).toUpperCase();
+        if (!name || !userId) window.location.href = 'login.html';
 
-            onValue(ref(db, "paid_users/" + userId), (snapshot) => {
-                const statusArea = document.getElementById('status-area');
-                if (snapshot.exists() && snapshot.val() === true) {
-                    statusArea.innerHTML = `<span class="status-badge verified">Verified Premium ✅</span>`;
+        document.getElementById('user-name').innerText = name;
+        document.getElementById('user-dept').innerText = localStorage.getItem('biu_user_dept');
+        document.getElementById('display-matric').innerText = matric || "Not Set";
+        document.getElementById('display-id').innerText = userId;
+        document.getElementById('user-initial').innerText = name.charAt(0).toUpperCase();
+
+        // 1. VERIFICATION LISTENER
+        onValue(ref(db, "users/" + userId), (snapshot) => {
+            const userData = snapshot.val();
+            const statusArea = document.getElementById('status-area');
+            const tickPlaceholder = document.getElementById('blue-tick-placeholder');
+            const requestArea = document.getElementById('request-tick-area');
+            
+            if (userData && userData.isVerified === true) {
+                if (!localStorage.getItem('notified_verified')) {
+                    document.getElementById('verify-notif').classList.add('show');
+                    localStorage.setItem('notified_verified', 'true');
+                    setTimeout(() => document.getElementById('verify-notif').classList.remove('show'), 5000);
+                }
+                statusArea.innerHTML = `<span class="status-badge verified-text">Verified Scholar ✅</span>`;
+                tickPlaceholder.innerHTML = `<span class="verified-badge">✓</span>`;
+                requestArea.classList.add('hidden');
+                return;
+            }
+
+            // 2. CHECK FOR PENDING REQUEST
+            onValue(ref(db, "verification_requests/" + userId), (reqSnap) => {
+                if (reqSnap.exists()) {
+                    statusArea.innerHTML = `<span class="status-badge status-pending">Reviewing Payment... ⏳</span>`;
+                    requestArea.innerHTML = `<p style="font-size:12px; opacity:0.7;">Request sent. Waiting for Admin confirmation.</p>`;
+                    requestArea.classList.remove('hidden');
                 } else {
                     statusArea.innerHTML = `<span class="status-badge unverified">Free Member 🔒</span>`;
+                    requestArea.innerHTML = `<button class="btn-action" style="background:var(--blue-tick); color:white;" onclick="togglePaymentModal()">Get Blue Tick (₦500)</button>`;
+                    requestArea.classList.remove('hidden');
                 }
             });
+        });
 
-            onValue(ref(db, "banned_users/" + userId), (snapshot) => {
-                if (snapshot.exists()) {
-                    localStorage.clear();
-                    window.location.href = 'login.html';
-                }
+        window.togglePaymentModal = () => document.getElementById('payment-modal').classList.toggle('hidden');
+
+        window.submitVerificationRequest = () => {
+            set(ref(db, "verification_requests/" + userId), {
+                name, matric, userId, timestamp: new Date().toLocaleString()
+            }).then(() => {
+                alert("Request Sent! Admin will confirm shortly.");
+                togglePaymentModal();
             });
-        }
-
-        window.logout = function() {
-            if(confirm("Are you sure you want to logout?")) {
-                localStorage.clear();
-                window.location.href = 'login.html';
-            }
         };
+
+        window.logout = () => { if(confirm("Logout?")) { localStorage.clear(); window.location.href = 'login.html'; } };
     </script>
 </body>
 </html>

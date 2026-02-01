@@ -12,6 +12,7 @@
             --danger: #dc3545; 
             --success: #28a745; 
             --info: #17a2b8; 
+            --blue-tick: #00BFFF;
         }
         
         body { 
@@ -120,6 +121,18 @@
         }
         input[type="text"]:focus { border-color: var(--info); }
 
+        /* Verification Request Card Style */
+        .request-card {
+            background: #fff;
+            border: 1px solid #eee;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
         /* Responsive Overrides */
         @media (max-width: 600px) {
             .admin-container { padding: 15px; border-radius: 0; margin: 0; }
@@ -143,6 +156,14 @@
              </div>
         </div>
         <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+
+        <div class="tool-card" style="margin-bottom: 25px; border-left: 8px solid var(--blue-tick);">
+            <h3 style="margin:0">💎 Blue Tick Requests (₦500)</h3>
+            <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Approve after confirming payment in your bank app.</p>
+            <div id="verification-requests-list">
+                <p style="font-size: 13px; opacity: 0.5;">No pending requests.</p>
+            </div>
+        </div>
 
         <div class="maintenance-card">
             <div>
@@ -220,6 +241,36 @@
         }
     
         function startAdmin() {
+            // NEW: VERIFICATION LOGIC
+            onValue(ref(db, "verification_requests"), (snapshot) => {
+                const requests = snapshot.val();
+                const listDiv = document.getElementById('verification-requests-list');
+                if(!requests) {
+                    listDiv.innerHTML = "<p style='font-size: 13px; opacity: 0.5;'>No pending requests.</p>";
+                    return;
+                }
+
+                listDiv.innerHTML = Object.entries(requests).map(([reqId, data]) => `
+                    <div class="request-card">
+                        <div>
+                            <strong>${data.name}</strong> <span style="font-size:11px; color:#666;">(${data.matric})</span><br>
+                            <small style="color:var(--blue-tick); font-size:10px;">ID: ${data.userId}</small>
+                        </div>
+                        <button class="btn" style="background:var(--success); color:white; padding:8px 15px; font-size:11px;" onclick="approveTick('${data.userId}')">Approve ✓</button>
+                    </div>
+                `).join('');
+            });
+
+            window.approveTick = (targetUid) => {
+                if(confirm("Confirm payment received and grant Blue Tick?")) {
+                    // Update user to verified
+                    update(ref(db, `users/${targetUid}`), { isVerified: true });
+                    // Remove request
+                    remove(ref(db, `verification_requests/${targetUid}`));
+                    alert("User Verified!");
+                }
+            };
+
             // BROADCAST: Pushing to "broadcast" node for Index.html to see
             window.sendGlobalAlert = () => {
                 const msg = document.getElementById('alert-msg').value;
@@ -270,9 +321,10 @@
                     const sorted = entries.sort((a,b) => (b[1].lastActive || 0) - (a[1].lastActive || 0));
                     list.innerHTML = sorted.map(([uid, data]) => {
                         const isBanned = banned[uid] === true;
+                        const hasTick = data.isVerified === true ? `<span style="color:var(--blue-tick);">✓</span>` : "";
                         return `
                         <tr>
-                            <td><strong>${data.name || 'User'}</strong></td>
+                            <td><strong>${data.name || 'User'}</strong> ${hasTick}</td>
                             <td>${data.matric || 'N/A'}</td>
                             <td>🔥 ${data.streak || 1}</td>
                             <td>${data.lastActive ? new Date(data.lastActive).toLocaleTimeString() : '---'}</td>
