@@ -393,7 +393,7 @@
         }
         setGreeting();
 
-        // UPDATED IDS TEST RESULT FETCH (SPREADSHEET ID UPDATED)
+        // FIXED: IDS TEST RESULT FETCH FOR ALL USERS
         async function fetchIDSResult() {
             const sheetId = '11Ka9v6t85uzJhW1WUGYM3AG8LKc1z2jl';
             const base = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
@@ -404,25 +404,34 @@
                 const rows = json.table.rows;
                 let total = 0, high = 0, count = 0, myRow = null, tableHTML = '';
 
+                // Clean the matric from localStorage for accurate comparison
+                const cleanUserMatric = userMatric ? userMatric.trim().toLowerCase() : "";
+
                 rows.forEach(row => {
-                    if (row.c[2] && row.c[2].v !== null) {
+                    // row.c[0] is Name, row.c[1] is Matric, row.c[2] is Score
+                    if (row.c && row.c[2] && row.c[2].v !== null) {
                         const score = parseFloat(row.c[2].v);
+                        const rowMatric = row.c[1] ? row.c[1].v.toString().trim().toLowerCase() : "";
                         const grade = getGrade(score);
+                        
                         total += score; count++;
                         if (score > high) high = score;
 
                         tableHTML += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: white;">
-                            <td style="padding: 10px 5px;">${maskName(row.c[0].v)}</td>
+                            <td style="padding: 10px 5px;">${maskName(row.c[0].v.toString())}</td>
                             <td style="font-weight:bold;">${score}/20</td>
                             <td style="color: ${grade.c}; font-weight: bold;">${grade.l}</td>
                         </tr>`;
 
-                        if (row.c[1] && row.c[1].v.toString().toLowerCase() === userMatric.toLowerCase()) myRow = row;
+                        // Match logic: Check if current row's matric matches the logged-in user
+                        if (rowMatric === cleanUserMatric && cleanUserMatric !== "") {
+                            myRow = row;
+                        }
                     }
                 });
 
                 document.getElementById('public-table-body').innerHTML = tableHTML;
-                document.getElementById('class-avg').innerText = (total / count).toFixed(1);
+                document.getElementById('class-avg').innerText = count > 0 ? (total / count).toFixed(1) : "0.0";
                 document.getElementById('class-high').innerText = high + "/20";
 
                 if (myRow) {
@@ -434,7 +443,7 @@
                     document.getElementById('ids-grade').innerText = `[GRADE: ${g.l}]`;
                     document.getElementById('ids-grade').style.color = g.c;
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Score fetch error:", e); }
         }
         if(userMatric) fetchIDSResult();
 
