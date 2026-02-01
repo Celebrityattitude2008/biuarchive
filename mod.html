@@ -13,131 +13,298 @@
             --light: #f8f9fa;
             --white: #ffffff; 
             --text: #333; 
+            --blue-tick: #00BFFF;
         }
 
-        body { font-family: 'Segoe UI', sans-serif; background: var(--light); color: var(--text); margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; background: var(--white); padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--light); color: var(--text); margin: 0; padding: 20px; transition: opacity 0.3s; }
+        .container { max-width: 1000px; margin: 0 auto; background: var(--white); padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         
         .mod-header { border-bottom: 3px solid var(--accent); margin-bottom: 30px; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         
-        .tool-card { background: #fdfdfd; border: 1px solid #eee; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-        .tool-card h3 { margin-top: 0; color: var(--primary); font-size: 1.2rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: var(--primary); color: white; padding: 15px; border-radius: 12px; text-align: center; border-left: 5px solid var(--accent); }
+        .stat-card span { display: block; font-size: 28px; font-weight: bold; color: var(--accent); }
 
-        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .tool-card { background: #ffffff; border: 1px solid #eee; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        .tool-card h3 { margin-top: 0; color: var(--primary); font-size: 1.2rem; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 5px rgba(0,33,71,0.2); }
         
-        .btn { padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn { padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 14px; display: inline-flex; align-items: center; gap: 5px; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-danger { background: var(--danger); color: white; }
         .btn-success { background: var(--success); color: white; }
-        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-verify { background: var(--blue-tick); color: white; padding: 6px 12px; font-size: 12px; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
 
-        .status-badge { font-size: 12px; padding: 4px 8px; border-radius: 4px; background: #eee; }
-        #chat-logs { height: 150px; overflow-y: auto; background: #f4f4f4; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 10px; }
+        .req-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        .req-table th { text-align: left; padding: 12px; border-bottom: 2px solid #eee; color: #666; background: #fafafa; }
+        .req-table td { padding: 12px; border-bottom: 1px solid #eee; }
+
+        #chat-logs, #action-logs { height: 180px; overflow-y: auto; background: #1e1e1e; color: #dcdcdc; padding: 15px; border-radius: 8px; font-family: 'Consolas', monospace; font-size: 12px; margin-bottom: 10px; border: 2px solid #333; }
+        .log-entry { margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 3px; }
+        .log-time { color: #888; margin-right: 8px; }
+        .hidden { display: none !important; }
+
+        .search-box { margin-bottom: 15px; position: relative; }
+        .badge { font-size: 10px; padding: 3px 8px; border-radius: 10px; vertical-align: middle; }
     </style>
 </head>
-<body>
+<body id="mod-body" class="hidden">
 
 <div class="container">
     <div class="mod-header">
         <div>
-            <h1 style="margin:0;">🛡️ Moderator Control</h1>
-            <p style="margin:0; opacity:0.7;">System Management & Governance</p>
+            <h1 style="margin:0;">🛡️ Archive Command Center</h1>
+            <p style="margin:0; opacity:0.7;">System Governance & Staff Tools</p>
         </div>
-        <button onclick="window.location.href='dashboard.html'" class="btn" style="background:#ddd;">Back to Dashboard</button>
+        <button onclick="window.location.href='profile.html'" class="btn" style="background:#f0f0f0; color: #333;">Exit Admin</button>
     </div>
 
-    <div class="tool-card">
-        <h3>📢 Global Broadcast</h3>
-        <p style="font-size: 13px;">This message appears at the top of every student's dashboard.</p>
-        <input type="text" id="broadcast-input" placeholder="Enter emergency alert or announcement...">
-        <button class="btn btn-primary" onclick="updateBroadcast()">Push to All Users</button>
-    </div>
-
-    <div class="tool-card">
-        <h3>🚫 Access Control (Ban System)</h3>
-        <p style="font-size: 13px;">Enter the <strong>User ID</strong> of the student to revoke access.</p>
-        <input type="text" id="ban-user-id" placeholder="e.g. 1706789452331">
-        <div style="display:flex; gap:10px;">
-            <button class="btn btn-danger" onclick="manageUser(true)">Ban Account</button>
-            <button class="btn btn-success" onclick="manageUser(false)">Unban Account</button>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span id="stat-online">0</span> Users Online
+        </div>
+        <div class="stat-card">
+            <span id="stat-verified">0</span> Verified Assets
+        </div>
+        <div class="stat-card">
+            <span id="stat-banned">0</span> Restricted IDs
         </div>
     </div>
 
     <div class="tool-card">
-        <h3>💬 Chat Governance</h3>
-        <div id="chat-logs">Loading recent messages...</div>
-        <button class="btn btn-danger" onclick="clearAllChat()">Clear All Chat History</button>
+        <h3>✅ Verification Desk <span class="badge" style="background:var(--blue-tick); color:white;" id="req-count">0</span></h3>
+        <div class="search-box">
+            <input type="text" id="verify-search" placeholder="Search by name or matric..." onkeyup="filterTable()">
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="req-table" id="req-table">
+                <thead>
+                    <tr>
+                        <th>Student Name</th>
+                        <th>Matriculation</th>
+                        <th>Request Time</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="verification-list">
+                    <tr><td colspan="4" style="text-align:center; opacity:0.5; padding:20px;">Establishing secure connection to database...</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <footer style="text-align: center; margin-top: 40px; font-size: 12px; opacity: 0.5;">
-        BIU ARCHIVE MODERATOR v2.0
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="tool-card">
+            <h3>📢 System Broadcast</h3>
+            <p style="font-size: 12px; color: #666;">This message ticker appears for all students.</p>
+            <input type="text" id="broadcast-input" placeholder="Emergency alert or update text...">
+            <button class="btn btn-primary" onclick="updateBroadcast()">Update Broadcast</button>
+        </div>
+
+        <div class="tool-card">
+            <h3>🚫 Access Control</h3>
+            <p style="font-size: 12px; color: #666;">Revoke portal access by User ID.</p>
+            <input type="text" id="ban-user-id" placeholder="Paste UID here...">
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-danger" onclick="manageUser(true)">Ban ID</button>
+                <button class="btn btn-success" onclick="manageUser(false)">Restore</button>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="tool-card">
+            <h3>💬 Chat Governance</h3>
+            <div id="chat-logs"></div>
+            <button class="btn btn-danger" onclick="clearAllChat()" style="width: 100%; justify-content: center;">Wipe Chat Data</button>
+        </div>
+        <div class="tool-card">
+            <h3>📝 Admin Audit Logs</h3>
+            <div id="action-logs"></div>
+        </div>
+    </div>
+
+    <footer style="text-align: center; margin-top: 40px; font-size: 11px; opacity: 0.5; letter-spacing: 2px;">
+        BIU ARCHIVE PROTOCOL V4.0 // ENCRYPTED SESSION
     </footer>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, remove, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, onValue, remove, update, get, serverTimestamp, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
         authDomain: "biu-archive.firebaseapp.com",
         databaseURL: "https://biu-archive-default-rtdb.firebaseio.com",
-        projectId: "biu-archive",
-        storageBucket: "biu-archive.firebasestorage.app",
-        messagingSenderId: "245967347998",
-        appId: "1:245967347998:web:a8feb5ad0ef9650946a90f"
+        projectId: "biu-archive"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const modName = localStorage.getItem('biu_user_name') || "Moderator";
+    const userId = localStorage.getItem('biu_user_id');
+    const modName = localStorage.getItem('biu_user_name') || "Staff_Admin";
 
-    // --- 1. UPDATE BROADCAST ---
+    // --- SECURITY GATE ---
+    if (!userId) {
+        window.location.href = 'login.html';
+    } else {
+        get(ref(db, `moderators/${userId}`)).then((snap) => {
+            if (snap.exists()) {
+                document.getElementById('mod-body').classList.remove('hidden');
+                startModSystems();
+                logAction("System", "Moderator session initialized.");
+            } else {
+                alert("Unauthorized Access Attempt.");
+                window.location.href = 'index.html';
+            }
+        });
+    }
+
+    function logAction(actor, action) {
+        const time = new Date().toLocaleTimeString();
+        const logBox = document.getElementById('action-logs');
+        const entry = document.createElement('div');
+        entry.className = "log-entry";
+        entry.innerHTML = `<span class="log-time">[${time}]</span> <strong>${actor}:</strong> ${action}`;
+        logBox.prepend(entry);
+        
+        // Also save to Firebase Audit Logs
+        push(ref(db, "logs"), {
+            actor: actor,
+            action: action,
+            timestamp: serverTimestamp()
+        });
+    }
+
+    function startModSystems() {
+        // 1. VERIFICATION LISTENER
+        onValue(ref(db, "verification_requests"), (snap) => {
+            const list = document.getElementById('verification-list');
+            const countBadge = document.getElementById('req-count');
+            list.innerHTML = "";
+            let count = 0;
+
+            if (snap.exists()) {
+                snap.forEach((child) => {
+                    count++;
+                    const req = child.val();
+                    list.innerHTML += `
+                        <tr>
+                            <td><strong>${req.name}</strong></td>
+                            <td>${req.matric || 'N/A'}</td>
+                            <td style="font-size:11px; color:#888;">${req.timestamp}</td>
+                            <td>
+                                <button class="btn btn-verify" onclick="approveUser('${req.userId}', '${req.name}')">Approve</button>
+                                <button class="btn btn-danger" style="padding:6px; font-size:10px;" onclick="rejectRequest('${req.userId}', '${req.name}')">×</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } else {
+                list.innerHTML = `<tr><td colspan="4" style="text-align:center; opacity:0.5; padding:20px;">Desk cleared. No pending requests.</td></tr>`;
+            }
+            countBadge.innerText = count;
+        });
+
+        // 2. LIVE STATS & BANNED COUNT
+        onValue(ref(db, "live_viewers"), (snap) => {
+            let total = 0;
+            if(snap.exists()){ snap.forEach(course => { total += Object.keys(course.val()).length; }); }
+            document.getElementById('stat-online').innerText = total;
+        });
+
+        onValue(ref(db, "users"), (snap) => {
+            let vCount = 0;
+            snap.forEach(user => { if(user.val().isVerified) vCount++; });
+            document.getElementById('stat-verified').innerText = vCount;
+        });
+
+        onValue(ref(db, "banned_users"), (snap) => {
+            document.getElementById('stat-banned').innerText = snap.exists() ? Object.keys(snap.val()).length : 0;
+        });
+
+        // 3. CHAT LOGS
+        onValue(ref(db, "messages"), (snap) => {
+            const logs = document.getElementById('chat-logs');
+            logs.innerHTML = "";
+            snap.forEach((child) => {
+                const data = child.val();
+                logs.innerHTML += `<div><span style="color:#888;">[CHAT]</span> <strong>${data.sender}:</strong> ${data.message}</div>`;
+            });
+            logs.scrollTop = logs.scrollHeight;
+        });
+    }
+
+    // --- MOD ACTIONS ---
+    window.approveUser = (uId, name) => {
+        if(confirm(`Approve verification for ${name}?`)) {
+            update(ref(db, `users/${uId}`), { isVerified: true })
+            .then(() => {
+                remove(ref(db, `verification_requests/${uId}`));
+                logAction(modName, `Verified user: ${name} (${uId})`);
+            });
+        }
+    };
+
+    window.rejectRequest = (uId, name) => {
+        if(confirm(`Reject request from ${name}?`)) {
+            remove(ref(db, `verification_requests/${uId}`));
+            logAction(modName, `Rejected verification for: ${name}`);
+        }
+    };
+
     window.updateBroadcast = () => {
         const msg = document.getElementById('broadcast-input').value;
-        if(!msg) return alert("Enter a message");
-        
-        set(ref(db, "broadcast_message"), {
-            text: msg,
-            updatedBy: modName,
-            time: Date.now()
-        }).then(() => alert("Broadcast updated successfully!"));
+        if(!msg) return;
+        set(ref(db, "broadcast_message"), { text: msg, updatedBy: modName, time: Date.now() })
+        .then(() => {
+            logAction(modName, `Updated global broadcast: "${msg}"`);
+            document.getElementById('broadcast-input').value = "";
+        });
     };
 
-    // --- 2. BAN / UNBAN SYSTEM ---
     window.manageUser = (isBan) => {
-        const userId = document.getElementById('ban-user-id').value;
-        if(!userId) return alert("Please provide a User ID");
-
+        const targetId = document.getElementById('ban-user-id').value;
+        if(!targetId) return;
         if(isBan) {
-            set(ref(db, `banned_users/${userId}`), {
-                reason: "Violation of portal rules",
-                bannedBy: modName,
-                timestamp: serverTimestamp()
-            }).then(() => alert("User " + userId + " has been BANNED."));
+            set(ref(db, `banned_users/${targetId}`), { bannedBy: modName, time: serverTimestamp() })
+            .then(() => {
+                logAction(modName, `BANNED User ID: ${targetId}`);
+                document.getElementById('ban-user-id').value = "";
+            });
         } else {
-            remove(ref(db, `banned_users/${userId}`))
-            .then(() => alert("User " + userId + " access restored."));
+            remove(ref(db, `banned_users/${targetId}`)).then(() => {
+                logAction(modName, `Restored User ID: ${targetId}`);
+                document.getElementById('ban-user-id').value = "";
+            });
         }
     };
-
-    // --- 3. CHAT MODERATION ---
-    onValue(ref(db, "messages"), (snap) => {
-        const logs = document.getElementById('chat-logs');
-        logs.innerHTML = "";
-        snap.forEach((child) => {
-            const data = child.val();
-            logs.innerHTML += `<div><strong>${data.sender}:</strong> ${data.message}</div>`;
-        });
-        logs.scrollTop = logs.scrollHeight;
-    });
 
     window.clearAllChat = () => {
-        if(confirm("This will delete the entire chat history for everyone. Proceed?")) {
-            remove(ref(db, "messages")).then(() => alert("Chat history cleared."));
+        if(confirm("DANGER: This will delete the entire public chat history. Proceed?")) {
+            remove(ref(db, "messages")).then(() => logAction(modName, "Wiped all chat logs."));
         }
     };
 
+    // --- UI HELPERS ---
+    window.filterTable = () => {
+        const input = document.getElementById("verify-search").value.toUpperCase();
+        const table = document.getElementById("req-table");
+        const tr = table.getElementsByTagName("tr");
+        for (let i = 1; i < tr.length; i++) {
+            let td = tr[i].getElementsByTagName("td")[0];
+            let td2 = tr[i].getElementsByTagName("td")[1];
+            if (td || td2) {
+                let txtValue = td.textContent || td.innerText;
+                let txtValue2 = td2.textContent || td2.innerText;
+                tr[i].style.display = (txtValue.toUpperCase().indexOf(input) > -1 || txtValue2.toUpperCase().indexOf(input) > -1) ? "" : "none";
+            }
+        }
+    };
 </script>
 </body>
 </html>

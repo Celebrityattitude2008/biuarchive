@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Buddy Hub | BIU Archive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { --primary: #002147; --accent: #FFD700; }
+        .bg-biu { background-color: var(--primary); }
+        .text-accent { color: var(--accent); }
+        .peer-card { transition: all 0.3s ease; }
+        .peer-card:hover { transform: translateY(-5px); border-color: var(--accent); }
+        
+        /* Chat Overlay Transitions */
+        #chat-window { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); transform: translateY(100%); }
+        #chat-window.open { transform: translateY(0); }
+
+        /* Welcome Modal Animation */
+        #welcome-modal.hidden { display: none; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen pb-20">
+
+    <div id="welcome-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm hidden p-6">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
+            <div class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">🤝</div>
+            <h2 class="text-2xl font-black text-blue-950 mb-2">Scholar Connect</h2>
+            <p class="text-gray-600 text-sm leading-relaxed mb-6">
+                You are now in the <b>Study Hub</b>. You can see other students online. 
+                Click <span class="text-blue-900 font-bold">"Connect"</span> to start a private 1-on-1 chat and study together!
+            </p>
+            <button onclick="closeWelcome()" class="w-full py-4 bg-biu text-white rounded-2xl font-bold shadow-lg shadow-blue-900/30 uppercase tracking-widest text-xs">
+                Let's Go!
+            </button>
+        </div>
+    </div>
+
+    <header class="bg-biu p-6 text-white rounded-b-3xl shadow-lg">
+        <button onclick="window.location.href='index.html'" class="mb-4 text-sm opacity-80">← Back to Portal</button>
+        <h1 class="text-3xl font-black italic">SCHOLAR <span class="text-accent">CONNECT</span></h1>
+        <p class="text-xs opacity-70 tracking-widest uppercase">Real-time Study Matchmaking</p>
+    </header>
+
+    <main class="p-4 max-w-2xl mx-auto">
+        <div class="flex gap-4 mb-6 -mt-8">
+            <div class="bg-white p-4 rounded-2xl shadow-sm flex-1 border-b-4 border-green-500 text-center">
+                <span class="block text-2xl font-bold text-slate-800" id="total-online">0</span>
+                <span class="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">Online Now</span>
+            </div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm flex-1 border-b-4 border-blue-500 text-center">
+                <span class="block text-2xl font-bold text-slate-800" id="courses-active">0</span>
+                <span class="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">Subjects Active</span>
+            </div>
+        </div>
+
+        <div id="buddy-list" class="space-y-3">
+             </div>
+    </main>
+
+    <div id="chat-window" class="fixed inset-0 z-[100] bg-white flex flex-col hidden">
+        <div class="bg-biu p-4 text-white flex justify-between items-center shadow-md">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-accent rounded-full flex items-center justify-center text-blue-900 font-bold">👤</div>
+                <div>
+                    <p id="chat-peer-name" class="font-bold text-sm leading-none text-accent uppercase">Study Partner</p>
+                    <small class="text-[10px] opacity-70 italic">Private Conversation</small>
+                </div>
+            </div>
+            <button onclick="closeChat()" class="text-3xl font-light hover:text-accent">&times;</button>
+        </div>
+        
+        <div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50 flex flex-col">
+            </div>
+
+        <div class="p-4 border-t bg-white flex gap-2">
+            <input type="text" id="chat-input" placeholder="Ask a question or say hi..." class="flex-1 bg-slate-100 p-3 rounded-xl outline-none text-sm border focus:border-accent">
+            <button id="send-btn" class="bg-biu text-white px-5 rounded-xl font-bold text-xs uppercase transition-colors active:bg-blue-800">Send</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue, set, onDisconnect, serverTimestamp, push, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
+            authDomain: "biu-archive.firebaseapp.com",
+            databaseURL: "https://biu-archive-default-rtdb.firebaseio.com",
+            projectId: "biu-archive"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const uId = localStorage.getItem('biu_user_id') || "Guest";
+        const uName = localStorage.getItem('biu_user_name') || "Student";
+        let activeChatId = null;
+
+        // 1. Onboarding Logic
+        window.addEventListener('load', () => {
+            if (!localStorage.getItem('hub_onboarded')) {
+                document.getElementById('welcome-modal').classList.remove('hidden');
+            }
+        });
+
+        window.closeWelcome = () => {
+            document.getElementById('welcome-modal').classList.add('hidden');
+            localStorage.setItem('hub_onboarded', 'true');
+        };
+
+        // 2. Presence Logic (Hub Exclusive)
+        const myPresenceRef = ref(db, `live_viewers/Buddy_Hub/${uId}`);
+        set(myPresenceRef, { name: uName, lastSeen: serverTimestamp() });
+        onDisconnect(myPresenceRef).remove();
+
+        // 3. Fetch Scholars List from ALL courses
+        onValue(ref(db, `live_viewers`), (snap) => {
+            const categories = snap.val();
+            const buddyList = document.getElementById('buddy-list');
+            let html = ''; let totalCount = 0; let courses = new Set();
+
+            if (categories) {
+                Object.keys(categories).forEach(course => {
+                    Object.keys(categories[course]).forEach(id => {
+                        if (id === uId) return; // Skip self
+                        totalCount++; 
+                        courses.add(course.replace('_', ' '));
+                        const user = categories[course][id];
+                        
+                        html += `
+                            <div class="peer-card bg-white p-4 rounded-2xl shadow-sm border border-transparent flex justify-between items-center">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-lg">🎓</div>
+                                    <div>
+                                        <h3 class="font-bold text-slate-800 text-sm">${user.name}</h3>
+                                        <p class="text-[9px] text-blue-600 font-bold uppercase tracking-tight">Reading: ${course.replace('_', ' ')}</p>
+                                    </div>
+                                </div>
+                                <button onclick="openChat('${id}', '${user.name}')" class="bg-biu text-white text-[10px] px-4 py-2 rounded-xl font-bold shadow-md uppercase tracking-widest hover:bg-yellow-500 hover:text-blue-900 transition-all">Connect</button>
+                            </div>`;
+                    });
+                });
+            }
+            buddyList.innerHTML = html || `<p class="text-center py-20 opacity-40">No other scholars active right now.</p>`;
+            document.getElementById('total-online').innerText = totalCount;
+            document.getElementById('courses-active').innerText = courses.size;
+        });
+
+        // 4. 1-to-1 Chat Logic
+        window.openChat = (peerId, peerName) => {
+            // Sort IDs to ensure both users enter the same room path
+            activeChatId = [uId, peerId].sort().join('_');
+            
+            document.getElementById('chat-peer-name').innerText = peerName;
+            const win = document.getElementById('chat-window');
+            win.classList.remove('hidden');
+            setTimeout(() => win.classList.add('open'), 10);
+            
+            loadMessages();
+        };
+
+        window.closeChat = () => {
+            const win = document.getElementById('chat-window');
+            win.classList.remove('open');
+            setTimeout(() => win.classList.add('hidden'), 400);
+            document.getElementById('chat-messages').innerHTML = "";
+            activeChatId = null;
+        };
+
+        function loadMessages() {
+            if(!activeChatId) return;
+            const chatRef = query(ref(db, `private_chats/${activeChatId}`), limitToLast(30));
+            onValue(chatRef, (snapshot) => {
+                const box = document.getElementById('chat-messages');
+                box.innerHTML = "";
+                snapshot.forEach(child => {
+                    const msg = child.val();
+                    const isMe = msg.senderId === uId;
+                    box.innerHTML += `
+                        <div class="max-w-[85%] ${isMe ? 'self-end bg-biu text-white rounded-l-2xl rounded-tr-2xl' : 'self-start bg-white border text-slate-800 rounded-r-2xl rounded-tl-2xl'} p-3 text-sm shadow-sm">
+                            <p>${msg.text}</p>
+                            <small class="text-[8px] opacity-50 block mt-1 ${isMe ? 'text-right' : 'text-left'}">${new Date(msg.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                        </div>`;
+                });
+                box.scrollTop = box.scrollHeight;
+            });
+        }
+
+        document.getElementById('send-btn').onclick = sendMessage;
+        document.getElementById('chat-input').addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') sendMessage();
+        });
+
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            if (input.value.trim() && activeChatId) {
+                push(ref(db, `private_chats/${activeChatId}`), {
+                    senderId: uId,
+                    senderName: uName,
+                    text: input.value.trim(),
+                    time: serverTimestamp()
+                });
+                input.value = "";
+            }
+        }
+    </script>
+</body>
+</html>

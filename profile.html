@@ -14,7 +14,7 @@
             --success: #28a745; 
             --danger: #dc3545;
             --blue-tick: #00BFFF;
-            --mod-purple: #8A2BE2; /* Moderator Color */
+            --mod-purple: #8A2BE2;
             --radius: 20px;
             --shadow: 0 10px 30px rgba(0,0,0,0.08);
         }
@@ -101,41 +101,41 @@
         .status-pending { background: #6c757d; color: white; animation: pulse-gray 2s infinite; }
         @keyframes pulse-gray { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        /* SUCCESS NOTIFICATION */
-        #verify-notif {
-            position: fixed;
-            bottom: -100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, var(--blue-tick), #0078ff);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 50px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: bold;
-            z-index: 9999;
-            transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        #verify-notif.show { bottom: 30px; }
-
+        /* PROFILE PIC & SOCIALS */
         .avatar { 
-            width: 90px; height: 90px; 
+            width: 100px; height: 100px; 
             background: linear-gradient(135deg, var(--primary), #004080); 
             color: var(--white); 
             border-radius: 50%; 
             display: flex; align-items: center; justify-content: center; 
             font-size: 36px; font-weight: 800; margin: 0 auto 20px; 
             border: 4px solid var(--accent); 
+            object-fit: cover;
+            overflow: hidden;
         }
         
+        .social-links { display: flex; justify-content: center; gap: 15px; margin: 15px 0; }
+        .social-links a { text-decoration: none; font-size: 20px; filter: grayscale(1); transition: 0.3s; }
+        .social-links a:hover { filter: grayscale(0); transform: scale(1.2); }
+
         .info-card { 
             background: rgba(128,128,128,0.04); 
             padding: 16px; border-radius: 14px; margin: 12px 0; 
             text-align: left; border-left: 5px solid var(--primary); 
         }
+
+        /* CUSTOMIZE SECTION */
+        .customize-section {
+            background: #f1faff;
+            border: 1px solid #cceeff;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        .input-group { margin-bottom: 10px; }
+        .input-group label { display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--blue-tick); }
+        .input-group input { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-size: 13px; box-sizing: border-box; }
         
         .btn-action { 
             width: 100%; padding: 15px; margin-top: 15px; 
@@ -143,16 +143,11 @@
             cursor: pointer; transition: 0.3s; font-size: 15px;
         }
         .btn-logout { background: #f0f0f0; color: #333; }
-        [data-theme="dark"] .btn-logout { background: #333; color: white; }
         .btn-back { background: var(--primary); color: var(--white); }
+        .btn-save { background: var(--success); color: white; margin-top: 10px; padding: 10px; }
     </style>
 </head>
 <body>
-
-    <div id="verify-notif">
-        <span>🎊</span>
-        <span>Account Verified! Welcome to the Elite.</span>
-    </div>
 
     <div id="payment-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px;">
         <div style="background: var(--white); padding: 30px; border-radius: 20px; max-width: 400px; width: 100%; text-align: center; color: var(--text);">
@@ -168,14 +163,38 @@
     </div>
 
     <div class="profile-container">
-        <div class="avatar" id="user-initial">?</div>
+        <div id="avatar-container">
+            <div class="avatar" id="user-initial">?</div>
+        </div>
+
         <h2 style="margin: 0; font-weight: 800; color: var(--primary);">
             <span id="user-name">Student Name</span><span id="badge-placeholder"></span>
         </h2>
+        
+        <div class="social-links" id="social-display">
+            </div>
+
         <p id="user-dept" style="opacity: 0.6; margin: 5px 0; font-weight: 600;">Department</p>
         
         <div id="status-area" style="margin-bottom: 20px;">
             <span class="status-badge unverified">Checking Status...</span>
+        </div>
+
+        <div id="customize-panel" class="customize-section hidden">
+            <h4 style="margin: 0 0 15px 0; font-size: 14px; color: var(--primary);">🎨 Customize Profile</h4>
+            <div class="input-group">
+                <label>Profile Pic URL</label>
+                <input type="text" id="edit-pic" placeholder="https://image-link.jpg">
+            </div>
+            <div class="input-group">
+                <label>Instagram Username</label>
+                <input type="text" id="edit-ig" placeholder="@username">
+            </div>
+            <div class="input-group">
+                <label>LinkedIn Link</label>
+                <input type="text" id="edit-li" placeholder="https://linkedin.com/in/...">
+            </div>
+            <button class="btn-action btn-save" onclick="saveProfileUpdates()">Save Changes</button>
         </div>
 
         <div id="request-tick-area" class="hidden"></div>
@@ -185,30 +204,21 @@
             <strong id="display-matric" style="font-size: 16px;">Loading...</strong>
         </div>
 
-        <div class="info-card">
-            <div style="font-size: 11px; text-transform: uppercase; opacity: 0.5; font-weight: 800;">Account ID</div>
-            <small id="display-id" style="font-family: monospace; font-size: 13px;">Loading...</small>
-        </div>
-
         <div style="margin-top: 30px;">
             <button class="btn-action btn-back" onclick="window.location.href='index.html'">Go to Vault</button>
-            <button id="mod-link" class="btn-action hidden" style="background: var(--mod-purple); color: white;" onclick="window.location.href='mod.html'">Moderator Panel</button>
             <button class="btn-action btn-logout" onclick="logout()">Log Out</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
             authDomain: "biu-archive.firebaseapp.com",
             databaseURL: "https://biu-archive-default-rtdb.firebaseio.com",
-            projectId: "biu-archive",
-            storageBucket: "biu-archive.firebasestorage.app",
-            messagingSenderId: "245967347998",
-            appId: "1:245967347998:web:a8feb5ad0ef9650946a90f"
+            projectId: "biu-archive"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -220,62 +230,76 @@
 
         if (!name || !userId) window.location.href = 'login.html';
 
+        // Initial UI set
         document.getElementById('user-name').innerText = name;
         document.getElementById('user-dept').innerText = localStorage.getItem('biu_user_dept');
         document.getElementById('display-matric').innerText = matric || "Not Set";
-        document.getElementById('display-id').innerText = userId;
         document.getElementById('user-initial').innerText = name.charAt(0).toUpperCase();
 
-        // 1. MODERATOR CHECKER
-        onValue(ref(db, "moderators/" + userId), (modSnap) => {
-            if (modSnap.exists()) {
-                document.getElementById('badge-placeholder').innerHTML = `<span class="mod-badge" title="Moderator">M</span>`;
-                document.getElementById('status-area').innerHTML = `<span class="status-badge mod-text">System Moderator 🛡️</span>`;
-                document.getElementById('mod-link').classList.remove('hidden');
-            }
-        });
-
-        // 2. VERIFICATION LISTENER
+        // Load and Listen for User Data
         onValue(ref(db, "users/" + userId), (snapshot) => {
             const userData = snapshot.val();
-            const statusArea = document.getElementById('status-area');
-            const badgePlaceholder = document.getElementById('badge-placeholder');
-            const requestArea = document.getElementById('request-tick-area');
-            
-            // If user is verified
-            if (userData && userData.isVerified === true) {
-                if (!localStorage.getItem('notified_verified')) {
-                    document.getElementById('verify-notif').classList.add('show');
-                    localStorage.setItem('notified_verified', 'true');
-                    setTimeout(() => document.getElementById('verify-notif').classList.remove('show'), 5000);
-                }
-                statusArea.innerHTML = `<span class="status-badge verified-text">Verified Scholar ✅</span>`;
-                // Keep mod badge if it exists, otherwise add tick
-                if(!badgePlaceholder.innerHTML.includes('mod-badge')) {
-                    badgePlaceholder.innerHTML = `<span class="verified-badge">✓</span>`;
-                }
-                requestArea.classList.add('hidden');
-                return;
+            if (!userData) return;
+
+            // Handle Profile Pic
+            if (userData.profilePic) {
+                document.getElementById('user-initial').innerHTML = `<img src="${userData.profilePic}" style="width:100%;height:100%;object-fit:cover;">`;
             }
 
-            // 3. CHECK FOR PENDING REQUEST
+            // Handle Socials
+            const socialBox = document.getElementById('social-display');
+            socialBox.innerHTML = '';
+            if (userData.instagram) socialBox.innerHTML += `<a href="https://instagram.com/${userData.instagram.replace('@','')}" target="_blank">📸</a>`;
+            if (userData.linkedin) socialBox.innerHTML += `<a href="${userData.linkedin}" target="_blank">💼</a>`;
+
+            // Handle Verification
+            const statusArea = document.getElementById('status-area');
+            const badgePlaceholder = document.getElementById('badge-placeholder');
+            const customizePanel = document.getElementById('customize-panel');
+            const requestArea = document.getElementById('request-tick-area');
+
+            if (userData.isVerified) {
+                statusArea.innerHTML = `<span class="status-badge verified-text">Verified Scholar ✅</span>`;
+                badgePlaceholder.innerHTML = `<span class="verified-badge">✓</span>`;
+                customizePanel.classList.remove('hidden');
+                requestArea.classList.add('hidden');
+                
+                // Prefill edit inputs
+                document.getElementById('edit-pic').value = userData.profilePic || '';
+                document.getElementById('edit-ig').value = userData.instagram || '';
+                document.getElementById('edit-li').value = userData.linkedin || '';
+            } else {
+                checkPendingRequest();
+            }
+        });
+
+        function checkPendingRequest() {
             onValue(ref(db, "verification_requests/" + userId), (reqSnap) => {
+                const statusArea = document.getElementById('status-area');
+                const requestArea = document.getElementById('request-tick-area');
                 if (reqSnap.exists()) {
                     statusArea.innerHTML = `<span class="status-badge status-pending">Reviewing Payment... ⏳</span>`;
-                    requestArea.innerHTML = `<p style="font-size:12px; opacity:0.7;">Request sent. Waiting for Admin confirmation.</p>`;
                     requestArea.classList.remove('hidden');
+                    requestArea.innerHTML = `<p style="font-size:12px; opacity:0.7;">Waiting for Admin confirmation.</p>`;
                 } else {
-                    // Only show "Free Member" if they aren't a Moderator
-                    onValue(ref(db, "moderators/" + userId), (mSnap) => {
-                        if (!mSnap.exists()) {
-                            statusArea.innerHTML = `<span class="status-badge unverified">Free Member 🔒</span>`;
-                            requestArea.innerHTML = `<button class="btn-action" style="background:var(--blue-tick); color:white;" onclick="togglePaymentModal()">Get Blue Tick (₦500)</button>`;
-                            requestArea.classList.remove('hidden');
-                        }
-                    });
+                    statusArea.innerHTML = `<span class="status-badge unverified">Free Member 🔒</span>`;
+                    requestArea.classList.remove('hidden');
+                    requestArea.innerHTML = `<button class="btn-action" style="background:var(--blue-tick); color:white;" onclick="togglePaymentModal()">Get Blue Tick (₦500)</button>`;
                 }
             });
-        });
+        }
+
+        window.saveProfileUpdates = () => {
+            const pic = document.getElementById('edit-pic').value;
+            const ig = document.getElementById('edit-ig').value;
+            const li = document.getElementById('edit-li').value;
+
+            update(ref(db, "users/" + userId), {
+                profilePic: pic,
+                instagram: ig,
+                linkedin: li
+            }).then(() => alert("Profile Updated Successfully!"));
+        };
 
         window.togglePaymentModal = () => document.getElementById('payment-modal').classList.toggle('hidden');
 
@@ -283,7 +307,7 @@
             set(ref(db, "verification_requests/" + userId), {
                 name, matric, userId, timestamp: new Date().toLocaleString()
             }).then(() => {
-                alert("Request Sent! Admin will confirm shortly.");
+                alert("Request Sent!");
                 togglePaymentModal();
             });
         };
