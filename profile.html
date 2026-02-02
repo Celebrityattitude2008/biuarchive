@@ -42,6 +42,28 @@
             box-sizing: border-box;
         }
         
+        /* LOADING SPINNER OVERLAY */
+        #loader-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: 0.5s;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(0,33,71,0.1);
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         .profile-container { 
             width: 100%;
             max-width: 450px; 
@@ -71,21 +93,6 @@
             vertical-align: middle;
         }
 
-        .mod-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 18px;
-            height: 18px;
-            background-color: var(--mod-purple);
-            color: white;
-            font-size: 10px;
-            border-radius: 4px;
-            margin-left: 6px;
-            vertical-align: middle;
-            border: 1px solid var(--accent);
-        }
-        
         .status-badge { 
             display: inline-block; 
             padding: 8px 18px; 
@@ -96,8 +103,6 @@
             text-transform: uppercase;
         }
         .verified-text { background: var(--success); color: white; }
-        .mod-text { background: var(--mod-purple); color: white; }
-        .unverified { background: #666; color: white; opacity: 0.8; }
         .status-pending { background: #6c757d; color: white; animation: pulse-gray 2s infinite; }
         @keyframes pulse-gray { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
@@ -124,7 +129,6 @@
             text-align: left; border-left: 5px solid var(--primary); 
         }
 
-        /* CUSTOMIZE SECTION */
         .customize-section {
             background: #f1faff;
             border: 1px solid #cceeff;
@@ -149,6 +153,11 @@
 </head>
 <body>
 
+    <div id="loader-overlay">
+        <div class="spinner"></div>
+        <p style="margin-top: 15px; font-weight: 600; font-size: 14px; color: var(--primary);">Accessing Archive...</p>
+    </div>
+
     <div id="payment-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px;">
         <div style="background: var(--white); padding: 30px; border-radius: 20px; max-width: 400px; width: 100%; text-align: center; color: var(--text);">
             <h3 style="color: var(--blue-tick);">Verification Payment</h3>
@@ -171,8 +180,7 @@
             <span id="user-name">Student Name</span><span id="badge-placeholder"></span>
         </h2>
         
-        <div class="social-links" id="social-display">
-            </div>
+        <div class="social-links" id="social-display"></div>
 
         <p id="user-dept" style="opacity: 0.6; margin: 5px 0; font-weight: 600;">Department</p>
         
@@ -183,12 +191,16 @@
         <div id="customize-panel" class="customize-section hidden">
             <h4 style="margin: 0 0 15px 0; font-size: 14px; color: var(--primary);">🎨 Customize Profile</h4>
             <div class="input-group">
-                <label>Profile Pic URL</label>
-                <input type="text" id="edit-pic" placeholder="https://image-link.jpg">
+                <label>Profile Pic (Drive Link)</label>
+                <input type="text" id="edit-pic" placeholder="Paste link here...">
             </div>
             <div class="input-group">
                 <label>Instagram Username</label>
                 <input type="text" id="edit-ig" placeholder="@username">
+            </div>
+            <div class="input-group">
+                <label>Tiktok Username</label>
+                <input type="text" id="edit-tk" placeholder="@username">
             </div>
             <div class="input-group">
                 <label>LinkedIn Link</label>
@@ -230,29 +242,41 @@
 
         if (!name || !userId) window.location.href = 'login.html';
 
-        // Initial UI set
         document.getElementById('user-name').innerText = name;
         document.getElementById('user-dept').innerText = localStorage.getItem('biu_user_dept');
         document.getElementById('display-matric').innerText = matric || "Not Set";
         document.getElementById('user-initial').innerText = name.charAt(0).toUpperCase();
 
-        // Load and Listen for User Data
+        // Helper to convert Google Drive links to direct image sources
+        function formatImageUrl(url) {
+            if (url.includes('drive.google.com')) {
+                const id = url.split('/d/')[1]?.split('/')[0] || url.split('id=')[1];
+                return `https://lh3.googleusercontent.com/u/0/d/${id}`;
+            }
+            return url;
+        }
+
+        // Fetch user data
         onValue(ref(db, "users/" + userId), (snapshot) => {
             const userData = snapshot.val();
+            
+            // HIDE LOADER once data arrives
+            document.getElementById('loader-overlay').style.opacity = '0';
+            setTimeout(() => document.getElementById('loader-overlay').classList.add('hidden'), 500);
+
             if (!userData) return;
 
-            // Handle Profile Pic
             if (userData.profilePic) {
-                document.getElementById('user-initial').innerHTML = `<img src="${userData.profilePic}" style="width:100%;height:100%;object-fit:cover;">`;
+                const imgUrl = formatImageUrl(userData.profilePic);
+                document.getElementById('user-initial').innerHTML = `<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;">`;
             }
 
-            // Handle Socials
             const socialBox = document.getElementById('social-display');
             socialBox.innerHTML = '';
             if (userData.instagram) socialBox.innerHTML += `<a href="https://instagram.com/${userData.instagram.replace('@','')}" target="_blank">📸</a>`;
+            if (userData.tiktok) socialBox.innerHTML += `<a href="https://tiktok.com/@${userData.tiktok}" target="_blank">🎵</a>`;
             if (userData.linkedin) socialBox.innerHTML += `<a href="${userData.linkedin}" target="_blank">💼</a>`;
 
-            // Handle Verification
             const statusArea = document.getElementById('status-area');
             const badgePlaceholder = document.getElementById('badge-placeholder');
             const customizePanel = document.getElementById('customize-panel');
@@ -264,14 +288,14 @@
                 customizePanel.classList.remove('hidden');
                 requestArea.classList.add('hidden');
                 
-                // Prefill edit inputs
                 document.getElementById('edit-pic').value = userData.profilePic || '';
                 document.getElementById('edit-ig').value = userData.instagram || '';
+                document.getElementById('edit-tk').value = userData.tiktok || '';
                 document.getElementById('edit-li').value = userData.linkedin || '';
             } else {
                 checkPendingRequest();
             }
-        });
+        }, { onlyOnce: false });
 
         function checkPendingRequest() {
             onValue(ref(db, "verification_requests/" + userId), (reqSnap) => {
@@ -292,11 +316,14 @@
         window.saveProfileUpdates = () => {
             const pic = document.getElementById('edit-pic').value;
             const ig = document.getElementById('edit-ig').value;
+            const tk = document.getElementById('edit-tk').value;
             const li = document.getElementById('edit-li').value;
+
 
             update(ref(db, "users/" + userId), {
                 profilePic: pic,
                 instagram: ig,
+                tiktok: tk,
                 linkedin: li
             }).then(() => alert("Profile Updated Successfully!"));
         };

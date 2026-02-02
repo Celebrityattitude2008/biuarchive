@@ -52,6 +52,7 @@
         .chat-display-area { height: 180px; overflow-y: auto; background: var(--white); border-radius: 8px; padding: 10px; border: 1px solid rgba(0,0,0,0.1); font-size: 13px; }
         .greeting-time { font-size: 14px; color: var(--info); font-weight: bold; margin-bottom: 5px; display: block; }
         footer { margin-top: 40px; font-size: 12px; opacity: 0.8; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.1); }
+        .verified-tick { color: #1DA1F2; margin-left: 4px; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -75,6 +76,7 @@
                     <button onclick="window.location.href='pq.html'">📄 Past Questions</button>
                     <button onclick="window.location.href='note.html'">📚 Course Notes</button>
                     <button onclick="window.location.href='leaderboard.html'">🏆 Scholar Leaderboard</button>
+                    <button onclick="window.location.href='upgrades.html'">🚀 Portal Upgrades <span style="background:red; color:white; padding:2px 5px; border-radius:4px; font-size:9px; margin-left:5px;">🌟 Scholar Perks</span></button>
                     
                     <div class="dropdown-header">Portal Management</div>
                     <button onclick="enterMod()">🛡️ Mod Dashboard</button>
@@ -129,10 +131,8 @@
                 
                 <div id="public-results-list" class="hidden" style="margin-top: 15px; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px;">
                     <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                        <input type="text" id="resultSearch" placeholder="Search..." onkeyup="filterResultsTable()"
-                               style="flex: 1; padding: 10px; border-radius: 5px; border: none; font-size: 12px; outline: none; background: white;">
-                        <button onclick="downloadAllResultsPDF()" title="Download Full List" 
-                                style="padding: 0 15px; border-radius: 5px; border: none; background: var(--info); color: white; cursor: pointer; font-size: 12px; font-weight: bold;">📥 All</button>
+                        <input type="text" id="resultSearch" placeholder="Search by name or matric..." onkeyup="filterResultsTable()"
+                               style="flex: 1; padding: 10px; border-radius: 5px; border: none; font-size: 12px; outline: none; background: white; color: #333;">
                     </div>
                     <div id="all-results-pdf-area" style="max-height: 250px; overflow-y: auto; font-size: 12px; background: rgba(255,255,255,0.05); border-radius: 5px; padding: 5px;">
                         <table style="width: 100%; border-collapse: collapse;" id="resultsTable">
@@ -175,7 +175,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded, onValue, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, push, onChildAdded, onValue, update, serverTimestamp, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
@@ -196,21 +196,62 @@
 
         if(!name || !userId) { window.location.href = 'login.html'; }
 
-        // IDS HELPERS
-        function getGrade(score) {
-            const p = (score / 20) * 100;
-            if (p >= 70) return { l: 'A', c: '#00ff88' };
-            if (p >= 60) return { l: 'B', c: '#ccff00' };
-            if (p >= 50) return { l: 'C', c: '#ffd700' };
-            if (p >= 45) return { l: 'D', c: '#ff9900' };
-            if (p >= 40) return { l: 'E', c: '#ff6600' };
-            return { l: 'F', c: '#ff4444' };
-        }
-        function maskName(name) {
-            return name.split(' ').map(n => n[0] + '*'.repeat(n.length > 1 ? n.length - 1 : 0)).join(' ');
-        }
-        
-        // MOD & ADMIN NAVIGATION
+        // --- SECURITY: CHECK IF BANNED OR UNDER MAINTENANCE ---
+        onValue(ref(db, `banned_users/${userId}`), (snapshot) => {
+            if (snapshot.val()) {
+                document.getElementById('ban-screen').classList.remove('hidden');
+                document.getElementById('main-archive').classList.add('hidden');
+            }
+        });
+
+        onValue(ref(db, "maintenance"), (snapshot) => {
+            if (snapshot.val() === true) {
+                alert("The Portal is currently under maintenance. Please check back later.");
+                window.location.href = 'login.html';
+            }
+        });
+
+        // --- PDF EXPORT FUNCTION ---
+        window.downloadResultPDF = () => {
+            const element = document.getElementById('ids-card-to-export');
+            const opt = {
+                margin: 10,
+                filename: `BIU_Result_${name.replace(/\s+/g, '_')}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        };
+
+        // --- IDS & CLASS LIST HELPERS ---
+        window.filterResultsTable = () => {
+            const input = document.getElementById("resultSearch").value.toUpperCase();
+            const rows = document.getElementById("resultsTable").getElementsByTagName("tr");
+            for (let i = 0; i < rows.length; i++) {
+                const text = rows[i].textContent || rows[i].innerText;
+                rows[i].style.display = text.toUpperCase().indexOf(input) > -1 ? "" : "none";
+            }
+        };
+
+        // --- LEADERBOARD WITH VERIFICATION TICKS ---
+        onValue(ref(db, "users"), (snapshot) => {
+            const users = snapshot.val();
+            if(!users) return;
+            const sorted = Object.values(users).sort((a,b) => (b.streak || 0) - (a.streak || 0)).slice(0, 5);
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = sorted.map((u, i) => `
+                <div class="leaderboard-item">
+                    <span>
+                        <span class="rank-circle">${i+1}</span>
+                        ${u.name} ${u.isVerified ? '<span class="verified-tick">blue_tick</span>' : ''}
+                    </span>
+                    <span style="font-weight:bold;">🔥 ${u.streak || 0}</span>
+                </div>
+            `).join('').replace(/blue_tick/g, '✔️');
+        });
+
+        // --- MOD & ADMIN NAVIGATION ---
         window.enterMod = () => {
             const pass = prompt("Enter Moderator Code:");
             if(pass === "MOD2026") window.location.href = 'mod.html';
@@ -223,7 +264,7 @@
             else if (pass !== null) alert("Incorrect Admin Credentials."); 
         };
 
-        // UI HELPERS
+        // --- UI HELPERS ---
         window.toggleDropdown = () => document.getElementById("myDropdown").classList.toggle("show");
         window.togglePublicResults = () => document.getElementById('public-results-list').classList.toggle('hidden');
         window.toggleTheme = () => {
@@ -281,7 +322,7 @@
         document.getElementById('user-level-tag').className = "level-tag " + level.class;
         update(ref(db, `users/${userId}`), { streak });
 
-        // CHAT & LEADERBOARD (Omitted for brevity, but kept same as your source)
+        // CHAT LOGIC
         window.sendChat = function() {
             const i = document.getElementById('chat-msg');
             if (i.value.trim()) { push(ref(db, "messages"), { sender: name.split(' ')[0], message: i.value, timestamp: serverTimestamp() }); i.value = ""; }

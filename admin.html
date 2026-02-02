@@ -102,8 +102,8 @@
         .btn:active { transform: scale(0.96); }
         .btn-broadcast { background: var(--info); color: white; width: 100%; margin-top: 10px; }
         .btn-sync { background: var(--success); color: white; width: 100%; margin-top: 10px; }
-        .btn-mod { background: var(--mod-purple); color: white; }
-        .btn-revoke { background: #666; color: white; }
+        .btn-verify { background: var(--blue-tick); color: white; }
+        .btn-unverify { background: #666; color: white; }
         .btn-ban { background: #000; color: white; }
         
         input[type="text"] {
@@ -142,9 +142,9 @@
             </div>
 
             <div class="tool-card" style="border-left: 8px solid var(--mod-purple);">
-                <h3 style="margin:0">🛡️ Current Moderators</h3>
+                <h3 style="margin:0">🛡️ Staff Information</h3>
                 <div id="active-mods-list" style="margin-top:15px; font-size: 13px;">
-                    <p style="opacity: 0.5;">No moderators assigned.</p>
+                    <p style="opacity: 0.5;">System Administrators Only.</p>
                 </div>
             </div>
         </div>
@@ -160,7 +160,7 @@
         <div class="stats-row">
             <div class="stat-card"> <h2 id="count">0</h2> <p>Total Users</p> </div>
             <div class="stat-card" style="background: var(--info);"> <h2 id="online-count">0</h2> <p>Online Now</p> </div>
-            <div class="stat-card" style="background: var(--mod-purple);"> <h2 id="mod-count">0</h2> <p>Staff/Mods</p> </div>
+            <div class="stat-card" style="background: var(--blue-tick);"> <h2 id="verified-count">0</h2> <p>Verified Users</p> </div>
             <div class="stat-card" style="background: var(--danger);"> <h2 id="banned-count">0</h2> <p>Banned</p> </div>
         </div>
 
@@ -171,13 +171,6 @@
                 <button class="btn btn-broadcast" onclick="sendGlobalAlert()">🚀 Push Sound & Alert</button>
                 <button class="btn" style="width:100%; margin-top:8px; background:#eee; color:#666;" onclick="clearBroadcast()">Clear Live Screens</button>
             </div>
-
-            <div class="tool-card">
-                <h3 style="margin:0">📊 Sync & Activity</h3>
-                <p style="font-size: 12px; color:#666;">Filter live activity below.</p>
-                <input type="text" id="admin-search" placeholder="Search name or matric..." onkeyup="filterTable()">
-            </div>
-        </div>
 
         <div style="background: #fff; border:1px solid #eee; padding:20px; border-radius:15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
             <h3 style="margin:0 0 15px 0">Live Activity Feed</h3>
@@ -226,22 +219,7 @@
                 listDiv.innerHTML = Object.entries(requests).map(([reqId, data]) => `
                     <div class="request-card">
                         <div style="font-size:12px;"><strong>${data.name}</strong></div>
-                        <button class="btn" style="background:var(--success); color:white;" onclick="approveTick('${data.userId}')">Approve</button>
-                    </div>
-                `).join('');
-            });
-
-            // MODERATOR TRACKER
-            onValue(ref(db, "moderators"), (snapshot) => {
-                const mods = snapshot.val() || {};
-                const listDiv = document.getElementById('active-mods-list');
-                const entries = Object.entries(mods);
-                document.getElementById('mod-count').innerText = entries.length;
-                if(entries.length === 0) { listDiv.innerHTML = "No moderators assigned."; return; }
-                listDiv.innerHTML = entries.map(([id, data]) => `
-                    <div style="padding:5px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between;">
-                        <span>🛡️ ${data.name}</span>
-                        <span style="color:red; cursor:pointer;" onclick="toggleMod('${id}', '${data.name}', true)">Revoke</span>
+                        <button class="btn" style="background:var(--success); color:white;" onclick="toggleVerify('${data.userId}', false)">Approve</button>
                     </div>
                 `).join('');
             });
@@ -251,36 +229,33 @@
                 const users = uSnap.val() || {};
                 onValue(ref(db, "banned_users"), (bSnap) => {
                     const banned = bSnap.val() || {};
-                    onValue(ref(db, "moderators"), (mSnap) => {
-                        const mods = mSnap.val() || {};
-                        const list = document.getElementById('log-list');
-                        const entries = Object.entries(users);
-                        document.getElementById('count').innerText = entries.length;
-                        document.getElementById('banned-count').innerText = Object.keys(banned).length;
+                    const list = document.getElementById('log-list');
+                    const entries = Object.entries(users);
+                    
+                    document.getElementById('count').innerText = entries.length;
+                    document.getElementById('banned-count').innerText = Object.keys(banned).length;
+                    document.getElementById('verified-count').innerText = entries.filter(u => u[1].isVerified).length;
 
-                        list.innerHTML = entries.sort((a,b) => (b[1].lastActive || 0) - (a[1].lastActive || 0)).map(([uid, data]) => {
-                            const isBanned = banned[uid] === true;
-                            const isMod = mods[uid] !== undefined;
-                            const hasTick = data.isVerified ? `<span style="color:var(--blue-tick);">✓</span>` : "";
-                            const modBadge = isMod ? `<span style="color:var(--mod-purple); font-weight:bold;">[M]</span>` : "";
-                            
-                            return `
-                            <tr>
-                                <td><strong>${data.name}</strong> ${modBadge} ${hasTick}</td>
-                                <td>${data.matric || 'N/A'}</td>
-                                <td>🔥 ${data.streak || 1}</td>
-                                <td>${data.lastActive ? new Date(data.lastActive).toLocaleTimeString() : '---'}</td>
-                                <td>
-                                    <button class="btn btn-ban" style="background:${isBanned ? 'green':'black'}" onclick="toggleBan('${uid}', ${isBanned})">${isBanned ? 'Unban':'Ban'}</button>
-                                    <button class="btn ${isMod ? 'btn-revoke':'btn-mod'}" onclick="toggleMod('${uid}', '${data.name}', ${isMod})">${isMod ? 'Revoke':'Make Mod'}</button>
-                                </td>
-                            </tr>`;
-                        }).join('');
-                    });
+                    list.innerHTML = entries.sort((a,b) => (b[1].lastActive || 0) - (a[1].lastActive || 0)).map(([uid, data]) => {
+                        const isBanned = banned[uid] === true;
+                        const hasTick = data.isVerified === true;
+                        
+                        return `
+                        <tr>
+                            <td><strong>${data.name}</strong> ${hasTick ? `<span style="color:var(--blue-tick);">✓</span>` : ""}</td>
+                            <td>${data.matric || 'N/A'}</td>
+                            <td>🔥 ${data.streak || 1}</td>
+                            <td>${data.lastActive ? new Date(data.lastActive).toLocaleTimeString() : '---'}</td>
+                            <td>
+                                <button class="btn btn-ban" style="background:${isBanned ? 'green':'black'}" onclick="toggleBan('${uid}', ${isBanned})">${isBanned ? 'Unban':'Ban'}</button>
+                                <button class="btn ${hasTick ? 'btn-unverify':'btn-verify'}" onclick="toggleVerify('${uid}', ${hasTick})">${hasTick ? 'Unverify':'Verify'}</button>
+                            </td>
+                        </tr>`;
+                    }).join('');
                 });
             });
 
-            // Online Estimator (5 min window)
+            // Online Estimator
             onValue(ref(db, "users"), (s) => {
                 const now = Date.now();
                 const active = Object.values(s.val() || {}).filter(u => (now - (u.lastActive || 0)) < 300000).length;
@@ -289,20 +264,16 @@
         }
 
         // FUNCTIONS
-        window.approveTick = (uid) => {
-            update(ref(db, `users/${uid}`), { isVerified: true });
-            remove(ref(db, `verification_requests/${uid}`));
-        };
-
-        window.toggleMod = (uid, name, currentlyMod) => {
-            if (currentlyMod) {
-                if(confirm(`Remove ${name} from Moderator team?`)) remove(ref(db, `moderators/${uid}`));
-            } else {
-                if(confirm(`Grant ${name} Moderator access?`)) set(ref(db, `moderators/${uid}`), { name: name, level: 'mod' });
+        window.toggleVerify = (uid, currentlyVerified) => {
+            const action = currentlyVerified ? "Remove Blue Tick from this user?" : "Grant Blue Tick to this user?";
+            if(confirm(action)) {
+                update(ref(db, `users/${uid}`), { isVerified: !currentlyVerified });
+                if(!currentlyVerified) remove(ref(db, `verification_requests/${uid}`));
             }
         };
 
         window.toggleBan = (uid, status) => set(ref(db, `banned_users/${uid}`), status ? null : true);
+        
         window.sendGlobalAlert = () => {
             const msg = document.getElementById('alert-msg').value;
             if(msg) set(ref(db, "broadcast"), { message: msg, timestamp: serverTimestamp() }).then(() => {
@@ -310,22 +281,21 @@
                 document.getElementById('alert-msg').value = "";
             });
         };
+        
         window.clearBroadcast = () => set(ref(db, "broadcast"), null);
+        
         window.toggleMaintenance = () => {
             onValue(ref(db, "maintenance_mode"), (s) => set(ref(db, "maintenance_mode"), !s.val()), { onlyOnce: true });
         };
+        
         onValue(ref(db, "maintenance_mode"), (s) => {
             const btn = document.getElementById('m-toggle-btn');
             btn.innerText = s.val() ? "LOCKED" : "ACTIVE";
             btn.style.background = s.val() ? "var(--danger)" : "var(--success)";
         });
+        
         window.clearChat = () => confirm("Clear chat?") && remove(ref(db, "messages"));
         window.nuclearClear = () => confirm("Wipe all user data?") && remove(ref(db, "users"));
-        window.filterTable = () => {
-            let input = document.getElementById("admin-search").value.toUpperCase();
-            let rows = document.getElementById("log-list").getElementsByTagName("tr");
-            for (let row of rows) row.style.display = row.innerText.toUpperCase().includes(input) ? "" : "none";
-        };
     </script>
 </body>
 </html>

@@ -111,6 +111,10 @@
             border: 1px solid rgba(0,0,0,0.03); 
             transition: 0.2s; 
         }
+        /* Style for clickable verified profiles */
+        .entry.verified-clickable { cursor: pointer; }
+        .entry.verified-clickable:hover { background: rgba(0, 191, 255, 0.08); transform: translateX(5px); }
+
         .entry-info { display: flex; align-items: center; gap: 12px; }
         
         .level-tag { font-size: 9px; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; font-weight: 800; margin-left: 5px; }
@@ -280,7 +284,8 @@
             leaderboardDiv.innerHTML = users.map((user, index) => {
                 const level = getLevelInfo(user.streak || 0);
                 const isOnline = (now - (user.lastActive || 0)) < 60000;
-                const userTick = user.isVerified ? '<span class="blue-tick">✓</span>' : '';
+                const isVerified = !!user.isVerified;
+                const userTick = isVerified ? '<span class="blue-tick">✓</span>' : '';
                 
                 let rankLabel = `<span class="rank-number">#${index + 1}</span>`;
                 let rankClass = "";
@@ -288,8 +293,12 @@
                 else if (index === 1) { rankLabel = `<span class="rank-emoji">🥈</span>`; rankClass = "rank-2"; }
                 else if (index === 2) { rankLabel = `<span class="rank-emoji">🥉</span>`; rankClass = "rank-3"; }
 
+                // Determine if this entry is a verified profile that can be viewed
+                const clickAction = isVerified ? `onclick="window.location.href='view-profile.html?id=${user.id}'"` : '';
+                const verifiedClass = isVerified ? 'verified-clickable' : '';
+
                 return `
-                    <div class="entry ${rankClass}" data-name="${user.name.toLowerCase()}">
+                    <div class="entry ${rankClass} ${verifiedClass}" data-name="${user.name.toLowerCase()}" ${clickAction}>
                         <div class="entry-info">
                             ${rankLabel}
                             <div>

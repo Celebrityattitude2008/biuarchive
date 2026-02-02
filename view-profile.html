@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>View Scholar | BIU Archive</title>
+    <style>
+        :root {
+            --primary: #002147; 
+            --accent: #FFD700; 
+            --bg: #f8f9fa;
+            --white: #ffffff; 
+            --text: #333; 
+            --blue-tick: #00BFFF;
+            --radius: 20px;
+        }
+
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text); 
+            margin: 0; padding: 15px; 
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+        
+        .profile-container { 
+            width: 100%; max-width: 400px; 
+            background: var(--white); 
+            padding: 40px 25px; 
+            border-radius: var(--radius); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
+            text-align: center; 
+        }
+
+        .avatar { 
+            width: 100px; height: 100px; 
+            background: linear-gradient(135deg, var(--primary), #004080); 
+            color: var(--white); border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 36px; font-weight: 800; margin: 0 auto 20px; 
+            border: 4px solid var(--accent); 
+            overflow: hidden;
+        }
+
+        .verified-badge {
+            background-color: var(--blue-tick);
+            color: white; width: 18px; height: 18px;
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 50%; font-size: 11px; margin-left: 6px;
+        }
+
+        .social-links { display: flex; justify-content: center; gap: 15px; margin: 20px 0; }
+        .social-links a { text-decoration: none; font-size: 24px; transition: 0.3s; }
+        .social-links a:hover { transform: scale(1.2); }
+
+        .info-card { 
+            background: rgba(128,128,128,0.04); 
+            padding: 16px; border-radius: 14px; margin: 12px 0; 
+            text-align: left; border-left: 5px solid var(--primary); 
+        }
+
+        .back-btn {
+            background: var(--primary); color: white;
+            padding: 12px 25px; border-radius: 12px;
+            text-decoration: none; font-weight: bold; display: inline-block;
+            margin-bottom: 20px; font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="profile-container">
+        <a href="leaderboard.html" class="back-btn">← Back to Rankings</a>
+
+        <div class="avatar" id="view-initial">?</div>
+
+        <h2 style="margin: 0; color: var(--primary);">
+            <span id="view-name">Scholar Name</span><span id="view-badge"></span>
+        </h2>
+        
+        <p id="view-dept" style="opacity: 0.6; margin: 5px 0; font-weight: 600;">Department</p>
+
+        <div class="social-links" id="view-socials"></div>
+
+        <div class="info-card">
+            <div style="font-size: 11px; text-transform: uppercase; opacity: 0.5; font-weight: 800;">Academic Streak</div>
+            <strong id="view-streak" style="font-size: 20px;">0 🔥</strong>
+        </div>
+
+        <div class="info-card">
+            <div style="font-size: 11px; text-transform: uppercase; opacity: 0.5; font-weight: 800;">Matriculation Status</div>
+            <strong style="font-size: 16px; color: var(--blue-tick);">Verified Scholar ✅</strong>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
+            authDomain: "biu-archive.firebaseapp.com",
+            databaseURL: "https://biu-archive-default-rtdb.firebaseio.com",
+            projectId: "biu-archive"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Function to fix Google Drive Links
+        function formatImageUrl(url) {
+            if (url.includes('drive.google.com')) {
+                const id = url.split('/d/')[1]?.split('/')[0] || url.split('id=')[1];
+                return `https://lh3.googleusercontent.com/d/${id}`;
+            }
+            return url;
+        }
+
+        // Get ID from URL
+        const params = new URLSearchParams(window.location.search);
+        const targetId = params.get('id');
+
+        if (targetId) {
+            onValue(ref(db, "users/" + targetId), (snapshot) => {
+                const data = snapshot.val();
+                if (!data) return;
+
+                // Set Name & Dept
+                document.getElementById('view-name').innerText = data.name;
+                document.getElementById('view-dept').innerText = data.department || "Scholar";
+                document.getElementById('view-streak').innerText = `${data.streak || 0} 🔥`;
+
+                // Set Profile Picture
+                if (data.profilePic) {
+                    const imgUrl = formatImageUrl(data.profilePic);
+                    document.getElementById('view-initial').innerHTML = `<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+                } else {
+                    document.getElementById('view-initial').innerText = data.name.charAt(0).toUpperCase();
+                }
+
+                // Show Badge
+                if (data.isVerified) {
+                    document.getElementById('view-badge').innerHTML = `<span class="verified-badge">✓</span>`;
+                }
+
+                // Handle Socials (Instagram, LinkedIn, TikTok)
+                const socialBox = document.getElementById('view-socials');
+                socialBox.innerHTML = '';
+                
+                if (data.instagram) {
+                    socialBox.innerHTML += `<a href="https://instagram.com/${data.instagram.replace('@','')}" target="_blank">📸</a>`;
+                }
+                if (data.tiktok) {
+                    // Strips @ if user added it
+                    socialBox.innerHTML += `<a href="https://tiktok.com/@${data.tiktok.replace('@','')}" target="_blank">🎵</a>`;
+                }
+                if (data.linkedin) {
+                    socialBox.innerHTML += `<a href="${data.linkedin}" target="_blank">💼</a>`;
+                }
+            });
+        } else {
+            window.location.href = 'leaderboard.html';
+        }
+    </script>
+</body>
+</html>
