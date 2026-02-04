@@ -6,128 +6,136 @@
     <title>Portal Upgrades | BIU Archive</title>
     <style>
         :root {
-            --primary: #002147; --accent: #FFD700; --light: #f4f4f4;
+            --primary: #002147; --accent: #FFD700; --light: #f8f9fa;
             --white: #ffffff; --text: #333; --premium: #00BFFF;
         }
-        [data-theme="dark"] {
-            --primary: #FFD700; --accent: #002147; --light: #121212;
-            --white: #1e1e1e; --text: #f4f4f4;
-        }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--light); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .container { background: var(--white); padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 700px; text-align: center; }
+        [data-theme="dark"] { --primary: #FFD700; --accent: #002147; --light: #121212; --white: #1e1e1e; --text: #f4f4f4; }
         
-        .status-card { padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 2px dashed #ccc; }
-        .verified-active { border-color: var(--premium); background: rgba(0, 191, 255, 0.05); }
+        /* OFFICIAL BIU DEPARTMENT THEMES */
+        [data-theme="emerald"] { --primary: #064e3b; --accent: #34d399; --light: #022c22; --white: #065f46; --text: #ecfdf5; }
+        [data-theme="midnight"] { --primary: #1e1b4b; --accent: #818cf8; --light: #020617; --white: #1e1b4b; --text: #f8fafc; }
+        [data-theme="crimson"] { --primary: #7f1d1d; --accent: #f87171; --light: #270606; --white: #7f1d1d; --text: #fef2f2; }
+
+        body { font-family: 'Segoe UI', sans-serif; background: var(--light); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; transition: 0.3s; }
+        .container { background: var(--white); padding: 2rem; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 700px; text-align: center; }
+        
+        .status-card { padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 2px dashed #ccc; transition: 0.3s; }
+        .verified-active { border-color: var(--premium); background: rgba(0, 191, 255, 0.1); border-style: solid; }
         
         .upgrade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
-        .feature-card { background: rgba(128,128,128,0.05); padding: 15px; border-radius: 10px; text-align: left; position: relative; opacity: 0.5; transition: 0.3s; }
-        .feature-card.unlocked { opacity: 1; border-left: 4px solid var(--premium); }
+        .feature-card { background: rgba(128,128,128,0.08); padding: 15px; border-radius: 12px; text-align: left; position: relative; opacity: 0.5; transition: 0.3s; border: 1px solid transparent; }
+        .feature-card.unlocked { opacity: 1; border-color: var(--premium); background: var(--white); }
         
         .lock-icon { position: absolute; top: 10px; right: 10px; font-size: 18px; }
         .btn { padding: 12px 20px; border: none; border-radius: 25px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; margin-top: 10px; }
-        .btn-request { background: var(--primary); color: white; }
-        .btn-back { background: none; color: var(--text); text-decoration: underline; font-size: 12px; }
+        .btn-request { background: var(--primary); color: var(--white); border: 1px solid var(--accent); }
+        .btn-back { background: none; color: var(--text); text-decoration: underline; font-size: 12px; border: none; cursor: pointer; margin-bottom: 10px; }
         .premium-text { color: var(--premium); font-weight: bold; }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
+
+        @media (max-width: 500px) {
+            .upgrade-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
         <button class="btn-back" onclick="window.location.href='index.html'">← Back to Portal</button>
-        <h1>🚀 Portal Upgrades</h1>
-        <p>Exclusive benefits for verified scholars.</p>
+        <h1>🚀 Scholar Upgrades</h1>
+        <p>Unlock the full potential of The BIU Archive.</p>
 
         <div id="status-box" class="status-card">
             <h3 id="status-title">Status: Standard Member</h3>
-            <p id="status-desc">Verification is required to unlock these features.</p>
-            <button id="verify-btn" class="btn btn-request" onclick="requestVerification()">Request Blue Tick</button>
+            <p id="status-desc">Verify your account to unlock exclusive scholar perks.</p>
+            <button id="verify-btn" class="btn btn-request" onclick="window.location.href='profile.html'">Get Verified (₦500)</button>
         </div>
 
         <div class="upgrade-grid">
             <div class="feature-card" id="f1">
                 <span class="lock-icon" id="l1">🔒</span>
-                <h4 style="margin:0">Full Folder Downloads</h4>
-                <p style="font-size: 12px;">Download all past questions for your level in one click.</p>
+                <h4 style="margin:0">Bulk Downloads</h4>
+                <p style="font-size: 12px;">Access full course packs and zip files for the entire semester.</p>
                 <button class="btn btn-request hidden" onclick="window.open('https://bit.ly/BIU-Full-Pack', '_blank')">Download All</button>
             </div>
 
             <div class="feature-card" id="f2">
                 <span class="lock-icon" id="l2">🔒</span>
                 <h4 style="margin:0">Verified Badge</h4>
-                <p style="font-size: 12px;">Display a blue checkmark next to your name on the leaderboard.</p>
+                <p style="font-size: 12px;">A blue checkmark next to your name on the leaderboard and profile.</p>
             </div>
 
-            <div class="feature-card" id="f3">
-                <span class="lock-icon" id="l3">🔒</span>
-                <h4 style="margin:0">Priority Chat</h4>
-                <p style="font-size: 12px;">Your messages appear with a special highlight in live discussion.</p>
+            <div class="feature-card" id="f5">
+                <span class="lock-icon" id="l5">🔒</span>
+                <h4 style="margin:0">Departmental Themes</h4>
+                <p style="font-size: 12px;">Switch between Law (Crimson), Engineering (Emerald), and Science themes.</p>
             </div>
 
             <div class="feature-card" id="f4">
                 <span class="lock-icon" id="l4">🔒</span>
                 <h4 style="margin:0">Streak Insurance</h4>
-                <p style="font-size: 12px;">Your login streak won't reset even if you miss a day.</p>
+                <p style="font-size: 12px;">Your daily login streak is protected even if you forget to log in.</p>
+            </div>
+
+            <div class="feature-card" id="f3">
+                <span class="lock-icon" id="l3">🔒</span>
+                <h4 style="margin:0">Profile Customization</h4>
+                <p style="font-size: 12px;">Add a custom bio, profile picture, and social media links.</p>
             </div>
         </div>
 
-        <p style="margin-top: 30px; font-size: 11px; opacity: 0.7;">Upgrade status is manually managed by Celebrity Attitude.</p>
+        <p style="margin-top: 30px; font-size: 11px; opacity: 0.7;">Verified status is a lifetime upgrade. Managed by Archive Admin.</p>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
             authDomain: "biu-archive.firebaseapp.com",
             databaseURL: "https://biu-archive-default-rtdb.firebaseio.com",
-            projectId: "biu-archive",
-            storageBucket: "biu-archive.firebasestorage.app",
-            messagingSenderId: "245967347998",
-            appId: "1:245967347998:web:a8feb5ad0ef9650946a90f"
+            projectId: "biu-archive"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const userId = localStorage.getItem('biu_user_id');
 
-        if (localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
+        // Check user data for Verification and Theme
+        if (userId) {
+            onValue(ref(db, `users/${userId}`), (snapshot) => {
+                const user = snapshot.val();
+                if (!user) return;
 
-        // Check Verification Status
-        onValue(ref(db, `users/${userId}`), (snapshot) => {
-            const user = snapshot.val();
-            if (user && user.isVerified) {
-                unlockPremium();
-            }
-        });
+                // Sync Theme
+                if(user.preferredTheme) {
+                    document.body.setAttribute('data-theme', user.preferredTheme);
+                }
+
+                // If Verified, Unlock everything
+                if (user.isVerified) {
+                    unlockPremium();
+                }
+            });
+        }
 
         function unlockPremium() {
-            // UI Updates
             document.getElementById('status-box').classList.add('verified-active');
             document.getElementById('status-title').innerHTML = 'Status: <span class="premium-text">Verified Scholar ✔️</span>';
-            document.getElementById('status-desc').innerText = 'All premium features are now free for you.';
+            document.getElementById('status-desc').innerText = 'You have full access to all archive features.';
             document.getElementById('verify-btn').classList.add('hidden');
 
-            // Unlock Cards
-            for (let i = 1; i <= 4; i++) {
-                document.getElementById(`f${i}`).classList.add('unlocked');
-                document.getElementById(`l${i}`).innerText = '🔓';
-            }
+            // Unlock all 5 cards
+            const features = ['f1', 'f2', 'f3', 'f4', 'f5'];
+            const locks = ['l1', 'l2', 'l3', 'l4', 'l5'];
+            
+            features.forEach(id => document.getElementById(id).classList.add('unlocked'));
+            locks.forEach(id => document.getElementById(id).innerText = '🔓');
             
             // Show Download Button
             document.querySelector('#f1 .btn').classList.remove('hidden');
         }
-
-        window.requestVerification = () => {
-            const matric = localStorage.getItem('biu_user_matric');
-            alert("Your request has been sent to the Admin. Please wait for approval.");
-            update(ref(db, `verification_requests/${userId}`), {
-                name: localStorage.getItem('biu_user_name'),
-                matric: matric,
-                timestamp: Date.now()
-            });
-        };
     </script>
 </body>
 </html>

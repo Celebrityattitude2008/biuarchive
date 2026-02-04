@@ -15,12 +15,19 @@
             --radius: 20px;
         }
 
+        /* DEPARTMENT THEME SUPPORT */
+        [data-theme="dark"] { --primary: #FFD700; --accent: #002147; --bg: #121212; --white: #1e1e1e; --text: #f4f4f4; }
+        [data-theme="emerald"] { --primary: #064e3b; --accent: #34d399; --bg: #022c22; --white: #065f46; --text: #ecfdf5; }
+        [data-theme="midnight"] { --primary: #1e1b4b; --accent: #818cf8; --bg: #020617; --white: #1e1b4b; --text: #f8fafc; }
+        [data-theme="crimson"] { --primary: #7f1d1d; --accent: #f87171; --bg: #270606; --white: #7f1d1d; --text: #fef2f2; }
+
         body { 
             font-family: 'Segoe UI', system-ui, sans-serif; 
             background-color: var(--bg); 
             color: var(--text); 
             margin: 0; padding: 15px; 
             display: flex; justify-content: center; align-items: center; min-height: 100vh;
+            transition: 0.3s ease;
         }
         
         .profile-container { 
@@ -28,7 +35,7 @@
             background: var(--white); 
             padding: 40px 25px; 
             border-radius: var(--radius); 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
             text-align: center; 
         }
 
@@ -40,6 +47,15 @@
             font-size: 36px; font-weight: 800; margin: 0 auto 20px; 
             border: 4px solid var(--accent); 
             overflow: hidden;
+        }
+
+        #view-bio {
+            font-size: 14px;
+            font-style: italic;
+            margin: 10px 0 20px;
+            line-height: 1.5;
+            opacity: 0.8;
+            padding: 0 10px;
         }
 
         .verified-badge {
@@ -54,7 +70,7 @@
         .social-links a:hover { transform: scale(1.2); }
 
         .info-card { 
-            background: rgba(128,128,128,0.04); 
+            background: rgba(128,128,128,0.06); 
             padding: 16px; border-radius: 14px; margin: 12px 0; 
             text-align: left; border-left: 5px solid var(--primary); 
         }
@@ -64,7 +80,9 @@
             padding: 12px 25px; border-radius: 12px;
             text-decoration: none; font-weight: bold; display: inline-block;
             margin-bottom: 20px; font-size: 14px;
+            transition: 0.3s;
         }
+        .back-btn:hover { opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -80,6 +98,8 @@
         
         <p id="view-dept" style="opacity: 0.6; margin: 5px 0; font-weight: 600;">Department</p>
 
+        <div id="view-bio"></div>
+
         <div class="social-links" id="view-socials"></div>
 
         <div class="info-card">
@@ -89,7 +109,7 @@
 
         <div class="info-card">
             <div style="font-size: 11px; text-transform: uppercase; opacity: 0.5; font-weight: 800;">Matriculation Status</div>
-            <strong style="font-size: 16px; color: var(--blue-tick);">Verified Scholar ✅</strong>
+            <strong id="view-status-text" style="font-size: 16px; color: var(--blue-tick);">Checking...</strong>
         </div>
     </div>
 
@@ -97,7 +117,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
             authDomain: "biu-archive.firebaseapp.com",
@@ -108,16 +127,14 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Function to fix Google Drive Links
         function formatImageUrl(url) {
             if (url.includes('drive.google.com')) {
                 const id = url.split('/d/')[1]?.split('/')[0] || url.split('id=')[1];
-                return `https://lh3.googleusercontent.com/d/${id}`;
+                return `https://drive.google.com/uc?export=view&id=${id}`;
             }
             return url;
         }
 
-        // Get ID from URL
         const params = new URLSearchParams(window.location.search);
         const targetId = params.get('id');
 
@@ -126,10 +143,16 @@
                 const data = snapshot.val();
                 if (!data) return;
 
-                // Set Name & Dept
+                // Set Theme
+                if(data.preferredTheme) {
+                    document.body.setAttribute('data-theme', data.preferredTheme);
+                }
+
+                // Set Basic Info
                 document.getElementById('view-name').innerText = data.name;
                 document.getElementById('view-dept').innerText = data.department || "Scholar";
                 document.getElementById('view-streak').innerText = `${data.streak || 0} 🔥`;
+                document.getElementById('view-bio').innerText = data.bio || "";
 
                 // Set Profile Picture
                 if (data.profilePic) {
@@ -139,25 +162,20 @@
                     document.getElementById('view-initial').innerText = data.name.charAt(0).toUpperCase();
                 }
 
-                // Show Badge
+                // Show Verification
                 if (data.isVerified) {
                     document.getElementById('view-badge').innerHTML = `<span class="verified-badge">✓</span>`;
+                    document.getElementById('view-status-text').innerHTML = `Verified Scholar ✅`;
+                } else {
+                    document.getElementById('view-status-text').innerHTML = `Free Member 🔒`;
                 }
 
-                // Handle Socials (Instagram, LinkedIn, TikTok)
+                // Handle Socials
                 const socialBox = document.getElementById('view-socials');
                 socialBox.innerHTML = '';
-                
-                if (data.instagram) {
-                    socialBox.innerHTML += `<a href="https://instagram.com/${data.instagram.replace('@','')}" target="_blank">📸</a>`;
-                }
-                if (data.tiktok) {
-                    // Strips @ if user added it
-                    socialBox.innerHTML += `<a href="https://tiktok.com/@${data.tiktok.replace('@','')}" target="_blank">🎵</a>`;
-                }
-                if (data.linkedin) {
-                    socialBox.innerHTML += `<a href="${data.linkedin}" target="_blank">💼</a>`;
-                }
+                if (data.instagram) socialBox.innerHTML += `<a href="https://instagram.com/${data.instagram.replace('@','')}" target="_blank">📸</a>`;
+                if (data.tiktok) socialBox.innerHTML += `<a href="https://tiktok.com/@${data.tiktok.replace('@','')}" target="_blank">🎵</a>`;
+                if (data.linkedin) socialBox.innerHTML += `<a href="${data.linkedin}" target="_blank">💼</a>`;
             });
         } else {
             window.location.href = 'leaderboard.html';

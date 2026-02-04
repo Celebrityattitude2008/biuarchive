@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BIU Archive | Admin Panel</title>
+    <style>
+        :root { 
+            --primary: #002147; 
+            --accent: #FFD700; 
+            --bg: #f8f9fa; 
+            --danger: #dc3545; 
+            --success: #28a745; 
+            --info: #17a2b8; 
+            --blue-tick: #00BFFF;
+            --mod-purple: #8A2BE2;
+        }
+        
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            padding: 10px; 
+            color: #333;
+        }
+
+        .admin-container { 
+            max-width: 1100px; 
+            margin: 10px auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+            box-sizing: border-box;
+        }
+        
+        /* Login Overlay Style */
+        #auth-overlay {
+            position: fixed; top:0; left:0; width:100%; height:100%; 
+            background: var(--primary); display: flex; align-items: center; justify-content: center; z-index: 9999;
+        }
+        .login-box {
+            background: white; padding: 30px; border-radius: 20px; text-align: center; width: 90%; max-width: 350px;
+        }
+
+        .stats-row { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+            gap: 12px; 
+            margin-bottom: 25px; 
+        }
+        .stat-card { 
+            background: var(--primary); 
+            color: white; 
+            padding: 20px 10px; 
+            border-radius: 12px; 
+            text-align: center; 
+            border-bottom: 4px solid var(--accent); 
+        }
+        .stat-card h2 { margin: 0; font-size: 1.8rem; }
+        .stat-card p { margin: 5px 0 0; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
+
+        .tool-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 25px; 
+        }
+        .tool-card { 
+            background: #fff; 
+            border: 1px solid #eee; 
+            padding: 20px; 
+            border-radius: 15px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        
+        .maintenance-card { 
+            background: #1a1a1a; 
+            color: white; 
+            padding: 20px; 
+            border-radius: 15px; 
+            margin-bottom: 25px; 
+            display: flex; 
+            flex-wrap: wrap;
+            justify-content: space-between; 
+            align-items: center; 
+            border-left: 8px solid var(--danger); 
+            gap: 15px;
+        }
+        
+        .table-wrapper { 
+            overflow-x: auto; 
+            background: white; 
+            border-radius: 12px; 
+            margin-top: 10px; 
+            border: 1px solid #eee;
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        th { background: #f8f9fa; color: var(--primary); padding: 15px; text-align: left; font-size: 12px; text-transform: uppercase; border-bottom: 2px solid #eee; }
+        td { padding: 12px 15px; border-bottom: 1px solid #f1f1f1; font-size: 13px; }
+
+        .btn { 
+            padding: 10px 14px; 
+            border-radius: 8px; 
+            border: none; 
+            cursor: pointer; 
+            font-weight: bold; 
+            transition: all 0.2s; 
+            font-size: 11px;
+        }
+        .btn:active { transform: scale(0.96); }
+        .btn-broadcast { background: var(--info); color: white; width: 100%; margin-top: 10px; }
+        .btn-verify { background: var(--blue-tick); color: white; }
+        .btn-unverify { background: #666; color: white; }
+        .btn-ban { background: #000; color: white; }
+        
+        input[type="text"], input[type="email"], input[type="password"] {
+            width: 100%; padding: 12px; border: 1.5px solid #eee; border-radius: 10px; outline: none; box-sizing: border-box;
+        }
+
+        .request-card {
+            background: #fff; border: 1px solid #eee; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .hidden { display: none; }
+
+        @media (max-width: 600px) {
+            .admin-container { padding: 15px; border-radius: 0; margin: 0; }
+            .tool-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;"> <div id="auth-overlay">
+        <div class="login-box">
+            <h2 style="color:var(--primary); margin-top:0;">Secure Access</h2>
+            <p style="font-size:12px; color:#666;">Administrator Verification Required</p>
+            <input type="email" id="admin-email" placeholder="Celebrity Email" style="margin-bottom:10px;">
+            <input type="password" id="admin-pass" placeholder="Access Password" style="margin-bottom:15px;">
+            <button class="btn btn-broadcast" onclick="handleLogin()" style="margin:0;">🔓 Authorize Panel</button>
+            <p id="auth-error" style="color:red; font-size:11px; margin-top:10px;"></p>
+        </div>
+    </div>
+
+    <div id="admin-content" class="admin-container" style="display:none;">
+        <div class="header-flex" style="display:flex; justify-content:space-between; align-items:center;">
+             <h1 style="color: var(--primary); margin:0; font-size: 1.5rem;">Celebrity Control Room</h1>
+             <div class="header-btns" style="display:flex; gap:8px; align-items:center;">
+                <button onclick="toggleStreakManager()" style="background:none; border:1px solid #ffcc00; color:#b8860b; font-size:10px; cursor:pointer; padding:6px; border-radius:8px;">🔥 Streak Manager</button>
+                <button onclick="nuclearClear()" style="background:none; border:1px solid #ffcccc; color:red; font-size:10px; cursor:pointer; padding:6px; border-radius:8px;">☢️ Wipe Logs</button>
+                <button onclick="clearChat()" style="background:none; border:1px solid #ffe5cc; color:orange; font-size:10px; cursor:pointer; padding:6px; border-radius:8px;">💬 Clear Chat</button>
+                <button onclick="window.location.href='index.html'" style="background:none; border:1px solid var(--info); color:var(--info); font-size:10px; cursor:pointer; padding:6px; border-radius:8px;">🏠 Portal</button>
+             </div>
+        </div>
+        <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+
+        <div id="streak-manager-card" class="tool-card hidden" style="border-left: 8px solid #ff4500; margin-bottom: 25px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0">🔥 Top 10 High Streaks</h3>
+                <button onclick="toggleStreakManager()" style="border:none; background:none; cursor:pointer; font-weight:bold; color:red;">Close</button>
+            </div>
+            <div id="high-streaks-list" style="margin-top:15px;">
+                <p style="font-size: 13px; opacity: 0.5;">Calculating data...</p>
+            </div>
+        </div>
+
+        <div class="tool-grid">
+            <div class="tool-card" style="border-left: 8px solid var(--blue-tick);">
+                <h3 style="margin:0">💎 Blue Tick Requests</h3>
+                <div id="verification-requests-list" style="margin-top:15px;">
+                    <p style="font-size: 13px; opacity: 0.5;">No pending requests.</p>
+                </div>
+            </div>
+
+            <div class="tool-card" style="border-left: 8px solid var(--mod-purple);">
+                <h3 style="margin:0">🛡️ Staff Information</h3>
+                <div id="active-mods-list" style="margin-top:15px; font-size: 13px;">
+                    <p style="opacity: 0.5;">System Administrators Only.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="maintenance-card">
+            <div>
+                <h3 style="margin:0">🛠️ System Lock</h3>
+                <p style="margin:5px 0 0 0; font-size: 12px; opacity:0.8;">Instantly block all students from the archive.</p>
+            </div>
+            <button id="m-toggle-btn" class="btn" style="min-width: 120px;" onclick="toggleMaintenance()">Loading...</button>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-card"> <h2 id="count">0</h2> <p>Total Users</p> </div>
+            <div class="stat-card" style="background: var(--info);"> <h2 id="online-count">0</h2> <p>Online Now</p> </div>
+            <div class="stat-card" style="background: var(--blue-tick);"> <h2 id="verified-count">0</h2> <p>Verified Users</p> </div>
+            <div class="stat-card" style="background: var(--danger);"> <h2 id="banned-count">0</h2> <p>Banned</p> </div>
+        </div>
+
+        <div class="tool-grid">
+            <div class="tool-card">
+                <h3 style="margin:0">📢 Global Broadcast</h3>
+                <input type="text" id="alert-msg" placeholder="Type announcement..." style="margin-top:10px;">
+                <button class="btn btn-broadcast" onclick="sendGlobalAlert()">🚀 Push Sound & Alert</button>
+                <button class="btn" style="width:100%; margin-top:8px; background:#eee; color:#666;" onclick="clearBroadcast()">Clear Live Screens</button>
+            </div>
+
+            <div style="background: #fff; border:1px solid #eee; padding:20px; border-radius:15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <h3 style="margin:0 0 15px 0">Live Activity Feed</h3>
+                <div class="table-wrapper">
+                    <table id="adminTable">
+                        <thead>
+                            <tr><th>Student</th><th>Matric</th><th>Streak</th><th>Last Seen</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="log-list"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue, set, remove, update, serverTimestamp, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
+            authDomain: "biu-archive.firebaseapp.com",
+            databaseURL: "https://biu-archive-default-rtdb.firebaseio.com",
+            projectId: "biu-archive",
+            storageBucket: "biu-archive.firebasestorage.app",
+            messagingSenderId: "245967347998",
+            appId: "1:245967347998:web:a8feb5ad0ef9650946a90f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+        const ADMIN_UID = "GhKV6PwC9RbEsHMCRST7k2vLOGe2";
+
+        // HANDLE LOGIN
+        window.handleLogin = () => {
+            const email = document.getElementById('admin-email').value;
+            const pass = document.getElementById('admin-pass').value;
+            const errDisplay = document.getElementById('auth-error');
+
+            signInWithEmailAndPassword(auth, email, pass)
+                .catch(error => {
+                    errDisplay.innerText = "Invalid Admin Credentials.";
+                    // LOG FAILED ATTEMPT
+                    push(ref(db, "logs/unauthorized_access"), {
+                        email: email,
+                        time: serverTimestamp(),
+                        type: "FAILED_LOGIN"
+                    });
+                });
+        };
+
+        // AUTH LISTENER
+        onAuthStateChanged(auth, (user) => {
+            if (user && user.uid === ADMIN_UID) {
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('admin-content').style.display = 'block';
+                startAdmin();
+            } else {
+                document.getElementById('auth-overlay').style.display = 'flex';
+                document.getElementById('admin-content').style.display = 'none';
+            }
+        });
+
+        function startAdmin() {
+            // TICK REQUESTS
+            onValue(ref(db, "verification_requests"), (snapshot) => {
+                const requests = snapshot.val();
+                const listDiv = document.getElementById('verification-requests-list');
+                if(!requests) { listDiv.innerHTML = "<p style='font-size: 13px; opacity: 0.5;'>No pending requests.</p>"; return; }
+                listDiv.innerHTML = Object.entries(requests).map(([reqId, data]) => `
+                    <div class="request-card">
+                        <div style="font-size:12px;"><strong>${data.name}</strong></div>
+                        <button class="btn" style="background:var(--success); color:white;" onclick="toggleVerify('${data.userId}', false)">Approve</button>
+                    </div>
+                `).join('');
+            });
+
+            // MAIN TABLE LOGIC & STREAK MANAGER DATA
+            onValue(ref(db, "users"), (uSnap) => {
+                const users = uSnap.val() || {};
+                onValue(ref(db, "banned_users"), (bSnap) => {
+                    const banned = bSnap.val() || {};
+                    const list = document.getElementById('log-list');
+                    const streakList = document.getElementById('high-streaks-list');
+                    const entries = Object.entries(users);
+                    
+                    document.getElementById('count').innerText = entries.length;
+                    document.getElementById('banned-count').innerText = Object.keys(banned).length;
+                    document.getElementById('verified-count').innerText = entries.filter(u => u[1].isVerified).length;
+
+                    const sortedByStreak = [...entries].sort((a,b) => (b[1].streak || 0) - (a[1].streak || 0)).slice(0, 10);
+                    streakList.innerHTML = sortedByStreak.map(([uid, data]) => `
+                        <div class="request-card" style="margin-bottom:5px; padding:10px;">
+                            <div style="font-size:11px;"><strong>${data.name}</strong> - 🔥 ${data.streak || 0}</div>
+                            <button class="btn" style="background:var(--danger); color:white; padding:5px 8px;" onclick="resetStreak('${uid}')">Reset</button>
+                        </div>
+                    `).join('');
+
+                    list.innerHTML = entries.sort((a,b) => (b[1].lastActive || 0) - (a[1].lastActive || 0)).map(([uid, data]) => {
+                        const isBanned = banned[uid] === true;
+                        const hasTick = data.isVerified === true;
+                        return `
+                        <tr>
+                            <td><strong>${data.name}</strong> ${hasTick ? `<span style="color:var(--blue-tick);">✓</span>` : ""}</td>
+                            <td>${data.matric || 'N/A'}</td>
+                            <td>🔥 ${data.streak || 1}</td>
+                            <td>${data.lastActive ? new Date(data.lastActive).toLocaleTimeString() : '---'}</td>
+                            <td>
+                                <button class="btn btn-ban" style="background:${isBanned ? 'green':'black'}" onclick="toggleBan('${uid}', ${isBanned})">${isBanned ? 'Unban':'Ban'}</button>
+                                <button class="btn ${hasTick ? 'btn-unverify':'btn-verify'}" onclick="toggleVerify('${uid}', ${hasTick})">${hasTick ? 'Unverify':'Verify'}</button>
+                            </td>
+                        </tr>`;
+                    }).join('');
+                });
+            });
+
+            onValue(ref(db, "users"), (s) => {
+                const now = Date.now();
+                const active = Object.values(s.val() || {}).filter(u => (now - (u.lastActive || 0)) < 300000).length;
+                document.getElementById('online-count').innerText = active;
+            });
+        }
+
+        // FUNCTIONS
+        window.toggleStreakManager = () => {
+            const card = document.getElementById('streak-manager-card');
+            card.classList.toggle('hidden');
+        };
+
+        window.resetStreak = (uid) => {
+            if(confirm("Reset streak?")) update(ref(db, `users/${uid}`), { streak: 0 });
+        };
+
+        window.toggleVerify = (uid, currentlyVerified) => {
+            if(confirm("Change verification?")) {
+                update(ref(db, `users/${uid}`), { isVerified: !currentlyVerified });
+                if(!currentlyVerified) remove(ref(db, `verification_requests/${uid}`));
+            }
+        };
+
+        window.toggleBan = (uid, status) => set(ref(db, `banned_users/${uid}`), status ? null : true);
+        
+        window.sendGlobalAlert = () => {
+            const msg = document.getElementById('alert-msg').value;
+            if(msg) set(ref(db, "broadcast"), { message: msg, timestamp: serverTimestamp() }).then(() => {
+                alert("Broadcast Sent");
+                document.getElementById('alert-msg').value = "";
+            });
+        };
+        
+        window.clearBroadcast = () => set(ref(db, "broadcast"), null);
+        
+        window.toggleMaintenance = () => {
+            onValue(ref(db, "maintenance_mode"), (s) => set(ref(db, "maintenance_mode"), !s.val()), { onlyOnce: true });
+        };
+        
+        onValue(ref(db, "maintenance_mode"), (s) => {
+            const btn = document.getElementById('m-toggle-btn');
+            btn.innerText = s.val() ? "LOCKED" : "ACTIVE";
+            btn.style.background = s.val() ? "var(--danger)" : "var(--success)";
+        });
+        
+        window.clearChat = () => confirm("Clear chat?") && remove(ref(db, "messages"));
+        window.nuclearClear = () => confirm("Wipe users?") && remove(ref(db, "users"));
+    </script>
+</body>
+</html>

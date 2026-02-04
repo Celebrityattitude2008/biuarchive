@@ -19,14 +19,12 @@
             --shadow: 0 10px 30px rgba(0,0,0,0.08);
         }
 
-        [data-theme="dark"] {
-            --primary: #FFD700; 
-            --accent: #002147; 
-            --bg: #121212;
-            --white: #1e1e1e; 
-            --text: #f4f4f4;
-            --shadow: 0 10px 30px rgba(0,0,0,0.4);
-        }
+        [data-theme="dark"] { --primary: #FFD700; --accent: #002147; --bg: #121212; --white: #1e1e1e; --text: #f4f4f4; --shadow: 0 10px 30px rgba(0,0,0,0.4); }
+        
+        /* OFFICIAL BIU DEPARTMENT THEMES */
+        [data-theme="emerald"] { --primary: #064e3b; --accent: #34d399; --bg: #022c22; --white: #065f46; --text: #ecfdf5; }
+        [data-theme="midnight"] { --primary: #1e1b4b; --accent: #818cf8; --bg: #020617; --white: #1e1b4b; --text: #f8fafc; }
+        [data-theme="crimson"] { --primary: #7f1d1d; --accent: #f87171; --bg: #270606; --white: #7f1d1d; --text: #fef2f2; }
 
         body { 
             font-family: 'Segoe UI', system-ui, sans-serif; 
@@ -42,7 +40,6 @@
             box-sizing: border-box;
         }
         
-        /* LOADING SPINNER OVERLAY */
         #loader-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -55,8 +52,7 @@
             transition: 0.5s;
         }
         .spinner {
-            width: 50px;
-            height: 50px;
+            width: 50px; height: 50px;
             border: 5px solid rgba(0,33,71,0.1);
             border-top: 5px solid var(--primary);
             border-radius: 50%;
@@ -78,18 +74,14 @@
 
         .hidden { display: none !important; }
 
-        /* BADGES */
         .verified-badge {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 18px;
-            height: 18px;
+            width: 18px; height: 18px;
             background-color: var(--blue-tick);
-            color: white;
-            font-size: 11px;
-            border-radius: 50%;
-            margin-left: 6px;
+            color: white; font-size: 11px;
+            border-radius: 50%; margin-left: 6px;
             vertical-align: middle;
         }
 
@@ -106,7 +98,6 @@
         .status-pending { background: #6c757d; color: white; animation: pulse-gray 2s infinite; }
         @keyframes pulse-gray { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        /* PROFILE PIC & SOCIALS */
         .avatar { 
             width: 100px; height: 100px; 
             background: linear-gradient(135deg, var(--primary), #004080); 
@@ -130,16 +121,14 @@
         }
 
         .customize-section {
-            background: #f1faff;
-            border: 1px solid #cceeff;
-            padding: 20px;
-            border-radius: 15px;
-            margin-top: 20px;
-            text-align: left;
+            background: rgba(0, 191, 255, 0.05);
+            border: 1px solid rgba(0, 191, 255, 0.2);
+            padding: 20px; border-radius: 15px;
+            margin-top: 20px; text-align: left;
         }
         .input-group { margin-bottom: 10px; }
         .input-group label { display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--blue-tick); }
-        .input-group input { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-size: 13px; box-sizing: border-box; }
+        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-size: 13px; box-sizing: border-box; background: var(--white); color: var(--text); font-family: inherit; }
         
         .btn-action { 
             width: 100%; padding: 15px; margin-top: 15px; 
@@ -149,6 +138,8 @@
         .btn-logout { background: #f0f0f0; color: #333; }
         .btn-back { background: var(--primary); color: var(--white); }
         .btn-save { background: var(--success); color: white; margin-top: 10px; padding: 10px; }
+
+        #user-bio-display { font-size: 13px; font-style: italic; margin: 10px 0; line-height: 1.4; opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -180,6 +171,8 @@
             <span id="user-name">Student Name</span><span id="badge-placeholder"></span>
         </h2>
         
+        <div id="user-bio-display"></div>
+        
         <div class="social-links" id="social-display"></div>
 
         <p id="user-dept" style="opacity: 0.6; margin: 5px 0; font-weight: 600;">Department</p>
@@ -189,7 +182,24 @@
         </div>
 
         <div id="customize-panel" class="customize-section hidden">
-            <h4 style="margin: 0 0 15px 0; font-size: 14px; color: var(--primary);">🎨 Customize Profile</h4>
+            <h4 style="margin: 0 0 15px 0; font-size: 14px; color: var(--primary);">🎨 Scholar Perks</h4>
+            
+            <div class="input-group">
+                <label>Profile Bio</label>
+                <textarea id="edit-bio" rows="2" placeholder="Tell the archive about yourself..."></textarea>
+            </div>
+
+            <div class="input-group">
+                <label>Portal Theme</label>
+                <select id="edit-theme">
+                    <option value="light">Default Light</option>
+                    <option value="dark">Default Dark</option>
+                    <option value="crimson">Official BIU Law (Crimson)</option>
+                    <option value="emerald">Official BIU Engineering (Emerald)</option>
+                    <option value="midnight">Official BIU Science (Midnight)</option>
+                </select>
+            </div>
+
             <div class="input-group">
                 <label>Profile Pic (Drive Link)</label>
                 <input type="text" id="edit-pic" placeholder="Paste link here...">
@@ -247,24 +257,27 @@
         document.getElementById('display-matric').innerText = matric || "Not Set";
         document.getElementById('user-initial').innerText = name.charAt(0).toUpperCase();
 
-        // Helper to convert Google Drive links to direct image sources
         function formatImageUrl(url) {
             if (url.includes('drive.google.com')) {
                 const id = url.split('/d/')[1]?.split('/')[0] || url.split('id=')[1];
-                return `https://lh3.googleusercontent.com/u/0/d/${id}`;
+                return `https://drive.google.com/uc?export=view&id=${id}`;
             }
             return url;
         }
 
-        // Fetch user data
         onValue(ref(db, "users/" + userId), (snapshot) => {
             const userData = snapshot.val();
-            
-            // HIDE LOADER once data arrives
             document.getElementById('loader-overlay').style.opacity = '0';
             setTimeout(() => document.getElementById('loader-overlay').classList.add('hidden'), 500);
 
             if (!userData) return;
+
+            // Apply theme & Bio
+            if(userData.preferredTheme) {
+                document.body.setAttribute('data-theme', userData.preferredTheme);
+                document.getElementById('edit-theme').value = userData.preferredTheme;
+            }
+            document.getElementById('user-bio-display').innerText = userData.bio || "";
 
             if (userData.profilePic) {
                 const imgUrl = formatImageUrl(userData.profilePic);
@@ -288,6 +301,7 @@
                 customizePanel.classList.remove('hidden');
                 requestArea.classList.add('hidden');
                 
+                document.getElementById('edit-bio').value = userData.bio || '';
                 document.getElementById('edit-pic').value = userData.profilePic || '';
                 document.getElementById('edit-ig').value = userData.instagram || '';
                 document.getElementById('edit-tk').value = userData.tiktok || '';
@@ -295,7 +309,7 @@
             } else {
                 checkPendingRequest();
             }
-        }, { onlyOnce: false });
+        });
 
         function checkPendingRequest() {
             onValue(ref(db, "verification_requests/" + userId), (reqSnap) => {
@@ -314,18 +328,25 @@
         }
 
         window.saveProfileUpdates = () => {
+            const bio = document.getElementById('edit-bio').value;
             const pic = document.getElementById('edit-pic').value;
             const ig = document.getElementById('edit-ig').value;
             const tk = document.getElementById('edit-tk').value;
             const li = document.getElementById('edit-li').value;
-
+            const theme = document.getElementById('edit-theme').value;
 
             update(ref(db, "users/" + userId), {
+                bio: bio,
                 profilePic: pic,
                 instagram: ig,
                 tiktok: tk,
-                linkedin: li
-            }).then(() => alert("Profile Updated Successfully!"));
+                linkedin: li,
+                preferredTheme: theme
+            }).then(() => {
+                localStorage.setItem('theme', theme);
+                document.body.setAttribute('data-theme', theme);
+                alert("Profile Updated!");
+            });
         };
 
         window.togglePaymentModal = () => document.getElementById('payment-modal').classList.toggle('hidden');
