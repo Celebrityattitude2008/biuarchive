@@ -22,12 +22,10 @@
 
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--light); color: var(--text); margin: 0; display: flex; justify-content: center; padding: 15px; transition: 0.3s; overflow-x: hidden; }
         
-        /* Container made responsive */
         .container { background: var(--white); padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 850px; text-align: center; position: relative; box-sizing: border-box; }
         
         .hidden { display: none !important; }
         
-        /* DROPDOWN STYLING - Mobile Optimized */
         .top-nav { position: absolute; top: 15px; right: 15px; left: 15px; display: flex; justify-content: space-between; gap: 8px; z-index: 100; align-items: center; }
         .nav-btn { padding: 8px 15px; border-radius: 20px; border: none; cursor: pointer; font-size: 11px; font-weight: bold; background: var(--primary); color: var(--white); transition: 0.2s; white-space: nowrap; }
         .dropdown { position: relative; display: inline-block; }
@@ -37,12 +35,10 @@
         .dropdown-header { padding: 10px 16px; font-size: 10px; text-transform: uppercase; color: var(--accent); opacity: 0.6; font-weight: bold; background: rgba(0,0,0,0.2); }
         .show { display: block !important; }
 
-        /* SCREENS */
         #ban-screen, #maintenance-screen { position: fixed; top:0; left:0; width:100%; height:100%; z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px; box-sizing:border-box; }
         #ban-screen { background: #900; color:white; }
         #maintenance-screen { background: var(--primary); color: var(--accent); }
 
-        /* IDS & CARDS - Responsive Fix */
         .ids-result-card { background: linear-gradient(135deg, var(--primary), #003366); color: white; padding: 20px; border-radius: 12px; margin-top: 20px; text-align: left; border-left: 6px solid var(--accent); position: relative; overflow: hidden; }
         .ids-result-card::after { content: 'IDS'; position: absolute; right: -10px; bottom: -10px; font-size: 60px; font-weight: 900; opacity: 0.1; pointer-events: none; }
         .score-badge { background: var(--accent); color: var(--primary); padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 1.2rem; float: right; margin-bottom: 10px; }
@@ -62,7 +58,6 @@
         .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
         .rank-circle { width: 22px; height: 22px; background: var(--primary); color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; margin-right: 8px; font-weight: bold; }
         
-        /* Grid Fix for Mobile */
         .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; margin: 25px 0; }
         .timetable-box, .study-advice { background: rgba(128, 128, 128, 0.05); border: 1px solid rgba(0,0,0,0.1); padding: 20px; border-radius: 12px; text-align: left; }
         
@@ -71,7 +66,6 @@
         footer { margin-top: 40px; font-size: 11px; opacity: 0.7; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.1); }
         .verified-tick { color: #1DA1F2; margin-left: 4px; font-size: 14px; }
 
-        /* MOBILE SPECIFIC OVERRIDES */
         @media (max-width: 600px) {
             .container { padding: 1.2rem; border-radius: 10px; }
             h1 { font-size: 1.6rem; }
@@ -227,14 +221,23 @@
 
         if(!name || !userId) { window.location.href = 'login.html'; }
 
-        // --- ADMIN SECURITY LOGIC ---
+        // --- UPGRADED ADMIN SECURITY LOGIC ---
         window.enterAdmin = async () => {
+            if (!userId) {
+                alert("Session expired. Please login again.");
+                return;
+            }
             const adminRef = ref(db, `admins/${userId}`);
-            const snapshot = await get(adminRef);
-            if (snapshot.exists() && snapshot.val() === true) {
-                window.location.href = 'vault.html';
-            } else {
-                alert("Access Denied: Administrative privileges required.");
+            try {
+                const snapshot = await get(adminRef);
+                if (snapshot.exists() && snapshot.val() === true) {
+                    window.location.href = 'vault.html';
+                } else {
+                    alert("Access Denied: Administrative privileges required.");
+                }
+            } catch (error) {
+                console.error("Security Check Error:", error);
+                alert("Connection error. Check your internet.");
             }
         };
 
@@ -253,7 +256,6 @@
             });
         }
 
-        // Fetch Class Stats
         onValue(ref(db, "stats/ids111"), (s) => {
             const d = s.val();
             if(d) {
@@ -262,7 +264,6 @@
             }
         });
 
-        // Fetch Public Results List
         onValue(ref(db, "public_results"), (snapshot) => {
             const results = snapshot.val();
             const tableBody = document.getElementById('public-table-body');
@@ -369,10 +370,10 @@
         // GREETING
         const hour = new Date().getHours();
         let greet = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
-        document.getElementById('time-greeting').innerText = `${greet}, ${name.split(' ')[0]} ✨`;
+        if(name) document.getElementById('time-greeting').innerText = `${greet}, ${name.split(' ')[0]} ✨`;
 
         // FIREBASE SYNC
-        function updateStatus() { update(ref(db, `users/${userId}`), { name, matric: userMatric || "Unknown", lastActive: serverTimestamp() }); }
+        function updateStatus() { if(userId) update(ref(db, `users/${userId}`), { name, matric: userMatric || "Unknown", lastActive: serverTimestamp() }); }
         updateStatus(); setInterval(updateStatus, 30000);
 
         onValue(ref(db, "broadcast"), (s) => {
@@ -402,12 +403,12 @@
         document.getElementById('streak-count').innerText = streak;
         document.getElementById('user-level-tag').innerText = level.title;
         document.getElementById('user-level-tag').className = "level-tag " + level.class;
-        update(ref(db, `users/${userId}`), { streak });
+        if(userId) update(ref(db, `users/${userId}`), { streak });
 
         // CHAT
         window.sendChat = function() {
             const i = document.getElementById('chat-msg');
-            if (i.value.trim()) { push(ref(db, "messages"), { sender: name.split(' ')[0], message: i.value, timestamp: serverTimestamp() }); i.value = ""; }
+            if (i.value.trim()) { push(ref(db, "messages"), { sender: name ? name.split(' ')[0] : "Guest", message: i.value, timestamp: serverTimestamp() }); i.value = ""; }
         };
         onChildAdded(ref(db, "messages"), (s) => {
             const d = s.val(); const disp = document.getElementById('chat-display');
