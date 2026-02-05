@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BIU Archive | CBT Exam Center</title>
+    <style>
+        :root {
+            --primary: #002147; --accent: #FFD700; --bg: #f4f7f6;
+            --danger: #dc3545; --success: #28a745; --white: #ffffff;
+        }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 0; color: #333; }
+        
+        .exam-header {
+            position: sticky; top: 0; background: var(--primary); color: white;
+            padding: 15px 20px; display: flex; justify-content: space-between;
+            align-items: center; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        #timer { font-family: monospace; font-size: 1.5rem; color: var(--accent); font-weight: bold; }
+
+        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
+        .question-card {
+            background: var(--white); border-radius: 15px; padding: 25px;
+            margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-left: 5px solid var(--primary);
+        }
+        .question-text { font-size: 1.1rem; font-weight: 600; margin-bottom: 15px; display: block; }
+        
+        .option-label {
+            display: block; padding: 12px 15px; margin: 8px 0; border: 1.5px solid #eee;
+            border-radius: 10px; cursor: pointer; transition: all 0.2s; font-size: 14px;
+        }
+        .option-label:hover { background: #f0f4f8; border-color: var(--primary); }
+        input[type="radio"] { margin-right: 10px; accent-color: var(--primary); }
+
+        .btn-submit {
+            display: block; width: 100%; padding: 18px; background: var(--success);
+            color: white; border: none; border-radius: 12px; font-size: 1.1rem;
+            font-weight: bold; cursor: pointer; margin-bottom: 50px; transition: 0.3s;
+        }
+        .btn-submit:hover { filter: brightness(1.1); transform: translateY(-2px); }
+
+        #result-screen {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: var(--primary); color: white; display: none;
+            flex-direction: column; align-items: center; justify-content: center; z-index: 2000;
+        }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="exam-header">
+        <div>
+            <h2 style="margin:0; font-size: 1.2rem;">Soteriology Exam</h2>
+            <small id="progress-text">Loading Questions...</small>
+        </div>
+        <div id="timer">30:00</div>
+    </div>
+
+    <div class="container" id="exam-form">
+        <div id="questions-container"></div>
+        <button id="submit-btn" class="btn-submit">Submit Examination</button>
+    </div>
+
+    <div id="result-screen">
+        <h1 style="font-size: 3rem; margin-bottom: 10px;">Exam Complete</h1>
+        <p id="final-score" style="font-size: 1.5rem;"></p>
+        <p id="performance-msg" style="margin-bottom: 30px; opacity: 0.8;"></p>
+        <button onclick="window.location.href='index.html'" style="padding: 12px 25px; border-radius: 8px; border: none; cursor:pointer; font-weight:bold;">Return to Portal</button>
+    </div>
+
+    <script type="module">
+        // FIREBASE CONFIGURATION
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            // PASTE YOUR FIREBASE CONFIG HERE
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        const masterBank = [
+            { q: "What is the Greek word for 'Salvation'?", a: ["Logos", "Soteria", "Pneuma", "Theos"], c: 1 },
+            { q: "The study of the Doctrine of Salvation is called:", a: ["Eschatology", "Hamartiology", "Soteriology", "Ecclesiology"], c: 2 },
+            { q: "Which view says man was created in a state of 'relative perfection'?", a: ["Catholic", "Rationalist", "Protestant", "Evolutionist"], c: 2 },
+            { q: "The Catholic view states man was created in a state of:", a: ["Barbarism", "Pure Nature", "Sin", "Relative Perfection"], c: 1 },
+            { q: "In Catholic theology, 'Original Righteousness' was a:", a: ["Natural gift", "Supernatural gift", "Sinful nature", "Myth"], c: 1 },
+            { q: "The 'Lower passions' in Catholic theology is known as:", a: ["Iniquity", "Concupiscence", "Transgression", "Apostasy"], c: 1 },
+            { q: "Which view claims man evolved out of a state of barbarism?", a: ["Protestant", "Evolutionist", "Catholic", "Orthodox"], c: 1 },
+            { q: "Rationalists believe the 'Fall of Man' was actually:", a: ["A disaster", "A step upward in self-consciousness", "A myth", "A legal error"], c: 1 },
+            { q: "Pelagians believe that man is born:", a: ["Sinful", "Innocent", "Evil", "A backslider"], c: 1 },
+            { q: "Define 'Ordo Salutis'.", a: ["Order of Worship", "Order of Salvation", "History of Sin", "Church Hierarchy"], c: 1 },
+            { q: "Ordo Salutis describes the process of realizing grace in:", a: ["The whole world", "The heart of a sinner", "The Old Testament", "The Angels"], c: 1 },
+            { q: "Which of these is the judicial act of God declaring a sinner righteous?", a: ["Sanctification", "Justification", "Regeneration", "Adoption"], c: 1 },
+            { q: "Justification is based on the work of:", a: ["The Sinner", "The Church", "Jesus Christ", "The Law"], c: 2 },
+            { q: "Regeneration is an inward experience where God imparts:", a: ["New Laws", "New Life", "New Money", "New Names"], c: 1 },
+            { q: "The New Testament describes Regeneration as being:", a: ["Born Again", "Legally Cleared", "Socially reformed", "Educated"], c: 0 },
+            { q: "Which aspect of salvation deals with our 'standing' before God?", a: ["Sanctification", "Justification", "Glorification", "Propitiation"], c: 1 },
+            { q: "True repentance involves which two components?", a: ["Sorrow & Confession", "Money & Prayer", "Sorrow & Turning away", "Fasting & Weeping"], c: 2 },
+            { q: "What is the emotional element of repentance?", a: ["Joy", "Godly Sorrow", "Anger", "Confusion"], c: 1 },
+            { q: "According to the notes, repentance is a 'Determination to':", a: ["Pay tithes", "Forsake sin", "Go to school", "Argue"], c: 1 },
+            { q: "Faith is defined as a 'heart-felt':", a: ["Argument", "Assurance", "Guess", "Wish"], c: 1 },
+            { q: "Saving faith results in:", a: ["Wealth", "Obedience and Surrender", "Fame", "Perfect memory"], c: 1 },
+            { q: "To 'Sanctify' means to:", a: ["Judge", "Set apart for God", "Destroy", "Criticize"], c: 1 },
+            { q: "Which type of sanctification is a daily growth process?", a: ["Positional", "Ultimate", "Progressive", "Imputed"], c: 2 },
+            { q: "Positional Sanctification happens:", a: ["Gradually", "At the second advent", "Instantly at conversion", "After death"], c: 2 },
+            { q: "Ultimate Sanctification occurs at:", a: ["Conversion", "Water Baptism", "The Second Coming", "Graduation"], c: 2 },
+            { q: "Progressive sanctification requires the believer to:", a: ["Do nothing", "Walk in the Spirit", "Join a club", "Sleep"], c: 1 },
+            { q: "What is described as the 'Breath of the soul'?", a: ["Bible Study", "Giving", "Prayer", "Evangelism"], c: 2 },
+            { q: "Without prayer, the Christian has no:", a: ["Money", "Spiritual Energy", "Friends", "Clothes"], c: 1 },
+            { q: "A Christian's character is built through:", a: ["A healthy prayer life", "Watching TV", "Sleeping", "Winning arguments"], c: 0 },
+            { q: "Feeding on the Word of God is compared to:", a: ["Exercising", "Eating physical food", "Traveling", "Singing"], c: 1 },
+            { q: "What happens when a believer is 'Ignorant of the Word'?", a: ["They get rich", "They become a backslider", "They become an Admin", "They go to heaven early"], c: 1 },
+            { q: "A 'Backslider' is someone who:", a: ["Never believed", "Turns back to old ways", "Moves to another country", "Is perfect"], c: 1 },
+            { q: "The goal of the Christian walk is to be conformed to:", a: ["Society", "The image of Christ", "Their parents", "Their pastor"], c: 1 },
+            { q: "One of the reasons for backsliding is a lack of:", a: ["Physical food", "Consistent prayer", "New clothes", "Social media"], c: 1 },
+            { q: "The 'Past' aspect of salvation is:", a: ["Sanctification", "Justification", "Glorification", "Adoption"], c: 1 },
+            { q: "The 'Present' aspect of salvation is:", a: ["Justification", "Sanctification", "Regeneration", "Selection"], c: 1 },
+            { q: "The 'Future' aspect of salvation is:", a: ["Conversion", "Glorification", "Justification", "Repentance"], c: 1 },
+            { q: "Which aspect saves us from the 'Power' of sin?", a: ["Justification", "Sanctification", "Glorification", "Propitiation"], c: 1 },
+            { q: "Which aspect saves us from the 'Presence' of sin?", a: ["Justification", "Sanctification", "Glorification", "Regeneration"], c: 2 },
+            { q: "Which aspect saves us from the 'Penalty' of sin?", a: ["Justification", "Sanctification", "Glorification", "Adoption"], c: 0 },
+            { q: "The Christian life is a life of:", a: ["Laziness", "Service and Witness", "Isolation", "Hiding"], c: 1 },
+            { q: "According to the notes, salvation is not earned by:", a: ["Grace", "Faith", "Works", "God"], c: 2 },
+            { q: "The 'New Birth' is another name for:", a: ["Justification", "Sanctification", "Regeneration", "Conversion"], c: 2 },
+            { q: "The basis of our salvation is God's:", a: ["Anger", "Justice", "Love and Grace", "Requirement of money"], c: 2 },
+            { q: "What is the result of saving faith?", a: ["Inner peace and obedience", "Confusion", "Pride", "Greed"], c: 0 },
+            { q: "The 'Old Nature' is dealt with through:", a: ["Regeneration and Sanctification", "Buying books", "Traveling", "Physical exercise"], c: 0 },
+            { q: "True conversion includes a change in:", a: ["Clothes", "Mind and Direction", "Phone number", "Name"], c: 1 },
+            { q: "Who provides the power for Progressive Sanctification?", a: ["The Sinner", "The Holy Spirit", "The Government", "The Teacher"], c: 1 },
+            { q: "The Christian walk is described as a 'Daily':", a: ["Sleep", "Burden", "Cross-bearing", "Vacation"], c: 2 },
+            { q: "Soteriology is essential because it explains:", a: ["Mathematics", "How man is redeemed", "How to build houses", "Politics"], c: 1 }
+        ];
+
+        let timeLeft = 1800;
+        let selectedQuestions = [];
+        let timerInterval;
+
+        function initExam() {
+            selectedQuestions = [...masterBank].sort(() => 0.5 - Math.random()).slice(0, 50);
+            renderQuestions();
+            startTimer();
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = selectedQuestions.map((item, idx) => `
+                <div class="question-card">
+                    <span class="question-text">${idx + 1}. ${item.q}</span>
+                    <div class="options-grid">
+                        ${item.a.map((opt, optIdx) => `
+                            <label class="option-label">
+                                <input type="radio" name="q${idx}" value="${optIdx}">
+                                <span>${opt}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('progress-text').innerText = `Total Questions: ${selectedQuestions.length}`;
+        }
+
+        function startTimer() {
+            const timerDiv = document.getElementById('timer');
+            timerInterval = setInterval(() => {
+                let mins = Math.floor(timeLeft / 60);
+                let secs = timeLeft % 60;
+                timerDiv.innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    finishExam();
+                }
+                if (timeLeft < 300) timerDiv.style.color = "var(--danger)";
+                timeLeft--;
+            }, 1000);
+        }
+
+        function finishExam() {
+            clearInterval(timerInterval);
+            let score = 0;
+            selectedQuestions.forEach((item, idx) => {
+                const checked = document.querySelector(`input[name="q${idx}"]:checked`);
+                if (checked && parseInt(checked.value) === item.c) {
+                    score++;
+                }
+            });
+
+            const percentage = (score / selectedQuestions.length) * 100;
+
+            // SAVE TO FIREBASE
+            const user = auth.currentUser;
+            if (user) {
+                const userScoreRef = ref(db, `leaderboard/${user.uid}`);
+                update(userScoreRef, {
+                    name: user.displayName || "Anonymous Student",
+                    score: score,
+                    total: selectedQuestions.length,
+                    percentage: percentage,
+                    timestamp: serverTimestamp()
+                }).catch(err => console.error("Firebase Error:", err));
+            }
+
+            // UI UPDATES
+            document.getElementById('exam-form').classList.add('hidden');
+            document.getElementById('result-screen').style.display = 'flex';
+            document.getElementById('final-score').innerText = `${score} / ${selectedQuestions.length} (${percentage.toFixed(1)}%)`;
+            document.getElementById('performance-msg').innerText = percentage >= 70 ? "EXCELLENT - You have mastered the Doctrine!" : "KEEP STUDYING - Re-read the notes and try again.";
+        }
+
+        // Attach event listener to button
+        document.getElementById('submit-btn').addEventListener('click', finishExam);
+
+        // Run when auth state is ready
+        onAuthStateChanged(auth, (user) => {
+            initExam();
+        });
+    </script>
+</body>
+</html>

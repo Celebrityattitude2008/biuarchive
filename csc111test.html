@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSC 111 Master CBT - BIU Archive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .option-card { transition: all 0.2s ease; cursor: pointer; }
+        .option-card:hover:not(.locked) { transform: translateX(5px); border-color: #3b82f6; background-color: #eff6ff; }
+        .correct-choice { background-color: #dcfce7 !important; border-color: #22c55e !important; }
+        .wrong-choice { background-color: #fee2e2 !important; border-color: #ef4444 !important; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="min-h-screen py-6 px-4">
+
+    <div class="max-w-4xl mx-auto flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900 leading-tight">CSC 111 <span class="text-blue-600">CBT</span></h1>
+            <p id="pb-display" class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Record: 0/50</p>
+        </div>
+        <div class="flex gap-4">
+            <div class="bg-white border-2 border-red-50 px-5 py-2 rounded-2xl shadow-sm text-center">
+                <p class="text-[9px] font-black text-red-400 uppercase">Timer</p>
+                <p id="timer" class="text-xl font-black text-red-600">30:00</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-container" class="max-w-4xl mx-auto glass rounded-[2.5rem] shadow-2xl border border-white p-6 md:p-10 transition-all">
+        
+        <div class="mb-8">
+            <div class="flex justify-between items-end mb-2">
+                <span id="q-label" class="text-sm font-black text-slate-400">Loading Exam...</span>
+                <span id="live-perc" class="text-xs font-bold text-blue-500">0%</span>
+            </div>
+            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div id="progress-fill" class="h-full bg-blue-600 transition-all duration-500" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <div id="quiz-screen">
+            <div id="question-area" class="min-h-[100px] mb-8">
+                <h2 id="question-text" class="text-xl md:text-2xl font-extrabold text-slate-800 leading-snug"></h2>
+            </div>
+
+            <div id="options-grid" class="grid grid-cols-1 gap-3">
+                </div>
+
+            <div class="mt-10 pt-6 border-t border-slate-50 flex justify-between items-center">
+                <button id="prev-btn" onclick="goBack()" class="text-slate-400 font-bold hover:text-slate-800 transition-colors disabled:opacity-0">← Previous</button>
+                <div class="flex gap-2" id="dot-nav"></div>
+                <button id="next-btn" onclick="goNext()" class="bg-[#002147] text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg hover:scale-105 active:scale-95 transition-all">Next Question →</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DATABASE = [
+    // --- WEEK 1: INTRODUCTION ---
+    { q: "What is the primary definition of a computer according to the notes?", o: ["A mechanical tool", "An electronic device that stores and manipulates data", "A social media machine", "A binary-only calculator"], c: 1 },
+    { q: "Which component is considered the 'physical' part of the computer?", o: ["Software", "Hardware", "Firmware", "Operating System"], c: 1 },
+    { q: "Which field focuses on large-scale software system maintenance?", o: ["Architecture", "Software Engineering", "Cybersecurity", "Data Structures"], c: 1 },
+    { q: "Who is the 'Father of the Computer'?", o: ["Alan Turing", "Charles Babbage", "Blaise Pascal", "Herman Hollerith"], c: 1 },
+    { q: "What technology did First Generation computers use?", o: ["Transistors", "Vacuum Tubes", "Integrated Circuits", "Microprocessors"], c: 1 },
+    { q: "Which field protects systems from unauthorized access?", o: ["HCI", "Cybersecurity", "Databases", "Networking"], c: 1 },
+    { q: "Third Generation computers introduced which technology?", o: ["GUI", "Integrated Circuits", "Punch cards", "Analog processing"], c: 1 },
+    { q: "Which discipline studies the theoretical foundations of computation?", o: ["Software Engineering", "Theoretical Computer Science", "Data Science", "AI"], c: 1 },
+    { q: "Fourth Generation computers are associated with:", o: ["AI", "The Microprocessor", "Magnetic Drums", "Machine Language"], c: 1 },
+    { q: "What manages hardware resources and provides a user interface?", o: ["Game design", "Operating System", "Math equations", "Compilers"], c: 1 },
+    { q: "Who was the first computer programmer?", o: ["Grace Hopper", "Ada Lovelace", "Marie Curie", "Joan Clarke"], c: 1 },
+    { q: "What is the primary focus of AI?", o: ["Hardware speed", "Mimicking human intelligence", "Global networking", "Structured data"], c: 1 },
+    { q: "What was the first general-purpose electronic digital computer?", o: ["Intel 4004", "ENIAC", "Colossus", "Pascaline"], c: 1 },
+    { q: "Which generation is focused on Parallel Processing and AI?", o: ["Third", "Fifth", "Second", "Fourth"], c: 1 },
+    { q: "What does ALU stand for?", o: ["Advanced Logic Utility", "Arithmetic Logic Unit", "Automated Loading", "Analog Unit"], c: 1 },
+    { q: "Which of these is Internal Hardware?", o: ["Keyboard", "RAM", "Monitor", "Printer"], c: 1 },
+    { q: "What acts as the main circuit board connecting all components?", o: ["Hard drive", "Motherboard", "GPU", "Power supply"], c: 1 },
+    { q: "Which discipline focuses on visual information processing?", o: ["Computer Graphics", "Databases", "OS Design", "Bioinformatics"], c: 0 },
+    { q: "The Abacus is an example of:", o: ["Electronic computer", "Manual mathematical tool", "Binary machine", "Internet protocol"], c: 1 },
+    { q: "Personal computers (PCs) became possible in which generation?", o: ["First", "Fourth", "Second", "Zero"], c: 1 },
+    { q: "Bioinformatics combines computer science with:", o: ["Viruses", "Biological data", "Silicon cells", "Exercise"], c: 1 },
+    { q: "Which part is responsible for long-term storage?", o: ["RAM", "HDD/SSD", "CPU", "GPU"], c: 1 },
+    { q: "What replaced vacuum tubes in the second generation?", o: ["Color displays", "Transistors", "Software", "Internet"], c: 1 },
+    { q: "A step-by-step procedure for solving a problem is an:", o: ["Internal part", "Algorithm", "Early computer", "Internet connection"], c: 1 },
+    { q: "Which discipline studies long-distance computer communication?", o: ["Architecture", "Computer Networks", "HCI", "Bioinformatics"], c: 1 },
+    { q: "What does CPU stand for?", o: ["Computer Processing Unit", "Central Processing Unit", "Control Power Unit", "Core Program Utility"], c: 1 },
+    { q: "Which is an example of System Software?", o: ["MS Word", "Operating System", "Photoshop", "Chrome"], c: 1 },
+    { q: "Input devices include:", o: ["Printers", "Keyboards", "Monitors", "Speakers"], c: 1 },
+    { q: "Output devices include:", o: ["Mouse", "Monitor", "Scanner", "Microphone"], c: 1 },
+    { q: "Who created the binary number system?", o: ["Babbage", "Leibniz", "Pascal", "Turing"], c: 1 },
+    { q: "Which is the smallest unit of data?", o: ["Byte", "Bit", "Nibble", "Word"], c: 1 },
+    { q: "How many bits are in a byte?", o: ["4", "8", "16", "32"], c: 1 },
+    { q: "What is volatile memory?", o: ["HDD", "RAM", "ROM", "Flash"], c: 1 },
+    { q: "Computers process data into:", o: ["Hardware", "Information", "Gears", "Electricity"], c: 1 },
+    { q: "What generation used 'Very Large Scale Integration'?", o: ["First", "Fourth", "Second", "Third"], c: 1 },
+    { q: "Herman Hollerith's machine used:", o: ["Steam", "Punched cards", "Vacuum tubes", "Transistors"], c: 1 },
+    { q: "Supercomputers are used for:", o: ["Browsing", "Weather forecasting", "Word processing", "Basic math"], c: 1 },
+    { q: "Mainframe computers serve:", o: ["Single users", "Large organizations", "Embedded systems", "Gamers"], c: 1 },
+    { q: "An example of a microcomputer is a:", o: ["Laptop", "Mainframe", "Supercomputer", "Calculator"], c: 0 },
+    { q: "Embedded computers are found in:", o: ["Microwaves", "Servers", "Supercomputers", "Mainframes"], c: 0 },
+    { q: "Which language does a computer understand directly?", o: ["Python", "Machine Language", "Java", "English"], c: 1 },
+    { q: "Which part of the CPU directs operations?", o: ["ALU", "Control Unit", "RAM", "Register"], c: 1 },
+    { q: "ROM stands for:", o: ["Random Only Memory", "Read Only Memory", "Ready On Memory", "Real Object Mode"], c: 1 },
+    { q: "A keyboard is an example of:", o: ["Software", "Input hardware", "Output hardware", "Processing"], c: 1 },
+    { q: "A printer is an example of:", o: ["Input", "Output", "Storage", "Processing"], c: 1 },
+    { q: "Data consists of:", o: ["Processed facts", "Raw facts", "Finished reports", "Algorithms"], c: 1 },
+    { q: "Storage devices are:", o: ["Volatile", "Non-volatile", "Temporary", "Processing units"], c: 1 },
+    { q: "Integrated Circuits are made of:", o: ["Glass", "Silicon", "Copper", "Wood"], c: 1 },
+    { q: "The second generation spanned:", o: ["1930s", "1950s-1960s", "1980s", "2020s"], c: 1 },
+    { q: "Modern computing is moving toward:", o: ["Bigger tubes", "Quantum/AI", "Manual gears", "Steam power"], c: 1 },
+
+    // --- WEEK 2: SOFTWARE ---
+    { q: "What is the collective term for a set of instructions?", o: ["Hardware", "Software", "Firmware", "Liveware"], c: 1 },
+    { q: "Which of the following is NOT a main category of software?", o: ["System Software", "Application Software", "Input Software", "Utility Software"], c: 2 },
+    { q: "System software acts as an interface between:", o: ["User and Internet", "Hardware and Application software", "Keyboard and Monitor", "Two users"], c: 1 },
+    { q: "Which software is responsible for booting up?", o: ["MS Word", "Operating System", "Web Browser", "Video Player"], c: 1 },
+    { q: "Application software is designed to:", o: ["Manage hardware", "Perform specific tasks", "Control CPU", "Allocate memory"], c: 1 },
+    { q: "Example of System Software:", o: ["Chrome", "Windows 10", "Photoshop", "Excel"], c: 1 },
+    { q: "Device Drivers fall under:", o: ["Application", "System Software", "Malware", "Hardware"], c: 1 },
+    { q: "Antivirus is a type of:", o: ["Browser", "Utility Software", "OS", "Compiler"], c: 1 },
+    { q: "A compiler translates high-level language to:", o: ["Music", "Machine code", "Websites", "Files"], c: 1 },
+    { q: "Example of General Purpose software:", o: ["Payroll", "Word Processor", "Air traffic control", "Hospital system"], c: 1 },
+    { q: "Open-source software means:", o: ["High cost", "Source code is available", "Illegal to copy", "Linux only"], c: 1 },
+    { q: "Software built for specific organization needs is:", o: ["Off-the-shelf", "Bespoke (Custom)", "Public domain", "System software"], c: 1 },
+    { q: "A software bug is:", o: ["A feature", "An error in code", "Hardware failure", "A virus"], c: 1 },
+    { q: "Fixing errors is called:", o: ["Compiling", "Debugging", "Encoding", "Uploading"], c: 1 },
+    { q: "Example of a mobile OS:", o: ["Windows 11", "Android", "macOS", "Linux Mint"], c: 1 },
+    { q: "Software for editing text is:", o: ["Spreadsheet", "Word Processor", "Database", "Presentation"], c: 1 },
+    { q: "Best app for complex numerical calculation:", o: ["Word", "Excel", "PowerPoint", "Notepad"], c: 1 },
+    { q: "Software that manages file storage:", o: ["Application", "File Management System", "Graphic editor", "Web browser"], c: 1 },
+    { q: "Proprietary Software is:", o: ["Free", "Owned by a company", "No copyright", "Open-source"], c: 1 },
+    { q: "Which layer is closest to hardware?", o: ["User", "Application Software", "Operating System", "Compilers"], c: 2 },
+    { q: "Which is NOT a high-level language?", o: ["Python", "Java", "Machine Language", "C++"], c: 2 },
+    { q: "User Interface (UI) refers to:", o: ["CPU speed", "How user interacts with software", "Hard drive size", "Monitor power"], c: 1 },
+    { q: "GUI stands for:", o: ["General User Input", "Graphical User Interface", "Global Unit Integration", "Graphic Utility Icon"], c: 1 },
+    { q: "Utility that reduces file size:", o: ["Antivirus", "File Compression", "Defragmenter", "Backup"], c: 1 },
+    { q: "Firmware is stored in:", o: ["Exercise apps", "ROM", "Temporary files", "Social media"], c: 1 },
+    { q: "Used to view websites:", o: ["Email client", "Web Browser", "Spreadsheet", "Media player"], c: 1 },
+    { q: "DBMS is used to:", o: ["Edit photos", "Organize large data", "Draw shapes", "Calculate tax"], c: 1 },
+    { q: "Sequential software model:", o: ["Agile", "Waterfall", "Spiral", "Rad"], c: 1 },
+    { q: "First step in SDLC:", o: ["Coding", "Requirement Analysis", "Testing", "Maintenance"], c: 1 },
+    { q: "SDLC stage for checking bugs:", o: ["Design", "Testing", "Implementation", "Deployment"], c: 1 },
+    { q: "Trial period software is:", o: ["Freeware", "Shareware", "Adware", "Spyware"], c: 1 },
+    { q: "The Kernel is the core of:", o: ["Application", "Operating System", "Spreadsheet", "Web Browser"], c: 1 },
+    { q: "VLC Media Player is:", o: ["System Software", "Application Software", "Utility Software", "Malware"], c: 1 },
+    { q: "Software updates are for:", o: ["Colors", "Security/Bug fixes", "Deleting files", "Drive space"], c: 1 },
+    { q: "Low-level language example:", o: ["Assembly", "Python", "Java", "Ruby"], c: 0 },
+    { q: "A Linker does what?", o: ["Connects internet", "Combines object files", "Links users", "Deletes files"], c: 1 },
+    { q: "Notepad is for:", o: ["Formatting", "Plain text/code", "High-res photos", "3D models"], c: 1 },
+    { q: "Digital presentation software:", o: ["Excel", "PowerPoint", "Access", "Word"], c: 1 },
+    { q: "Multitasking in OS means:", o: ["Multiple monitors", "Multiple programs at once", "Many users", "Large computer"], c: 1 },
+    { q: "NOT an office suite app:", o: ["Word processor", "Spreadsheet", "Operating System", "Presentation"], c: 2 },
+    { q: "Cloud Software is accessed via:", o: ["Rain", "Internet", "Meteorologists", "Permanence"], c: 1 },
+    { q: "BIOS stands for:", o: ["Binary Input Output", "Basic Input Output System", "Internal OS", "Online System"], c: 1 },
+    { q: "Moving software from internet to PC is:", o: ["Uploading", "Downloading", "Compiling", "Debugging"], c: 1 },
+    { q: "Example of Freeware:", o: ["Windows", "Adobe Reader", "Office 365", "Photoshop"], c: 1 },
+    { q: "Software that monitors activity without consent:", o: ["Freeware", "Spyware", "Shareware", "Utility"], c: 1 },
+    { q: "CAD stands for:", o: ["Computer Aided Design", "Added Data", "Control and Design", "Calculate and Display"], c: 0 },
+    { q: "Stage where code is written:", o: ["Analysis", "Implementation", "Design", "Testing"], c: 1 },
+    { q: "Manages hardware like a printer:", o: ["Application", "Device Driver", "Word Processor", "Antivirus"], c: 1 },
+    { q: "Linux is:", o: ["Proprietary", "Open Source OS", "Firmware", "Application"], c: 1 },
+    { q: "Without software, hardware is:", o: ["Smart", "Useless", "Internet portal", "Storage"], c: 1 },
+
+    // --- WEEK 4: NUMBERS & MEMORY ---
+    { q: "Base of Binary system?", o: ["2", "8", "10", "16"], c: 0 },
+    { q: "Base of Hexadecimal system?", o: ["2", "8", "10", "16"], c: 3 },
+    { q: "Digits in Octal system?", o: ["0-1", "0-7", "0-9", "0-F"], c: 1 },
+    { q: "Hexadecimal 'A' value?", o: ["9", "10", "11", "12"], c: 1 },
+    { q: "Binary 1010 equals?", o: ["8", "10", "12", "14"], c: 1 },
+    { q: "Decimal to Binary conversion method?", o: ["Multiplication", "Repeated Division", "Addition", "Subtraction"], c: 1 },
+    { q: "Memory for BIOS?", o: ["RAM", "ROM", "Cache", "HDD"], c: 1 },
+    { q: "Which is Volatile?", o: ["ROM", "Flash", "RAM", "SSD"], c: 2 },
+    { q: "Cache location?", o: ["Hard Drive", "Close to CPU", "USB", "Monitor"], c: 1 },
+    { q: "Fastest computer memory?", o: ["RAM", "Storage", "Registers", "Optical"], c: 2 },
+    { q: "Bits in 1 KB (binary terms)?", o: ["1000", "1024", "2048", "512"], c: 1 },
+    { q: "Binary 1 + 1 equals?", o: ["2", "11", "10", "0"], c: 2 },
+    { q: "Logic gate HIGH only if both are HIGH?", o: ["OR", "AND", "NOT", "XOR"], c: 1 },
+    { q: "Which is the Inverter?", o: ["AND", "OR", "NOT", "NAND"], c: 2 },
+    { q: "Logic gate HIGH if at least one is HIGH?", o: ["AND", "OR", "NOT", "NAND"], c: 1 },
+    { q: "How many bits in a Nibble?", o: ["2", "4", "8", "16"], c: 1 },
+    { q: "Largest value in single Hex digit?", o: ["9", "10", "15", "16"], c: 2 },
+    { q: "Which is Secondary Storage?", o: ["RAM", "HDD", "Registers", "Cache"], c: 1 },
+    { q: "SSD stands for?", o: ["Super Speed", "Solid State Drive", "System Storage", "Static Disk"], c: 1 },
+    { q: "Bridges speed gap between CPU and RAM?", o: ["ROM", "Cache", "HDD", "CD-ROM"], c: 1 },
+    { q: "Binary 0 x 1?", o: ["0", "1", "10", "Error"], c: 0 },
+    { q: "Hex used for?", o: ["Names", "Addresses/Colors", "Sound", "Voltage"], c: 1 },
+    { q: "Larger than GB?", o: ["MB", "KB", "TB", "Bit"], c: 2 },
+    { q: "Base of Decimal system?", o: ["2", "8", "10", "16"], c: 2 },
+    { q: "Bit stands for?", o: ["Integer", "Binary Digit", "Task", "Item"], c: 1 },
+    { q: "Opposite of AND gate?", o: ["OR", "NAND", "NOR", "XOR"], c: 1 },
+    { q: "Common character code?", o: ["Binary", "ASCII/Unicode", "Hex", "Octal"], c: 1 },
+    { q: "Virtual Memory is:", o: ["Cloud", "HDD as RAM", "ROM type", "VR memory"], c: 1 },
+    { q: "Optical Storage example:", o: ["HDD", "DVD", "RAM", "SSD"], c: 1 },
+    { q: "RAM data when power is lost?", o: ["Saved", "Deleted", "Moves to ROM", "Stays"], c: 1 },
+    { q: "HIGH if inputs are different?", o: ["AND", "XOR", "OR", "NOT"], c: 1 },
+    { q: "MB in a GB (1024 base)?", o: ["100", "1000", "1024", "1048"], c: 2 },
+    { q: "Memory addresses usually in?", o: ["Binary", "Decimal", "Hex", "English"], c: 2 },
+    { q: "NOT a logic gate?", o: ["AND", "IF", "OR", "XOR"], c: 1 },
+    { q: "Word Size refers to:", o: ["Print pages", "Bits CPU processes at once", "Font size", "Password length"], c: 1 },
+    { q: "Binary for Decimal 1?", o: ["0", "1", "10", "11"], c: 1 },
+    { q: "Binary for Decimal 2?", o: ["1", "10", "11", "100"], c: 1 },
+    { q: "Binary for Decimal 4?", o: ["10", "11", "100", "101"], c: 2 },
+    { q: "LSB location?", o: ["Left", "Right", "Middle", "Top"], c: 1 },
+    { q: "Byte can represent how many values?", o: ["8", "64", "256", "1024"], c: 2 },
+    { q: "Faster/more expensive RAM?", o: ["DRAM", "SRAM", "VRAM", "SDRAM"], c: 1 },
+    { q: "SSD advantage over HDD?", o: ["Cheaper", "No moving parts/Faster", "Stores less", "More power"], c: 1 },
+    { q: "PB is larger than TB?", o: ["True", "False", "Macs only", "Servers only"], c: 0 },
+    { q: "Cannot be easily rewritten?", o: ["RAM", "ROM", "Cache", "Registers"], c: 1 },
+    { q: "Circuit adding two bits?", o: ["Full Adder", "Half Adder", "Multiplier", "Logic Box"], c: 1 },
+    { q: "Hex 'F' value?", o: ["14", "15", "16", "0"], c: 1 },
+    { q: "Gen using 'Magnetic Core' for memory?", o: ["First", "Second/Third", "Fourth", "Fifth"], c: 1 },
+    { q: "Binary for 7?", o: ["100", "110", "111", "1011"], c: 2 },
+    { q: "Registers cleared after CPU cycle?", o: ["True", "False", "Sometimes", "Sundays"], c: 0 },
+    { q: "Study of binary logic gates?", o: ["Calculus", "Boolean Algebra", "Geometry", "Physics"], c: 1 }
+];
+
+        // --- CORE LOGIC ---
+        let currentIdx = 0;
+        let examSet = [];
+        let answers = new Array(50).fill(null);
+        let time = 1800; // 30 min
+
+        function init() {
+            examSet = DATABASE.sort(() => Math.random() - 0.5).slice(0, 50);
+            const pb = localStorage.getItem('biu_pb') || 0;
+            document.getElementById('pb-display').innerText = `Record: ${pb}/50`;
+            startTimer();
+            render();
+        }
+
+        function render() {
+            const q = examSet[currentIdx];
+            document.getElementById('q-label').innerText = `Question ${currentIdx + 1} of 50`;
+            document.getElementById('question-text').innerText = q.q;
+            document.getElementById('progress-fill').style.width = `${((currentIdx + 1) / 50) * 100}%`;
+            document.getElementById('live-perc').innerText = `${Math.round(((currentIdx + 1) / 50) * 100)}%`;
+            
+            // Nav button states
+            document.getElementById('prev-btn').disabled = currentIdx === 0;
+            document.getElementById('next-btn').innerText = currentIdx === 49 ? "Finish Exam" : "Next Question →";
+
+            const grid = document.getElementById('options-grid');
+            grid.innerHTML = '';
+
+            q.o.forEach((opt, i) => {
+                const btn = document.createElement('div');
+                btn.className = `option-card p-5 rounded-2xl border-2 border-slate-100 font-bold text-slate-700 flex items-center bg-white shadow-sm`;
+                
+                // If already answered, show the selection
+                if (answers[currentIdx] === i) {
+                    btn.classList.add('border-blue-600', 'bg-blue-50');
+                }
+
+                btn.innerHTML = `
+                    <span class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center mr-4 text-xs font-black text-slate-400">${String.fromCharCode(65+i)}</span>
+                    <p>${opt}</p>
+                `;
+                btn.onclick = () => selectAnswer(i);
+                grid.appendChild(btn);
+            });
+        }
+
+        function selectAnswer(i) {
+            answers[currentIdx] = i;
+            render();
+            // Subtle haptic feel: auto advance after a tiny delay
+            setTimeout(() => { if(currentIdx < 49) goNext(); }, 250);
+        }
+
+        function goNext() {
+            if (currentIdx < 49) {
+                currentIdx++;
+                render();
+            } else {
+                finish();
+            }
+        }
+
+        function goBack() {
+            if (currentIdx > 0) {
+                currentIdx--;
+                render();
+            }
+        }
+
+        function startTimer() {
+            const el = document.getElementById('timer');
+            const loop = setInterval(() => {
+                let m = Math.floor(time / 60);
+                let s = time % 60;
+                el.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+                if (time <= 0) { clearInterval(loop); finish(); }
+                time--;
+            }, 1000);
+        }
+
+        function finish() {
+            let score = 0;
+            answers.forEach((ans, i) => { if(ans === examSet[i].c) score++; });
+            
+            const best = localStorage.getItem('biu_pb') || 0;
+            if (score > best) localStorage.setItem('biu_pb', score);
+
+            const container = document.getElementById('app-container');
+            container.innerHTML = `
+                <div class="text-center py-10 animate-in fade-in duration-700">
+                    <h2 class="text-3xl font-black text-slate-800 mb-2">Exam Result</h2>
+                    <p class="text-slate-400 font-bold mb-8">Comprehensive CSC 111 Performance</p>
+                    
+                    <div class="inline-block bg-[#002147] text-white rounded-[3rem] px-16 py-10 mb-10 shadow-2xl">
+                        <h3 class="text-8xl font-black">${score}<span class="text-2xl opacity-40">/50</span></h3>
+                        <p class="text-blue-300 font-bold mt-2 tracking-widest">${((score/50)*100)}%</p>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row gap-4 justify-center max-w-sm mx-auto">
+                        <button onclick="location.reload()" class="bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-blue-700 transition-all">RESTART EXAM</button>
+                        <button onclick="reviewMistakes()" class="bg-white border-2 border-slate-100 text-slate-700 py-4 rounded-2xl font-black hover:bg-slate-50 transition-all">REVIEW MISTAKES</button>
+                    </div>
+                </div>
+            `;
+            // Keep final score available for review function
+            window.finalScore = score;
+            window.finalAnswers = [...answers];
+        }
+
+        window.reviewMistakes = () => {
+            const container = document.getElementById('app-container');
+            let html = `
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-2xl font-black text-slate-800">Review Mode</h2>
+                    <button onclick="location.reload()" class="text-blue-600 font-bold">Restart Exam</button>
+                </div>
+                <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-4">
+            `;
+
+            examSet.forEach((q, i) => {
+                const isCorrect = window.finalAnswers[i] === q.c;
+                html += `
+                    <div class="p-5 rounded-3xl border-2 ${isCorrect ? 'border-green-100 bg-green-50' : 'border-red-100 bg-red-50'}">
+                        <p class="text-xs font-black uppercase text-slate-400 mb-1">Question ${i+1}</p>
+                        <p class="font-bold text-slate-800 mb-3">${q.q}</p>
+                        <div class="text-sm">
+                            <p class="${isCorrect ? 'text-green-600' : 'text-red-600'} font-bold">Your: ${window.finalAnswers[i] !== null ? q.o[window.finalAnswers[i]] : 'SKIPPED'}</p>
+                            ${!isCorrect ? `<p class="text-green-600 font-bold mt-1">Correct: ${q.o[q.c]}</p>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            container.innerHTML = html;
+        };
+
+        init();
+    </script>
+</body>
+</html>

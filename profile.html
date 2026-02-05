@@ -20,8 +20,6 @@
         }
 
         [data-theme="dark"] { --primary: #FFD700; --accent: #002147; --bg: #121212; --white: #1e1e1e; --text: #f4f4f4; --shadow: 0 10px 30px rgba(0,0,0,0.4); }
-        
-        /* OFFICIAL BIU DEPARTMENT THEMES */
         [data-theme="emerald"] { --primary: #064e3b; --accent: #34d399; --bg: #022c22; --white: #065f46; --text: #ecfdf5; }
         [data-theme="midnight"] { --primary: #1e1b4b; --accent: #818cf8; --bg: #020617; --white: #1e1b4b; --text: #f8fafc; }
         [data-theme="crimson"] { --primary: #7f1d1d; --accent: #f87171; --bg: #270606; --white: #7f1d1d; --text: #fef2f2; }
@@ -90,7 +88,7 @@
             padding: 8px 18px; 
             border-radius: 25px; 
             font-weight: 800; 
-            font-size: 13px; 
+            font-size: 11px; 
             margin-top: 5px; 
             text-transform: uppercase;
         }
@@ -128,16 +126,18 @@
         }
         .input-group { margin-bottom: 10px; }
         .input-group label { display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--blue-tick); }
-        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-size: 13px; box-sizing: border-box; background: var(--white); color: var(--text); font-family: inherit; }
+        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 13px; box-sizing: border-box; background: var(--white); color: var(--text); font-family: inherit; }
         
         .btn-action { 
-            width: 100%; padding: 15px; margin-top: 15px; 
+            width: 100%; padding: 15px; margin-top: 10px; 
             border-radius: 12px; border: none; font-weight: 800; 
-            cursor: pointer; transition: 0.3s; font-size: 15px;
+            cursor: pointer; transition: 0.2s; font-size: 14px;
         }
+        .btn-action:active { transform: scale(0.98); }
         .btn-logout { background: #f0f0f0; color: #333; }
         .btn-back { background: var(--primary); color: var(--white); }
-        .btn-save { background: var(--success); color: white; margin-top: 10px; padding: 10px; }
+        .btn-save { background: var(--success); color: white; }
+        .btn-edit-toggle { background: var(--white); color: var(--primary); border: 2.5px solid var(--primary); }
 
         #user-bio-display { font-size: 13px; font-style: italic; margin: 10px 0; line-height: 1.4; opacity: 0.8; }
     </style>
@@ -175,18 +175,25 @@
         
         <div class="social-links" id="social-display"></div>
 
-        <p id="user-dept" style="opacity: 0.6; margin: 5px 0; font-weight: 600;">Department</p>
+        <p id="user-dept" style="opacity: 0.6; margin: 5px 0; font-weight: 600; font-size: 13px;">Department</p>
         
         <div id="status-area" style="margin-bottom: 20px;">
-            <span class="status-badge unverified">Checking Status...</span>
+            <span class="status-badge unverified">Checking...</span>
         </div>
 
+        <button id="edit-profile-btn" class="btn-action btn-edit-toggle hidden" onclick="toggleEditPanel()">✏️ Edit Archive Profile</button>
+
         <div id="customize-panel" class="customize-section hidden">
-            <h4 style="margin: 0 0 15px 0; font-size: 14px; color: var(--primary);">🎨 Scholar Perks</h4>
+            <h4 style="margin: 0 0 15px 0; font-size: 14px; color: var(--primary);">🎨 Scholar Customization</h4>
             
             <div class="input-group">
                 <label>Profile Bio</label>
                 <textarea id="edit-bio" rows="2" placeholder="Tell the archive about yourself..."></textarea>
+            </div>
+
+            <div class="input-group">
+                <label>Profile Pic (Google Drive Link)</label>
+                <input type="text" id="edit-pic" placeholder="Paste Drive/Image link here...">
             </div>
 
             <div class="input-group">
@@ -201,10 +208,6 @@
             </div>
 
             <div class="input-group">
-                <label>Profile Pic (Drive Link)</label>
-                <input type="text" id="edit-pic" placeholder="Paste link here...">
-            </div>
-            <div class="input-group">
                 <label>Instagram Username</label>
                 <input type="text" id="edit-ig" placeholder="@username">
             </div>
@@ -216,7 +219,7 @@
                 <label>LinkedIn Link</label>
                 <input type="text" id="edit-li" placeholder="https://linkedin.com/in/...">
             </div>
-            <button class="btn-action btn-save" onclick="saveProfileUpdates()">Save Changes</button>
+            <button class="btn-action btn-save" onclick="saveProfileUpdates()">Update Profile</button>
         </div>
 
         <div id="request-tick-area" class="hidden"></div>
@@ -257,10 +260,17 @@
         document.getElementById('display-matric').innerText = matric || "Not Set";
         document.getElementById('user-initial').innerText = name.charAt(0).toUpperCase();
 
+        // FIX FOR GOOGLE DRIVE LINKS
         function formatImageUrl(url) {
+            if (!url) return '';
             if (url.includes('drive.google.com')) {
-                const id = url.split('/d/')[1]?.split('/')[0] || url.split('id=')[1];
-                return `https://drive.google.com/uc?export=view&id=${id}`;
+                let id = "";
+                if (url.includes('/d/')) {
+                    id = url.split('/d/')[1].split('/')[0];
+                } else if (url.includes('id=')) {
+                    id = url.split('id=')[1].split('&')[0];
+                }
+                return id ? `https://lh3.googleusercontent.com/u/0/d/${id}` : url;
             }
             return url;
         }
@@ -281,26 +291,27 @@
 
             if (userData.profilePic) {
                 const imgUrl = formatImageUrl(userData.profilePic);
-                document.getElementById('user-initial').innerHTML = `<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+                document.getElementById('user-initial').innerHTML = `<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerText='${name.charAt(0)}'">`;
             }
 
             const socialBox = document.getElementById('social-display');
             socialBox.innerHTML = '';
             if (userData.instagram) socialBox.innerHTML += `<a href="https://instagram.com/${userData.instagram.replace('@','')}" target="_blank">📸</a>`;
-            if (userData.tiktok) socialBox.innerHTML += `<a href="https://tiktok.com/@${userData.tiktok}" target="_blank">🎵</a>`;
+            if (userData.tiktok) socialBox.innerHTML += `<a href="https://tiktok.com/@${userData.tiktok.replace('@','')}" target="_blank">🎵</a>`;
             if (userData.linkedin) socialBox.innerHTML += `<a href="${userData.linkedin}" target="_blank">💼</a>`;
 
             const statusArea = document.getElementById('status-area');
             const badgePlaceholder = document.getElementById('badge-placeholder');
-            const customizePanel = document.getElementById('customize-panel');
             const requestArea = document.getElementById('request-tick-area');
+            const editBtn = document.getElementById('edit-profile-btn');
 
             if (userData.isVerified) {
                 statusArea.innerHTML = `<span class="status-badge verified-text">Verified Scholar ✅</span>`;
                 badgePlaceholder.innerHTML = `<span class="verified-badge">✓</span>`;
-                customizePanel.classList.remove('hidden');
+                editBtn.classList.remove('hidden');
                 requestArea.classList.add('hidden');
                 
+                // Pre-fill inputs
                 document.getElementById('edit-bio').value = userData.bio || '';
                 document.getElementById('edit-pic').value = userData.profilePic || '';
                 document.getElementById('edit-ig').value = userData.instagram || '';
@@ -316,16 +327,22 @@
                 const statusArea = document.getElementById('status-area');
                 const requestArea = document.getElementById('request-tick-area');
                 if (reqSnap.exists()) {
-                    statusArea.innerHTML = `<span class="status-badge status-pending">Reviewing Payment... ⏳</span>`;
+                    statusArea.innerHTML = `<span class="status-badge status-pending">Reviewing... ⏳</span>`;
                     requestArea.classList.remove('hidden');
-                    requestArea.innerHTML = `<p style="font-size:12px; opacity:0.7;">Waiting for Admin confirmation.</p>`;
+                    requestArea.innerHTML = `<p style="font-size:11px; opacity:0.6;">Admin is verifying your ₦500 payment.</p>`;
                 } else {
-                    statusArea.innerHTML = `<span class="status-badge unverified">Free Member 🔒</span>`;
+                    statusArea.innerHTML = `<span class="status-badge unverified" style="background:#eee; color:#666;">Standard Member</span>`;
                     requestArea.classList.remove('hidden');
-                    requestArea.innerHTML = `<button class="btn-action" style="background:var(--blue-tick); color:white;" onclick="togglePaymentModal()">Get Blue Tick (₦500)</button>`;
+                    requestArea.innerHTML = `<button class="btn-action" style="background:var(--blue-tick); color:white;" onclick="togglePaymentModal()">Get Blue Tick & Custom Themes (₦500)</button>`;
                 }
             });
         }
+
+        window.toggleEditPanel = () => {
+            const panel = document.getElementById('customize-panel');
+            panel.classList.toggle('hidden');
+            window.scrollTo({ top: panel.offsetTop, behavior: 'smooth' });
+        };
 
         window.saveProfileUpdates = () => {
             const bio = document.getElementById('edit-bio').value;
@@ -343,9 +360,8 @@
                 linkedin: li,
                 preferredTheme: theme
             }).then(() => {
-                localStorage.setItem('theme', theme);
-                document.body.setAttribute('data-theme', theme);
-                alert("Profile Updated!");
+                alert("Archive Profile Updated!");
+                document.getElementById('customize-panel').classList.add('hidden');
             });
         };
 
@@ -355,12 +371,12 @@
             set(ref(db, "verification_requests/" + userId), {
                 name, matric, userId, timestamp: new Date().toLocaleString()
             }).then(() => {
-                alert("Request Sent!");
+                alert("Request Sent! Once admin confirms your payment, you'll get the Blue Tick.");
                 togglePaymentModal();
             });
         };
 
-        window.logout = () => { if(confirm("Logout?")) { localStorage.clear(); window.location.href = 'login.html'; } };
+        window.logout = () => { if(confirm("Logout from archive?")) { localStorage.clear(); window.location.href = 'login.html'; } };
     </script>
 </body>
 </html>

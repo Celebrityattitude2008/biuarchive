@@ -15,63 +15,16 @@
 
     <nav class="bg-[#002147] text-white p-4 shadow-xl sticky top-0 z-40">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold tracking-tight">BIU<span class="text-yellow-400">Archive</span> <span id="premium-badge" class="hidden ml-2 text-[10px] bg-green-500 text-white px-2 py-0.5 rounded-full uppercase">Premium</span></h1>
+            <h1 class="text-xl font-bold tracking-tight">BIU<span class="text-yellow-400">Archive</span> <span id="public-badge" class="ml-2 text-[10px] bg-blue-500 text-white px-2 py-0.5 rounded-full uppercase">Open Access</span></h1>
             <a href="index.html" class="text-xs bg-white/10 px-4 py-2 rounded-lg hover:bg-white/20 transition-all font-medium border border-white/20">Back to Home</a>
         </div>
     </nav>
 
     <main class="container mx-auto px-4 py-6 max-w-5xl">
         
-        <div id="payment-box" class="bg-white border border-blue-100 p-6 mb-8 rounded-2xl shadow-sm relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-2 h-full bg-blue-600"></div>
-            <div class="flex flex-col lg:flex-row justify-between gap-8">
-                <div class="flex-1">
-                    <h3 class="text-xl font-black text-blue-900 mb-2">Unlock Full Archive Access</h3>
-                    <p class="text-slate-600 mb-6">Gain permanent access to all 100L notes, past questions, and departmental resources.</p>
-                    
-                    <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <p class="text-[10px] uppercase tracking-wider text-blue-500 font-bold">Bank Name</p>
-                            <p class="font-bold text-slate-800">OPay Digital Bank</p>
-                        </div>
-                        <div>
-                            <p class="text-[10px] uppercase tracking-wider text-blue-500 font-bold">Account Number</p>
-                            <p class="font-black text-blue-700 text-xl tracking-tight">7041795388</p>
-                        </div>
-                        <div class="sm:col-span-2">
-                            <p class="text-[10px] uppercase tracking-wider text-blue-500 font-bold">Account Name</p>
-                            <p class="font-bold text-slate-800 uppercase">Paul Adamu</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="flex flex-col justify-center items-center lg:items-end gap-3">
-                    <div class="text-center lg:text-right">
-                        <span class="text-3xl font-black text-slate-900">₦5,000</span>
-                        <p class="text-xs text-slate-500 font-medium">One-time payment</p>
-                    </div>
-                    <button onclick="startVerification()" class="w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl transition-all shadow-lg shadow-blue-200 active:scale-95">
-                        Confirm Transfer
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div id="status-overlay" class="hidden fixed inset-0 bg-slate-900/90 backdrop-blur-md flex items-center justify-center z-50 p-6">
-            <div class="bg-white p-8 rounded-3xl max-w-sm w-full text-center shadow-2xl scale-in-center">
-                <div class="relative w-20 h-20 mx-auto mb-6">
-                    <div class="absolute inset-0 rounded-full border-4 border-blue-100"></div>
-                    <div class="absolute inset-0 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"></div>
-                </div>
-                <h3 class="text-2xl font-black text-slate-800">Pending Verification</h3>
-                <p class="text-slate-500 mt-4 text-sm leading-relaxed">
-                    Once you send the receipt on WhatsApp, Paul will activate your account. <br><b>This page will unlock automatically.</b>
-                </p>
-                <div class="mt-8 pt-6 border-t border-slate-100 flex flex-col gap-3">
-                    <button onclick="startVerification()" class="text-blue-600 font-bold text-sm">Resend Receipt on WhatsApp</button>
-                    <button onclick="document.getElementById('status-overlay').classList.add('hidden')" class="text-slate-400 text-xs hover:text-red-500 transition-colors">Close this window</button>
-                </div>
-            </div>
+        <div class="mb-8">
+            <h2 class="text-2xl font-black text-slate-800">Course Materials</h2>
+            <p class="text-slate-500 text-sm">Access all 100L notes and departmental resources for free.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -85,15 +38,15 @@
                 <ul class="space-y-4" id="csc-list">
                     <li class="flex justify-between items-center group">
                         <span class="text-sm font-medium text-slate-600 group-hover:text-blue-600 transition-colors">Week 1: Introduction</span>
-                        <a href="#" class="note-link text-slate-400 text-xs font-bold py-1 px-3 rounded-md bg-slate-50 border border-slate-100" data-url="https://docs.google.com/document/d/1h4bQbzrBq0Wy-Einz69xmdYMWz55ydY3/edit">Locked 🔒</a>
+                        <a href="https://docs.google.com/document/d/1h4bQbzrBq0Wy-Einz69xmdYMWz55ydY3/edit" target="_blank" class="note-link text-blue-700 text-xs font-bold py-1 px-3 rounded-md bg-blue-50 border border-blue-100">Open Note 🔓</a>
                     </li>
                     <li class="flex justify-between items-center group">
                         <span class="text-sm font-medium text-slate-600 group-hover:text-blue-600 transition-colors">Week 2: Hardware</span>
-                        <a href="#" class="note-link text-slate-400 text-xs font-bold py-1 px-3 rounded-md bg-slate-50 border border-slate-100" data-url="https://docs.google.com/document/d/1jh4GRfoYRw6MTaDj_I2XkUeDhwWPSSES/edit">Locked 🔒</a>
+                        <a href="https://docs.google.com/document/d/1jh4GRfoYRw6MTaDj_I2XkUeDhwWPSSES/edit" target="_blank" class="note-link text-blue-700 text-xs font-bold py-1 px-3 rounded-md bg-blue-50 border border-blue-100">Open Note 🔓</a>
                     </li>
                     <li class="flex justify-between items-center group">
                         <span class="text-sm font-medium text-slate-600 group-hover:text-blue-600 transition-colors">Week 4: Algorithms</span>
-                        <a href="#" class="note-link text-slate-400 text-xs font-bold py-1 px-3 rounded-md bg-slate-50 border border-slate-100" data-url="https://docs.google.com/document/d/1JJI3XIsuKNWgxtcj_m8gHFY-zx1l9bKx/edit">Locked 🔒</a>
+                        <a href="https://docs.google.com/document/d/1JJI3XIsuKNWgxtcj_m8gHFY-zx1l9bKx/edit" target="_blank" class="note-link text-blue-700 text-xs font-bold py-1 px-3 rounded-md bg-blue-50 border border-blue-100">Open Note 🔓</a>
                     </li>
                 </ul>
             </div>
@@ -106,16 +59,16 @@
                     <h3 class="text-lg font-black text-slate-800">Physics 111 / 113</h3>
                 </div>
                 <ul class="space-y-4">
-                    <li class="flex justify-between items-center">
-                        <span class="text-sm font-medium text-slate-600">Full Physics Repository</span>
-                        <a href="#" class="note-link text-slate-400 text-xs font-bold py-1 px-3 rounded-md bg-slate-50 border border-slate-100" data-url="https://drive.google.com/drive/folders/16H9xh6u8rctHtdYjv-OPetsA6Djo11Vj?usp=sharing">Locked 🔒</a>
+                    <li class="flex justify-between items-center group">
+                        <span class="text-sm font-medium text-slate-600 group-hover:text-blue-600 transition-colors">Full Physics Repository</span>
+                        <a href="https://drive.google.com/drive/folders/16H9xh6u8rctHtdYjv-OPetsA6Djo11Vj?usp=sharing" target="_blank" class="note-link text-blue-700 text-xs font-bold py-1 px-3 rounded-md bg-blue-50 border border-blue-100">Open Note 🔓</a>
                     </li>
                 </ul>
             </div>
 
-            <div id="other-courses-card" class="md:col-span-2 bg-slate-100 p-8 rounded-2xl border border-dashed border-slate-300 text-center">
-                <p id="lock-text" class="text-slate-500 font-medium text-sm">
-                    🔓 Unlock premium to access Chemistry, GSTs, Math, and Professional PQs.
+            <div id="other-courses-card" class="md:col-span-2 bg-blue-50 p-8 rounded-2xl border border-dashed border-blue-200 text-center">
+                <p class="text-blue-600 font-medium text-sm">
+                    ✨ You have full access to Chemistry, GSTs, Math, and Professional Past Questions.
                 </p>
             </div>
         </div>
@@ -129,10 +82,7 @@
             apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
             authDomain: "biu-archive.firebaseapp.com",
             databaseURL: "https://biu-archive-default-rtdb.firebaseio.com",
-            projectId: "biu-archive",
-            storageBucket: "biu-archive.firebasestorage.app",
-            messagingSenderId: "245967347998",
-            appId: "1:245967347998:web:a8feb5ad0ef9650946a90f"
+            projectId: "biu-archive"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -141,20 +91,12 @@
         const studentName = localStorage.getItem('biu_user_name');
         const userId = localStorage.getItem('biu_user_id');
 
+        // Simple auth check remains to ensure they are logged in to the archive
         if (!studentName || !userId) {
             window.location.href = 'login.html';
         }
 
-        // Real-time access check
-        onValue(ref(db, "paid_users/" + userId), (snapshot) => {
-            if (snapshot.exists() && snapshot.val() === true) { 
-                unlockNotes(); 
-            } else {
-                lockNotes();
-            }
-        });
-
-        // Anti-ban check
+        // Anti-ban check remains for security
         onValue(ref(db, "banned_users/" + userId), (snapshot) => {
             if (snapshot.exists()) {
                 localStorage.clear();
@@ -162,41 +104,6 @@
             }
         });
 
-        window.startVerification = function() {
-            document.getElementById('status-overlay').classList.remove('hidden');
-            const whatsappUrl = `https://wa.me/2347041795388?text=${encodeURIComponent("Hello Paul, I just paid for the BIU Notes Archive.\n\nName: " + studentName + "\nUser ID: " + userId)}`;
-            setTimeout(() => { window.open(whatsappUrl, '_blank'); }, 800);
-        }
-
-        function unlockNotes() {
-            document.getElementById('status-overlay').classList.add('hidden');
-            document.getElementById('payment-box').classList.add('hidden');
-            document.getElementById('premium-badge').classList.remove('hidden');
-            
-            const otherCard = document.getElementById('other-courses-card');
-            otherCard.classList.replace('bg-slate-100', 'bg-green-50');
-            otherCard.classList.replace('border-slate-300', 'border-green-200');
-            document.getElementById('lock-text').innerHTML = "✨ <b>Premium Active:</b> All departmental resources are now visible.";
-
-            document.querySelectorAll('.note-link').forEach(link => {
-                const realUrl = link.getAttribute('data-url');
-                link.setAttribute('href', realUrl);
-                link.setAttribute('target', '_blank');
-                link.classList.remove('text-slate-400', 'bg-slate-50', 'cursor-not-allowed');
-                link.classList.add('text-green-700', 'bg-green-100', 'border-green-200');
-                link.innerHTML = 'Open Note 🔓';
-            });
-        }
-
-        function lockNotes() {
-            document.getElementById('payment-box').classList.remove('hidden');
-            document.getElementById('premium-badge').classList.add('hidden');
-            
-            document.querySelectorAll('.note-link').forEach(link => {
-                link.setAttribute('href', '#');
-                link.innerHTML = 'Locked 🔒';
-            });
-        }
     </script>
 </body>
 </html>

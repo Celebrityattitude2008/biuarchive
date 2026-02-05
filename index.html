@@ -100,6 +100,8 @@
                     <button onclick="window.location.href='profile.html'">👤 My Profile</button>
                     <button onclick="window.location.href='buddy-hub.html'">🤝 Buddy Hub</button>
                     <button onclick="window.location.href='pq.html'">📄 Past Questions</button>
+                    <button onclick="window.location.href='idsquiz.html'">📄 IDS STUDY Questions</button>
+                    <button onclick="window.location.href='csc111test.html'">📄 CSC 111 STUDY Questions</button>
                     <button onclick="window.location.href='note.html'">📚 Course Notes</button>
                     <button onclick="window.location.href='lost.html'">🔍 Lost & Found</button>
                     <button onclick="window.location.href='leaderboard.html'">🏆 Scholar Leaderboard</button>
@@ -177,7 +179,8 @@
 
         <div class="info-grid">
             <div class="timetable-box">
-                <h3>📅 Exam Schedule</h3>
+                <h3>📅 Exam Center</h3>
+                <button class="nav-btn" style="width: 100%; background: #6a11cb; margin-bottom: 10px;" onclick="window.location.href='idsquiz.html'">✍️ Try IDS QUIZ TRIAL</button>
                 <button class="nav-btn" style="width: 100%;" onclick="window.open('https://drive.google.com/file/d/1RDC9EBFjF2a9sSMakA5JzMgIBZ9p0oz0/view?usp=drivesdk', '_blank')">📥 View Timetable</button>
             </div>
             <div class="study-advice">
@@ -221,7 +224,7 @@
 
         if(!name || !userId) { window.location.href = 'login.html'; }
 
-        // --- UPGRADED ADMIN SECURITY LOGIC ---
+        // --- UPGRADED ADMIN SECURITY LOGIC (Vault Redirect) ---
         window.enterAdmin = async () => {
             if (!userId) {
                 alert("Session expired. Please login again.");
@@ -230,6 +233,7 @@
             const adminRef = ref(db, `admins/${userId}`);
             try {
                 const snapshot = await get(adminRef);
+                // Checks if user exists in the admin node and is true
                 if (snapshot.exists() && snapshot.val() === true) {
                     window.location.href = 'vault.html';
                 } else {
@@ -277,7 +281,7 @@
             }
         });
 
-        // --- SECURITY ---
+        // --- SECURITY & MAINTENANCE ---
         onValue(ref(db, `banned_users/${userId}`), (snapshot) => {
             if (snapshot.val()) {
                 document.getElementById('ban-screen').classList.remove('hidden');
@@ -309,9 +313,10 @@
         // --- PDF ---
         window.downloadResultPDF = () => {
             const element = document.getElementById('ids-card-to-export');
+            const fileName = name ? name.replace(/\s+/g, '_') : 'Student';
             const opt = {
                 margin: 10,
-                filename: `BIU_Result_${name.replace(/\s+/g, '_')}.pdf`,
+                filename: `BIU_Result_${fileName}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -353,7 +358,7 @@
             const theme = current === 'dark' ? 'light' : 'dark';
             document.body.setAttribute('data-theme', theme); 
             localStorage.setItem('theme', theme);
-            update(ref(db, `users/${userId}`), { preferredTheme: theme });
+            if(userId) update(ref(db, `users/${userId}`), { preferredTheme: theme });
         };
         window.logout = () => { localStorage.clear(); window.location.href = 'login.html'; };
         window.contactAdmin = () => window.location.href = "mailto:pauladamu600@gmail.com";

@@ -11,15 +11,8 @@
             --blue-tick: #00BFFF; --mod-purple: #8A2BE2;
         }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #333; }
-        
-        /* Auth Overlay */
-        #auth-overlay {
-            position: fixed; top:0; left:0; width:100%; height:100%; 
-            background: var(--primary); display: flex; align-items: center; justify-content: center; z-index: 9999;
-        }
+        #auth-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--primary); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .login-box { background: white; padding: 30px; border-radius: 20px; text-align: center; width: 90%; max-width: 350px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        
-        /* Dashboard Components */
         .admin-container { max-width: 1100px; margin: 10px auto; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 25px; }
         .stat-card { background: var(--primary); color: white; padding: 20px 10px; border-radius: 12px; text-align: center; border-bottom: 4px solid var(--accent); }
@@ -71,12 +64,12 @@
             appId: "1:245967347998:web:a8feb5ad0ef9650946a90f"
         };
 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby5R8wF2fO7-Sa0bjWoDXxbrocOBAsZqtAD-ddyXNdSAx48L1mgK5Hiep64QzcrusTr/exec";
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
         const ADMIN_UID = "GhKV6PwC9RbEsHMCRST7k2vLOGe2";
 
-        // HTML TEMPLATE (Injected only after Auth)
         const ADMIN_HTML = `
             <div class="admin-container">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
@@ -90,23 +83,16 @@
                 </div>
                 <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
 
-                <div id="streak-manager-card" class="tool-card hidden" style="border-left: 8px solid #ff4500; margin-bottom: 25px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h3 style="margin:0">🔥 Top 10 High Streaks</h3>
-                        <button onclick="toggleStreakManager()" style="border:none; background:none; cursor:pointer; color:red;">Close</button>
-                    </div>
-                    <div id="high-streaks-list" style="margin-top:15px;"></div>
-                </div>
-
                 <div class="tool-grid">
+                    <div class="tool-card" style="border-left: 8px solid #28a745;">
+                        <h3 style="margin:0">📊 Logins Spreadsheet</h3>
+                        <p style="font-size:11px; color:#666; margin: 10px 0;">External Script: ${SCRIPT_URL.substring(0, 30)}...</p>
+                        <button class="btn" style="background:#28a745; color:white; width:100%;" onclick="importFromSheet()">🔄 Sync From Spreadsheet</button>
+                        <button class="btn" style="background:#eee; color:#333; width:100%; margin-top:8px;" onclick="window.open('${SCRIPT_URL}', '_blank')">🔗 View Script</button>
+                    </div>
                     <div class="tool-card" style="border-left: 8px solid var(--blue-tick);">
                         <h3 style="margin:0">💎 Blue Tick Requests</h3>
                         <div id="verification-requests-list" style="margin-top:15px;"></div>
-                    </div>
-                    <div class="tool-card" style="border-left: 8px solid var(--mod-purple);">
-                        <h3 style="margin:0">🛡️ System Security</h3>
-                        <p style="font-size:12px; opacity:0.7;">Authorized UID: ${ADMIN_UID}</p>
-                        <button class="btn" style="width:100%; background:#eee;" onclick="window.location.href='index.html'">Return to Portal</button>
                     </div>
                 </div>
 
@@ -130,7 +116,6 @@
                         <h3 style="margin:0">📢 Global Broadcast</h3>
                         <input type="text" id="alert-msg" placeholder="Type announcement..." style="margin-top:10px;">
                         <button class="btn" style="background:var(--info); color:white; width:100%; margin-top:10px;" onclick="sendGlobalAlert()">🚀 Push Sound & Alert</button>
-                        <button class="btn" style="width:100%; margin-top:8px; background:#eee; color:#666;" onclick="clearBroadcast()">Clear Live Screens</button>
                     </div>
                     <div class="tool-card">
                         <h3 style="margin:0 0 15px 0">Live Activity Feed</h3>
@@ -145,13 +130,12 @@
             </div>
         `;
 
-        // AUTH CORE
+        // AUTH & DASHBOARD LOGIC
         window.handleLogin = () => {
             const email = document.getElementById('admin-email').value;
             const pass = document.getElementById('admin-pass').value;
             document.getElementById('login-form').classList.add('hidden');
             document.getElementById('auth-loading').classList.remove('hidden');
-
             signInWithEmailAndPassword(auth, email, pass).catch(err => {
                 document.getElementById('auth-error').innerText = "Access Denied.";
                 document.getElementById('login-form').classList.remove('hidden');
@@ -169,64 +153,35 @@
             } else {
                 document.getElementById('main-mount').innerHTML = '';
                 document.getElementById('auth-overlay').style.display = 'flex';
-                document.getElementById('login-form').classList.remove('hidden');
-                document.getElementById('auth-loading').classList.add('hidden');
             }
         });
 
-        // ADMIN LOGIC
-        function startAdmin() {
-            onValue(ref(db, "verification_requests"), (snapshot) => {
-                const requests = snapshot.val();
-                const listDiv = document.getElementById('verification-requests-list');
-                if(!requests) { listDiv.innerHTML = "<p style='font-size: 13px; opacity: 0.5;'>No pending requests.</p>"; return; }
-                listDiv.innerHTML = Object.entries(requests).map(([reqId, data]) => `
-                    <div style="background:#f8f9fa; padding:10px; border-radius:10px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:12px;"><strong>${data.name}</strong></span>
-                        <button class="btn" style="background:var(--success); color:white; padding:5px 10px;" onclick="toggleVerify('${data.userId}', false)">Approve</button>
-                    </div>
-                `).join('');
-            });
+        window.importFromSheet = () => {
+            if(!confirm("Attempt to sync logins from Google Sheets?")) return;
+            fetch(SCRIPT_URL)
+                .then(res => res.json())
+                .then(data => {
+                    alert("Sync Successful! Records found: " + (data.length || 0));
+                    console.log("Sheet Data:", data);
+                })
+                .catch(err => alert("Sync Error: Check script permissions."));
+        };
 
+        function startAdmin() {
             onValue(ref(db, "users"), (uSnap) => {
                 const users = uSnap.val() || {};
-                onValue(ref(db, "banned_users"), (bSnap) => {
-                    const banned = bSnap.val() || {};
-                    const entries = Object.entries(users);
-                    
-                    document.getElementById('count').innerText = entries.length;
-                    document.getElementById('banned-count').innerText = Object.keys(banned).length;
-                    document.getElementById('verified-count').innerText = entries.filter(u => u[1].isVerified).length;
-
-                    // Streak Manager
-                    const sortedByStreak = [...entries].sort((a,b) => (b[1].streak || 0) - (a[1].streak || 0)).slice(0, 10);
-                    document.getElementById('high-streaks-list').innerHTML = sortedByStreak.map(([uid, data]) => `
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid #eee;">
-                            <span style="font-size:12px;">${data.name} (🔥 ${data.streak || 0})</span>
-                            <button class="btn" style="background:var(--danger); color:white; padding:4px 8px;" onclick="resetStreak('${uid}')">Reset</button>
-                        </div>
-                    `).join('');
-
-                    // Table
-                    document.getElementById('log-list').innerHTML = entries.sort((a,b) => (b[1].lastActive || 0) - (a[1].lastActive || 0)).map(([uid, data]) => {
-                        const isBanned = banned[uid] === true;
-                        const hasTick = data.isVerified === true;
-                        return `
-                        <tr>
-                            <td><strong>${data.name}</strong> ${hasTick ? `<span style="color:var(--blue-tick);">✓</span>` : ""}</td>
-                            <td>${data.matric || 'N/A'}</td>
-                            <td>🔥 ${data.streak || 1}</td>
-                            <td>${data.lastActive ? new Date(data.lastActive).toLocaleTimeString() : '---'}</td>
-                            <td>
-                                <button class="btn" style="background:${isBanned ? 'var(--success)':'#000'}; color:white;" onclick="toggleBan('${uid}', ${isBanned})">${isBanned ? 'Unban':'Ban'}</button>
-                                <button class="btn" style="background:${hasTick ? '#666':'var(--blue-tick)'}; color:white;" onclick="toggleVerify('${uid}', ${hasTick})">${hasTick ? 'Revoke':'Verify'}</button>
-                            </td>
-                        </tr>`;
-                    }).join('');
-                });
+                const entries = Object.entries(users);
+                document.getElementById('count').innerText = entries.length;
+                document.getElementById('log-list').innerHTML = entries.map(([uid, data]) => `
+                    <tr>
+                        <td><strong>${data.name}</strong></td>
+                        <td>${data.matric || 'N/A'}</td>
+                        <td>🔥 ${data.streak || 1}</td>
+                        <td>${data.lastActive ? new Date(data.lastActive).toLocaleTimeString() : '---'}</td>
+                        <td><button class="btn" onclick="toggleBan('${uid}')">Manage</button></td>
+                    </tr>`).join('');
             });
 
-            // Maintenance listener
             onValue(ref(db, "maintenance_mode"), (s) => {
                 const btn = document.getElementById('m-toggle-btn');
                 if(btn) {
@@ -236,28 +191,13 @@
             });
         }
 
-        // GLOBALS
-        window.toggleStreakManager = () => document.getElementById('streak-manager-card').classList.toggle('hidden');
-        window.resetStreak = (uid) => confirm("Reset streak?") && update(ref(db, `users/${uid}`), { streak: 0 });
-        window.toggleVerify = (uid, current) => {
-            update(ref(db, `users/${uid}`), { isVerified: !current });
-            if(!current) remove(ref(db, `verification_requests/${uid}`));
-        };
-        window.toggleBan = (uid, status) => set(ref(db, `banned_users/${uid}`), status ? null : true);
+        window.toggleMaintenance = () => onValue(ref(db, "maintenance_mode"), (s) => set(ref(db, "maintenance_mode"), !s.val()), { onlyOnce: true });
         window.sendGlobalAlert = () => {
             const msg = document.getElementById('alert-msg').value;
-            if(msg) set(ref(db, "broadcast"), { message: msg, timestamp: serverTimestamp() }).then(() => {
-                document.getElementById('alert-msg').value = "";
-            });
+            if(msg) set(ref(db, "broadcast"), { message: msg, timestamp: serverTimestamp() });
         };
-        window.clearBroadcast = () => set(ref(db, "broadcast"), null);
-        window.toggleMaintenance = () => onValue(ref(db, "maintenance_mode"), (s) => set(ref(db, "maintenance_mode"), !s.val()), { onlyOnce: true });
-        window.clearChat = () => confirm("Permanently delete all messages?") && remove(ref(db, "messages"));
-        window.nuclearClear = () => {
-            if(confirm("DANGER: This will delete ALL users. Continue?")) {
-                if(confirm("FINAL WARNING: Are you absolutely sure?")) remove(ref(db, "users"));
-            }
-        };
+        window.clearChat = () => confirm("Delete chat?") && remove(ref(db, "messages"));
+        window.nuclearClear = () => confirm("Wipe all users?") && remove(ref(db, "users"));
     </script>
 </body>
 </html>
