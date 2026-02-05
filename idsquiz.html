@@ -3,93 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIU Archive | CBT Exam Center</title>
+    <title>BIU Archive | Soteriology CBT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
-            --primary: #002147; --accent: #FFD700; --bg: #f4f7f6;
-            --danger: #dc3545; --success: #28a745; --white: #ffffff;
+            --primary: #002147; --accent: #FFD700; --bg: #f8fafc;
         }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 0; color: #333; }
+        body { background: var(--bg); font-family: 'Inter', system-ui, sans-serif; }
         
-        .exam-header {
-            position: sticky; top: 0; background: var(--primary); color: white;
-            padding: 15px 20px; display: flex; justify-content: space-between;
-            align-items: center; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        .glass-header {
+            background: rgba(0, 33, 71, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid var(--accent);
         }
-        #timer { font-family: monospace; font-size: 1.5rem; color: var(--accent); font-weight: bold; }
 
-        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
         .question-card {
-            background: var(--white); border-radius: 15px; padding: 25px;
-            margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            border-left: 5px solid var(--primary);
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
         }
-        .question-text { font-size: 1.1rem; font-weight: 600; margin-bottom: 15px; display: block; }
-        
+        .question-card.error-highlight {
+            border: 2px solid #ef4444;
+            background: #fef2f2;
+            animation: shake 0.4s ease-in-out;
+        }
+
         .option-label {
-            display: block; padding: 12px 15px; margin: 8px 0; border: 1.5px solid #eee;
-            border-radius: 10px; cursor: pointer; transition: all 0.2s; font-size: 14px;
+            transition: all 0.2s;
+            border: 2px solid #e2e8f0;
         }
-        .option-label:hover { background: #f0f4f8; border-color: var(--primary); }
-        input[type="radio"] { margin-right: 10px; accent-color: var(--primary); }
+        input[type="radio"]:checked + span { color: var(--primary); font-weight: 700; }
+        input[type="radio"]:checked ~ .option-label {
+            border-color: var(--primary);
+            background: #f0f7ff;
+        }
 
-        .btn-submit {
-            display: block; width: 100%; padding: 18px; background: var(--success);
-            color: white; border: none; border-radius: 12px; font-size: 1.1rem;
-            font-weight: bold; cursor: pointer; margin-bottom: 50px; transition: 0.3s;
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
         }
-        .btn-submit:hover { filter: brightness(1.1); transform: translateY(-2px); }
 
-        #result-screen {
-            position: fixed; top:0; left:0; width:100%; height:100%;
-            background: var(--primary); color: white; display: none;
-            flex-direction: column; align-items: center; justify-content: center; z-index: 2000;
+        #error-toast {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3000;
+            animation: slideUp 0.3s ease;
         }
-        .hidden { display: none; }
+
+        @keyframes slideUp { from { bottom: -50px; opacity: 0; } to { bottom: 20px; opacity: 1; } }
     </style>
 </head>
-<body>
+<body class="pb-10">
 
-    <div class="exam-header">
-        <div>
-            <h2 style="margin:0; font-size: 1.2rem;">Soteriology Exam</h2>
-            <small id="progress-text">Loading Questions...</small>
+    <header class="glass-header sticky top-0 z-50 text-white p-4 shadow-xl">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-black tracking-tight text-yellow-400">Soteriology Exam</h1>
+                <p id="progress-stats" class="text-xs text-blue-200 font-bold uppercase tracking-widest">0/50 Answered</p>
+            </div>
+            <div id="timer" class="text-2xl font-mono font-black bg-black/20 px-4 py-1 rounded-lg border border-white/10">30:00</div>
         </div>
-        <div id="timer">30:00</div>
+        <div class="absolute bottom-0 left-0 w-full h-1 bg-blue-900">
+            <div id="top-progress-bar" class="h-full bg-yellow-400 transition-all duration-300" style="width: 0%"></div>
+        </div>
+    </header>
+
+    <div id="error-toast" class="bg-red-600 text-white px-6 py-3 rounded-full shadow-2xl font-bold flex items-center gap-2">
+        <span>⚠️</span> <span id="error-msg">Please answer all questions!</span>
     </div>
 
-    <div class="container" id="exam-form">
-        <div id="questions-container"></div>
-        <button id="submit-btn" class="btn-submit">Submit Examination</button>
-    </div>
+    <main class="max-w-3xl mx-auto mt-8 px-4">
+        <div id="questions-container" class="space-y-6">
+            </div>
 
-    <div id="result-screen">
-        <h1 style="font-size: 3rem; margin-bottom: 10px;">Exam Complete</h1>
-        <p id="final-score" style="font-size: 1.5rem;"></p>
-        <p id="performance-msg" style="margin-bottom: 30px; opacity: 0.8;"></p>
-        <button onclick="window.location.href='index.html'" style="padding: 12px 25px; border-radius: 8px; border: none; cursor:pointer; font-weight:bold;">Return to Portal</button>
+        <div class="mt-10 space-y-4">
+            <button id="submit-btn" class="w-full py-5 bg-green-600 hover:bg-green-500 text-white rounded-2xl font-black text-lg shadow-lg shadow-green-900/20 transition-all transform active:scale-95">
+                SUBMIT EXAMINATION
+            </button>
+        </div>
+    </main>
+
+    <div id="result-screen" class="fixed inset-0 bg-[#002147] z-[60] hidden flex-col items-center justify-center text-center p-6">
+        <div class="w-32 h-32 bg-yellow-400 rounded-full flex items-center justify-center text-5xl mb-6 animate-bounce">🎓</div>
+        <h2 class="text-white text-4xl font-black mb-2">Final Result</h2>
+        <div id="final-score" class="text-6xl font-black text-yellow-400 mb-4">0%</div>
+        <p id="performance-msg" class="text-blue-100 max-w-md mb-8 leading-relaxed"></p>
+        <button onclick="location.reload()" class="bg-white text-blue-950 px-10 py-4 rounded-xl font-bold hover:bg-yellow-400 transition-colors">Try Again</button>
     </div>
 
     <script type="module">
-        // FIREBASE CONFIGURATION
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak", 
-            authDomain: "biu-archive.firebaseapp.com",
-            databaseURL: "https://biu-archive-default-rtdb.firebaseio.com",
-            projectId: "biu-archive",
-            storageBucket: "biu-archive.firebasestorage.app",
-            messagingSenderId: "245967347998",
-            appId: "1:245967347998:web:a8feb5ad0ef9650946a90f" 
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const auth = getAuth(app);
-
         const masterBank = [
             { q: "What is the Greek word for 'Salvation'?", a: ["Logos", "Soteria", "Pneuma", "Theos"], c: 1 },
             { q: "The study of the Doctrine of Salvation is called:", a: ["Eschatology", "Hamartiology", "Soteriology", "Ecclesiology"], c: 2 },
@@ -143,88 +148,125 @@
             { q: "Soteriology is essential because it explains:", a: ["Mathematics", "How man is redeemed", "How to build houses", "Politics"], c: 1 }
         ];
 
+        let selectedQuestions = masterBank; // Use full set or slice for testing
         let timeLeft = 1800;
-        let selectedQuestions = [];
-        let timerInterval;
 
-        function initExam() {
-            selectedQuestions = [...masterBank].sort(() => 0.5 - Math.random()).slice(0, 50);
+        function init() {
             renderQuestions();
             startTimer();
+            setupTracking();
         }
 
         function renderQuestions() {
             const container = document.getElementById('questions-container');
             container.innerHTML = selectedQuestions.map((item, idx) => `
-                <div class="question-card">
-                    <span class="question-text">${idx + 1}. ${item.q}</span>
-                    <div class="options-grid">
-                        ${item.a.map((opt, optIdx) => `
-                            <label class="option-label">
-                                <input type="radio" name="q${idx}" value="${optIdx}">
-                                <span>${opt}</span>
+                <div class="question-card bg-white p-6 rounded-2xl shadow-sm" id="card-${idx}">
+                    <p class="text-sm font-black text-blue-900 mb-1 uppercase tracking-tighter">Question ${idx + 1}</p>
+                    <h3 class="text-lg font-bold text-slate-800 mb-4 leading-snug">${item.q}</h3>
+                    <div class="grid gap-3">
+                        ${item.a.map((opt, i) => `
+                            <label class="relative flex items-center p-4 rounded-xl border-2 border-slate-100 hover:border-blue-200 cursor-pointer transition-all has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 group">
+                                <input type="radio" name="q${idx}" value="${i}" class="w-4 h-4 accent-blue-600">
+                                <span class="ml-3 text-slate-700 font-medium group-hover:text-blue-900">${opt}</span>
                             </label>
                         `).join('')}
                     </div>
                 </div>
             `).join('');
-            document.getElementById('progress-text').innerText = `Total Questions: ${selectedQuestions.length}`;
         }
 
+        function setupTracking() {
+            document.querySelectorAll('input[type="radio"]').forEach(input => {
+                input.addEventListener('change', () => {
+                    const answered = document.querySelectorAll('input[type="radio"]:checked').length;
+                    const total = selectedQuestions.length;
+                    const perc = (answered / total) * 100;
+                    
+                    document.getElementById('progress-stats').innerText = `${answered}/${total} Answered`;
+                    document.getElementById('top-progress-bar').style.width = perc + '%';
+                    
+                    // Remove error styling if answered
+                    const qIdx = input.name.replace('q', '');
+                    document.getElementById(`card-${qIdx}`).classList.remove('error-highlight');
+                });
+            });
+        }
+
+        function showError(msg) {
+            const toast = document.getElementById('error-toast');
+            document.getElementById('error-msg').innerText = msg;
+            toast.style.display = 'flex';
+            setTimeout(() => toast.style.display = 'none', 3000);
+        }
+
+        // ... [Keep masterBank as is] ...
+
+function submitExam() {
+    const answeredCount = document.querySelectorAll('input[type="radio"]:checked').length;
+    
+    if (answeredCount < selectedQuestions.length) {
+        showError(`Missing ${selectedQuestions.length - answeredCount} questions!`);
+        for(let i=0; i<selectedQuestions.length; i++) {
+            if(!document.querySelector(`input[name="q${i}"]:checked`)) {
+                const card = document.getElementById(`card-${i}`);
+                card.classList.add('error-highlight');
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                break;
+            }
+        }
+        return;
+    }
+
+    let score = 0;
+    selectedQuestions.forEach((q, idx) => {
+        const checkedInput = document.querySelector(`input[name="q${idx}"]:checked`);
+        const selected = parseInt(checkedInput.value);
+        const card = document.getElementById(`card-${idx}`);
+        
+        // UI FEEDBACK FOR REVIEW
+        if (selected === q.c) {
+            score++;
+            card.classList.add('border-2', 'border-green-500', 'bg-green-50');
+        } else {
+            card.classList.add('border-2', 'border-red-500', 'bg-red-50');
+            // Show the correct answer label
+            const feedback = document.createElement('div');
+            feedback.className = "mt-3 p-3 bg-white rounded-lg border border-red-200 text-sm font-bold text-red-700";
+            feedback.innerHTML = `❌ Wrong. Correct Answer: <span class="text-green-700">${q.a[q.c]}</span>`;
+            card.appendChild(feedback);
+        }
+    });
+
+    const percent = (score / selectedQuestions.length) * 100;
+    
+    // UPDATED RESULT SCREEN
+    document.getElementById('result-screen').classList.remove('hidden');
+    document.getElementById('final-score').innerText = `${percent.toFixed(0)}%`;
+    document.getElementById('performance-msg').innerHTML = `
+        <span class="block text-xl font-bold mb-4">${score} / ${selectedQuestions.length} Correct</span>
+        ${percent >= 70 ? "Excellent! You have a firm grasp of Soteriology." : "Keep studying. Review your failed questions below."}
+        <button onclick="document.getElementById('result-screen').classList.add('hidden')" class="mt-6 block w-full py-3 bg-blue-900 text-white rounded-lg font-bold">Review My Answers</button>
+    `;
+}
+
         function startTimer() {
-            const timerDiv = document.getElementById('timer');
-            timerInterval = setInterval(() => {
-                let mins = Math.floor(timeLeft / 60);
-                let secs = timeLeft % 60;
-                timerDiv.innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            const timerEl = document.getElementById('timer');
+            const interval = setInterval(() => {
+                const m = Math.floor(timeLeft / 60);
+                const s = timeLeft % 60;
+                timerEl.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+                
                 if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    finishExam();
+                    clearInterval(interval);
+                    submitExam();
                 }
-                if (timeLeft < 300) timerDiv.style.color = "var(--danger)";
+                if (timeLeft < 300) timerEl.classList.add('text-red-500', 'animate-pulse');
                 timeLeft--;
             }, 250);
         }
 
-        function finishExam() {
-            clearInterval(timerInterval);
-            let score = 0;
-            selectedQuestions.forEach((item, idx) => {
-                const checked = document.querySelector(`input[name="q${idx}"]:checked`);
-                if (checked && parseInt(checked.value) === item.c) {
-                    score++;
-                }
-            });
-
-            const percentage = (score / selectedQuestions.length) * 100;
-
-            // SAVE TO FIREBASE
-            const user = auth.currentUser;
-            if (user) {
-                const userScoreRef = ref(db, `leaderboard/${user.uid}`);
-                update(userScoreRef, {
-                    name: user.displayName || "Anonymous Student",
-                    score: score,
-                    total: selectedQuestions.length,
-                    percentage: percentage,
-                    timestamp: serverTimestamp()
-                }).catch(err => console.error("Firebase Error:", err));
-            }
-
-            // UI UPDATES
-            document.getElementById('exam-form').classList.add('hidden');
-            document.getElementById('result-screen').style.display = 'flex';
-            document.getElementById('final-score').innerText = `${score} / ${selectedQuestions.length} (${percentage.toFixed(1)}%)`;
-            document.getElementById('performance-msg').innerText = percentage >= 70 ? "EXCELLENT - You have mastered the Doctrine!" : "KEEP STUDYING - Re-read the notes and try again.";
-        }
-
-        // Attach event listener to button
-        document.getElementById('submit-btn').addEventListener('click', finishExam);
-
-        // Run when auth state is ready
-        onAuthStateChanged(auth, (user) => {
-            initExam();
-        });
+        document.getElementById('submit-btn').addEventListener('click', submitExam);
+        window.onload = init;
     </script>
 </body>
 </html>
