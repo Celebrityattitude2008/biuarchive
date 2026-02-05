@@ -3,207 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>The BIU Archive | Student Portal</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <title>Maintenance | BIU Archive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --primary: #002147; --accent: #FFD700; --light: #f4f4f4;
-            --white: #ffffff; --text: #333; --success: #28a745; --info: #17a2b8;
-            --dark-menu: #1e1e1e;
+        .bg-pattern {
+            background-color: #002147;
+            background-image: url("https://www.transparenttextures.com/patterns/cubes.png");
         }
-        [data-theme="dark"] {
-            --primary: #FFD700; --accent: #002147; --light: #121212;
-            --white: #1e1e1e; --text: #f4f4f4;
+        .shimmer {
+            animation: shimmer 2.5s infinite linear;
+            background: linear-gradient(to right, #ffd700 0%, #fff 50%, #ffd700 100%);
+            background-size: 200% auto;
+            display: inline-block;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
         }
-        /* OFFICIAL BIU DEPARTMENT THEMES */
-        [data-theme="emerald"] { --primary: #064e3b; --accent: #34d399; --light: #022c22; --white: #065f46; --text: #ecfdf5; }
-        [data-theme="midnight"] { --primary: #1e1b4b; --accent: #818cf8; --light: #020617; --white: #1e1b4b; --text: #f8fafc; }
-        [data-theme="crimson"] { --primary: #7f1d1d; --accent: #f87171; --light: #270606; --white: #7f1d1d; --text: #fef2f2; }
-
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--light); color: var(--text); margin: 0; display: flex; justify-content: center; padding: 15px; transition: 0.3s; overflow-x: hidden; }
-        
-        .container { background: var(--white); padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 850px; text-align: center; position: relative; box-sizing: border-box; }
-        
-        .hidden { display: none !important; }
-        
-        .top-nav { position: absolute; top: 15px; right: 15px; left: 15px; display: flex; justify-content: space-between; gap: 8px; z-index: 100; align-items: center; }
-        .nav-btn { padding: 8px 15px; border-radius: 20px; border: none; cursor: pointer; font-size: 11px; font-weight: bold; background: var(--primary); color: var(--white); transition: 0.2s; white-space: nowrap; }
-        .dropdown { position: relative; display: inline-block; }
-        .dropdown-content { display: none; position: absolute; right: 0; top: 40px; background-color: var(--dark-menu); min-width: 220px; box-shadow: 0px 8px 16px rgba(0,0,0,0.3); border-radius: 10px; overflow: hidden; z-index: 101; text-align: left; }
-        .dropdown-content button { color: white; padding: 14px 16px; display: block; width: 100%; border: none; background: none; text-align: left; font-size: 13px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; }
-        .dropdown-content button:hover { background-color: #333; padding-left: 20px; color: var(--accent); }
-        .dropdown-header { padding: 10px 16px; font-size: 10px; text-transform: uppercase; color: var(--accent); opacity: 0.6; font-weight: bold; background: rgba(0,0,0,0.2); }
-        .show { display: block !important; }
-
-        #ban-screen, #maintenance-screen { position: fixed; top:0; left:0; width:100%; height:100%; z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px; box-sizing:border-box; }
-        #ban-screen { background: #900; color:white; }
-        #maintenance-screen { background: var(--primary); color: var(--accent); }
-
-        .ids-result-card { background: linear-gradient(135deg, var(--primary), #003366); color: white; padding: 20px; border-radius: 12px; margin-top: 20px; text-align: left; border-left: 6px solid var(--accent); position: relative; overflow: hidden; }
-        .ids-result-card::after { content: 'IDS'; position: absolute; right: -10px; bottom: -10px; font-size: 60px; font-weight: 900; opacity: 0.1; pointer-events: none; }
-        .score-badge { background: var(--accent); color: var(--primary); padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 1.2rem; float: right; margin-bottom: 10px; }
-
-        .streak-badge { background: linear-gradient(135deg, #ff9d00, #ff5e00); color: white; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .level-tag { font-size: 9px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; font-weight: bold; margin-left: 5px; background: #eee; color: #666; }
-        .lvl-bronze { background: #cd7f32; color: white; }
-        .lvl-silver { background: #c0c0c0; color: #333; }
-        .lvl-gold { background: #ffd700; color: #002147; }
-        .lvl-diamond { background: #b9f2ff; color: #005f73; animation: glow 2s infinite; }
-        @keyframes glow { 0% { box-shadow: 0 0 5px #b9f2ff; } 50% { box-shadow: 0 0 15px #b9f2ff; } 100% { box-shadow: 0 0 5px #b9f2ff; } }
-        
-        #broadcast-bar { background: #FFD700; color: #002147; padding: 12px; border-radius: 10px; margin-top: 50px; margin-bottom: 15px; font-weight: bold; border-left: 5px solid #002147; display: flex; justify-content: space-between; align-items: center; font-size: 13px; animation: pulse-alert 2s infinite; }
-        @keyframes pulse-alert { 0% { transform: scale(1); } 50% { transform: scale(1.01); } 100% { transform: scale(1); } }
-        
-        .leaderboard-section { margin-top: 30px; background: rgba(128,128,128,0.05); padding: 15px; border-radius: 15px; text-align: left; border: 1px solid rgba(0,0,0,0.1); }
-        .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .rank-circle { width: 22px; height: 22px; background: var(--primary); color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; margin-right: 8px; font-weight: bold; }
-        
-        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; margin: 25px 0; }
-        .timetable-box, .study-advice { background: rgba(128, 128, 128, 0.05); border: 1px solid rgba(0,0,0,0.1); padding: 20px; border-radius: 12px; text-align: left; }
-        
-        .chat-display-area { height: 200px; overflow-y: auto; background: var(--white); border-radius: 8px; padding: 10px; border: 1px solid rgba(0,0,0,0.1); font-size: 13px; }
-        .greeting-time { font-size: 14px; color: var(--info); font-weight: bold; margin-bottom: 5px; display: block; }
-        footer { margin-top: 40px; font-size: 11px; opacity: 0.7; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.1); }
-        .verified-tick { color: #1DA1F2; margin-left: 4px; font-size: 14px; }
-
-        @media (max-width: 600px) {
-            .container { padding: 1.2rem; border-radius: 10px; }
-            h1 { font-size: 1.6rem; }
-            .ids-result-card { padding: 15px; }
-            .dropdown-content { position: fixed; right: 10px; left: 10px; width: auto; top: 60px; }
-            .nav-btn { font-size: 10px; padding: 6px 10px; }
-        }
+        @keyframes shimmer { to { background-position: 200% center; } }
+        .status-pulse { animation: pulse-ring 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite; }
+        @keyframes pulse-ring { 0% { transform: scale(0.33); } 80%, 100% { opacity: 0; } }
+        @keyframes stripes { from { background-position: 0 0; } to { background-position: 20px 0; } }
+        .animate-stripes { animation: stripes 1s linear infinite; }
     </style>
 </head>
-<body>
+<body class="bg-pattern h-screen flex items-center justify-center p-6 text-white overflow-hidden select-none">
 
-    <div id="maintenance-screen" class="hidden">
-        <h1 style="font-size: 3rem;">🛠️</h1>
-        <h2>System Maintenance</h2>
-        <p>The Portal is currently being upgraded.<br>Please check back later.</p>
-    </div>
+    <div class="max-w-md w-full text-center space-y-8">
+        <div class="relative inline-block">
+            <div class="text-7xl animate-bounce drop-shadow-2xl">🛠️</div>
+            <div class="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full status-pulse"></div>
+            <div class="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full"></div>
+        </div>
 
-    <div id="ban-screen" class="hidden">
-        <h1 style="font-size: 4rem;">🚫</h1>
-        <h2>Account Suspended</h2>
-        <p>Your access has been revoked.<br>If this is a mistake, contact Celebrity Attitude.</p>
-        <button onclick="logout()" class="nav-btn" style="background: white; color: #900; margin-top: 20px;">Return to Login</button>
-    </div>
-
-    <div id="main-archive" class="container">
-        <div class="top-nav">
-            <div class="streak-badge">🔥 <span id="streak-count">1</span> <span id="user-level-tag" class="level-tag">Novice</span></div>
-            <div class="dropdown">
-                <button class="nav-btn" onclick="toggleDropdown()">☰ Menu</button>
-                <div id="myDropdown" class="dropdown-content">
-                    <div class="dropdown-header">Navigation</div>
-                    <button onclick="window.location.href='profile.html'">👤 My Profile</button>
-                    <button onclick="window.location.href='buddy-hub.html'">🤝 Buddy Hub</button>
-                    <button onclick="window.location.href='pq.html'">📄 Past Questions</button>
-                    <button onclick="window.location.href='idsquiz.html'">📄 IDS STUDY Questions</button>
-                    <button onclick="window.location.href='csc111test.html'">📄 CSC 111 STUDY Questions</button>
-                    <button onclick="window.location.href='note.html'">📚 Course Notes</button>
-                    <button onclick="window.location.href='lost.html'">🔍 Lost & Found</button>
-                    <button onclick="window.location.href='leaderboard.html'">🏆 Scholar Leaderboard</button>
-                    <button onclick="window.location.href='upgrades.html'">🚀 Portal Upgrades <span style="background:red; color:white; padding:2px 5px; border-radius:4px; font-size:9px; margin-left:5px;">🌟 Scholar Perks</span></button>
-                    
-                    <div class="dropdown-header">Portal Management</div>
-                    <button onclick="enterAdmin()">⚙️ Admin Settings</button>
-                    
-                    <div class="dropdown-header">System</div>
-                    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
-                    <button onclick="contactAdmin()">📧 Contact Support</button>
-                    <button style="color: #ff4d4d; font-weight: bold;" onclick="logout()">Logout</button>
-                </div>
+        <div class="space-y-4">
+            <h1 class="text-4xl font-black tracking-tighter shimmer uppercase">BIU Archive</h1>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/40 border border-blue-700/50">
+                <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+                <span class="text-xs font-bold tracking-widest text-blue-200 uppercase">System Maintenance</span>
             </div>
-        </div>
-        
-        <div id="broadcast-bar" class="hidden">
-            <span>📢 <span id="live-broadcast-text"></span></span>
-            <button onclick="this.parentElement.classList.add('hidden')" style="background:none; border:none; cursor:pointer; font-weight:bold; padding:5px; color:inherit;">✕</button>
+            
+            <div class="py-2">
+                <p class="text-[10px] text-yellow-500/80 uppercase font-bold tracking-[0.2em] mb-1">Estimated Completion</p>
+                <div id="countdown" class="text-3xl font-mono font-bold text-white tabular-nums tracking-widest">--:--:--</div>
+            </div>
+
+            <p class="text-blue-100/80 leading-relaxed text-sm px-4">
+                We're currently polishing the archive to give you a better study experience. 
+                <span class="block mt-2 font-semibold text-yellow-400/90">Your streaks and data are perfectly safe!</span>
+            </p>
         </div>
 
-        <div style="margin-top: 60px;">
-            <span id="time-greeting" class="greeting-time">Good Day,</span>
-            <h1 style="margin-top: 0; color: var(--primary);">BIU Archive Portal</h1>
-        </div>
-
-        <div id="ids-result-container" class="hidden">
-            <div id="ids-card-to-export" class="ids-result-card">
-                <span id="ids-score" class="score-badge">0/20</span>
-                <h3 style="margin:0; color:var(--accent);">IDS 111 TEST RESULT <span id="ids-grade" style="margin-left:10px; font-size: 0.8em; opacity: 0.8;"></span></h3>
-                
-                <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 15px; margin-bottom: 15px;">
-                    <p style="margin:5px 0 0 0; font-size:14px; opacity:0.9;">
-                        <span id="ids-name" style="font-weight: bold; font-size: 16px;">Student Name</span><br>
-                        <small id="ids-matric">Matric Number</small>
-                    </p>
-                    
-                    <div style="display: flex; gap: 10px; font-size: 10px; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px;">
-                        <div style="text-align: center; border-right: 1px solid rgba(255,255,255,0.2); padding-right: 10px;">
-                            <div style="opacity: 0.7; text-transform: uppercase;">Class Avg</div>
-                            <div id="class-avg" style="font-weight: bold; font-size: 12px; color: var(--accent);">0.0</div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="opacity: 0.7; text-transform: uppercase;">Highest</div>
-                            <div id="class-high" style="font-weight: bold; font-size: 12px; color: #00ff88;">0/20</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button onclick="togglePublicResults()" class="nav-btn" style="flex: 1; min-width: 120px; background: rgba(255,255,255,0.2); border: 1px dashed white;">📊 Class List</button>
-                    <button onclick="downloadResultPDF()" class="nav-btn" style="flex: 1; min-width: 120px; background: var(--success); border: none;">📥 My Result PDF</button>
-                </div>
-                
-                <div id="public-results-list" class="hidden" style="margin-top: 15px; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px;">
-                    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                        <input type="text" id="resultSearch" placeholder="Search by name or matric..." onkeyup="filterResultsTable()"
-                               style="flex: 1; padding: 10px; border-radius: 5px; border: none; font-size: 12px; outline: none; background: white; color: #333;">
-                    </div>
-                    <div id="all-results-pdf-area" style="max-height: 250px; overflow-y: auto; font-size: 12px; background: rgba(255,255,255,0.05); border-radius: 5px; padding: 5px;">
-                        <table style="width: 100%; border-collapse: collapse;" id="resultsTable">
-                            <tbody id="public-table-body"></tbody>
-                        </table>
-                    </div>
-                </div>
+        <div class="relative w-full bg-blue-950/80 rounded-full h-3 overflow-hidden border border-blue-800 shadow-inner">
+            <div id="progressBar" class="absolute top-0 left-0 bg-gradient-to-r from-yellow-600 to-yellow-300 h-full w-0 rounded-full transition-all duration-1000 ease-in-out">
+                <div class="w-full h-full opacity-30 bg-[linear-gradient(45deg,rgba(255,255,255,.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,.2)_50%,rgba(255,255,255,.2)_75%,transparent_75%,transparent)] bg-[length:20px_20px] animate-stripes"></div>
             </div>
         </div>
 
-        <div class="leaderboard-section">
-            <h4 style="margin: 0 0 10px 0; color: var(--primary);">🏆 Top Scholars</h4>
-            <div id="leaderboard-list">
-                <p style="font-size:12px; opacity:0.6;">Loading rankings...</p>
+        <div class="flex flex-col gap-4">
+            <button id="statusBtn" class="w-full py-4 bg-yellow-400 hover:bg-yellow-500 text-blue-950 font-black rounded-2xl transition-all active:scale-95 shadow-xl shadow-yellow-900/20 uppercase tracking-wider text-sm">
+                🔄 Check System Status
+            </button>
+
+            <button onclick="adminAccess()" class="w-full py-2 bg-blue-900/40 hover:bg-blue-800/60 text-blue-200 border border-blue-700/50 rounded-xl transition-all text-[10px] uppercase font-bold tracking-[0.2em]">
+                ⚙️ Admin Dashboard
+            </button>
+            
+            <div class="space-y-1 cursor-pointer group" onclick="adminAccess()">
+                <p class="text-[10px] text-blue-400 uppercase tracking-widest font-bold group-hover:text-yellow-400 transition-colors">Maintained by</p>
+                <p class="text-xs text-blue-200 font-medium">Paul Adamu • 2026 Admin</p>
             </div>
         </div>
-
-        <div class="info-grid">
-            <div class="timetable-box">
-                <h3>📅 Exam Center</h3>
-                <button class="nav-btn" style="width: 100%; background: #6a11cb; margin-bottom: 10px;" onclick="window.location.href='idsquiz.html'">✍️ Try IDS QUIZ TRIAL</button>
-                <button class="nav-btn" style="width: 100%;" onclick="window.open('https://drive.google.com/file/d/1RDC9EBFjF2a9sSMakA5JzMgIBZ9p0oz0/view?usp=drivesdk', '_blank')">📥 View Timetable</button>
-            </div>
-            <div class="study-advice">
-                <h3>📂 Quick Access</h3>
-                <button class="nav-btn" style="width: 100%; background: var(--success);" onclick="window.location.href='pq.html'">Open Past Questions</button>
-            </div>
-        </div>
-
-        <div class="chat-section" style="margin-top: 30px; background: rgba(0,0,0,0.03); padding: 20px; border-radius: 15px; text-align: left;">
-            <h3>💬 Live Discussion</h3>
-            <div id="chat-display" class="chat-display-area"><em>Connecting...</em></div>
-            <div class="chat-input-area" style="display:flex; gap:5px; margin-top:10px;">
-                <input type="text" id="chat-msg" placeholder="Type a message..." style="flex:1; padding:10px; border-radius:8px; border:1px solid #ccc;">
-                <button class="nav-btn" onclick="sendChat()">Send</button>
-            </div>
-        </div>
-
-        <footer><strong>The BIU Archive © 2026</strong></footer>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded, onValue, update, serverTimestamp, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
@@ -218,211 +95,59 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        const name = localStorage.getItem('biu_user_name');
-        const userId = localStorage.getItem('biu_user_id');
-        const userMatric = localStorage.getItem('biu_user_matric');
+        // Global Admin Access Logic
+        window.adminAccess = () => {
+            const pin = prompt("Enter Admin Passkey:");
+            if (pin === "BIU2026") {
+                window.location.href = "vault.html"; // Change to your actual admin page file
+            } else if (pin !== null) {
+                alert("Unauthorized Access Attempt Logged.");
+            }
+        };
 
-        if(!name || !userId) { window.location.href = 'login.html'; }
+        let targetTime = 0;
+        const totalDuration = 12 * 60 * 60 * 1000;
 
-        // --- UPGRADED ADMIN SECURITY LOGIC (Vault Redirect) ---
-        window.enterAdmin = async () => {
-            if (!userId) {
-                alert("Session expired. Please login again.");
+        const timeRef = ref(db, "maintenance_end_timestamp");
+        onValue(timeRef, (snapshot) => {
+            targetTime = snapshot.val() || (Date.now() + totalDuration);
+        });
+
+        function updateUI() {
+            const now = Date.now();
+            const distance = targetTime - now;
+
+            if (distance <= 0) {
+                document.getElementById('countdown').innerText = "00:00:00";
+                document.getElementById('progressBar').style.width = "100%";
                 return;
             }
-            const adminRef = ref(db, `admins/${userId}`);
-            try {
-                const snapshot = await get(adminRef);
-                // Checks if user exists in the admin node and is true
-                if (snapshot.exists() && snapshot.val() === true) {
-                    window.location.href = 'vault.html';
-                } else {
-                    alert("Access Denied: Administrative privileges required.");
-                }
-            } catch (error) {
-                console.error("Security Check Error:", error);
-                alert("Connection error. Check your internet.");
-            }
-        };
 
-        // --- IDS RESULT LOGIC ---
-        if (userMatric) {
-            const safeMatric = userMatric.replace(/\//g, '_');
-            onValue(ref(db, `results/${safeMatric}`), (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    document.getElementById('ids-result-container').classList.remove('hidden');
-                    document.getElementById('ids-score').innerText = `${data.score}/20`;
-                    document.getElementById('ids-name').innerText = name;
-                    document.getElementById('ids-matric').innerText = userMatric;
-                    document.getElementById('ids-grade').innerText = data.score >= 10 ? "✅ PASSED" : "❌ FAILED";
-                }
-            });
+            const hours = Math.floor(distance / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById('countdown').innerText = 
+                `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+            const elapsed = totalDuration - distance;
+            const progress = Math.min(Math.max((elapsed / totalDuration) * 100, 5), 98);
+            document.getElementById('progressBar').style.width = progress + "%";
         }
+        
+        setInterval(updateUI, 1000);
 
-        onValue(ref(db, "stats/ids111"), (s) => {
-            const d = s.val();
-            if(d) {
-                document.getElementById('class-avg').innerText = d.average || "0.0";
-                document.getElementById('class-high').innerText = `${d.highest || 0}/20`;
+        const maintenanceRef = ref(db, "maintenance_mode");
+        onValue(maintenanceRef, (snapshot) => {
+            if (snapshot.val() === false) {
+                document.body.style.backgroundColor = "#064e3b";
+                setTimeout(() => { window.location.href = 'index.html'; }, 500);
             }
         });
 
-        onValue(ref(db, "public_results"), (snapshot) => {
-            const results = snapshot.val();
-            const tableBody = document.getElementById('public-table-body');
-            if (results) {
-                tableBody.innerHTML = Object.values(results).map(r => `
-                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                        <td style="padding: 8px;">${r.name}</td>
-                        <td style="padding: 8px; text-align: right; font-weight: bold;">${r.score}/20</td>
-                    </tr>
-                `).join('');
-            }
+        document.getElementById('statusBtn').addEventListener('click', () => {
+            location.reload();
         });
-
-        // --- SECURITY & MAINTENANCE ---
-        onValue(ref(db, `banned_users/${userId}`), (snapshot) => {
-            if (snapshot.val()) {
-                document.getElementById('ban-screen').classList.remove('hidden');
-                document.getElementById('main-archive').classList.add('hidden');
-            }
-        });
-
-        onValue(ref(db, "maintenance"), (snapshot) => {
-            const isMaint = snapshot.val();
-            const mScreen = document.getElementById('maintenance-screen');
-            const mainContent = document.getElementById('main-archive');
-            if (isMaint === true) {
-                mScreen.classList.remove('hidden');
-                mainContent.classList.add('hidden');
-            } else {
-                mScreen.classList.add('hidden');
-                mainContent.classList.remove('hidden');
-            }
-        });
-
-        // --- THEME ---
-        onValue(ref(db, `users/${userId}/preferredTheme`), (snap) => {
-            if (snap.val()) {
-                document.body.setAttribute('data-theme', snap.val());
-                localStorage.setItem('theme', snap.val());
-            }
-        });
-
-        // --- PDF ---
-        window.downloadResultPDF = () => {
-            const element = document.getElementById('ids-card-to-export');
-            const fileName = name ? name.replace(/\s+/g, '_') : 'Student';
-            const opt = {
-                margin: 10,
-                filename: `BIU_Result_${fileName}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-            html2pdf().set(opt).from(element).save();
-        };
-
-        window.filterResultsTable = () => {
-            const input = document.getElementById("resultSearch").value.toUpperCase();
-            const rows = document.getElementById("resultsTable").getElementsByTagName("tr");
-            for (let i = 0; i < rows.length; i++) {
-                const text = rows[i].textContent || rows[i].innerText;
-                rows[i].style.display = text.toUpperCase().indexOf(input) > -1 ? "" : "none";
-            }
-        };
-
-        // --- LEADERBOARD ---
-        onValue(ref(db, "users"), (snapshot) => {
-            const users = snapshot.val();
-            if(!users) return;
-            const sorted = Object.values(users).sort((a,b) => (b.streak || 0) - (a.streak || 0)).slice(0, 5);
-            const list = document.getElementById('leaderboard-list');
-            list.innerHTML = sorted.map((u, i) => `
-                <div class="leaderboard-item">
-                    <span>
-                        <span class="rank-circle">${i+1}</span>
-                        ${u.name} ${u.isVerified ? '<span class="verified-tick">✔️</span>' : ''}
-                    </span>
-                    <span style="font-weight:bold;">🔥 ${u.streak || 0}</span>
-                </div>
-            `).join('');
-        });
-
-        // --- UI HELPERS ---
-        window.toggleDropdown = () => document.getElementById("myDropdown").classList.toggle("show");
-        window.togglePublicResults = () => document.getElementById('public-results-list').classList.toggle('hidden');
-        window.toggleTheme = () => {
-            const current = document.body.getAttribute('data-theme');
-            const theme = current === 'dark' ? 'light' : 'dark';
-            document.body.setAttribute('data-theme', theme); 
-            localStorage.setItem('theme', theme);
-            if(userId) update(ref(db, `users/${userId}`), { preferredTheme: theme });
-        };
-        window.logout = () => { localStorage.clear(); window.location.href = 'login.html'; };
-        window.contactAdmin = () => window.location.href = "mailto:pauladamu600@gmail.com";
-
-        window.onclick = function(event) {
-            if (!event.target.matches('.nav-btn')) {
-                var dropdowns = document.getElementsByClassName("dropdown-content");
-                for (var i = 0; i < dropdowns.length; i++) {
-                    if (dropdowns[i].classList.contains('show')) dropdowns[i].classList.remove('show');
-                }
-            }
-        }
-
-        // GREETING
-        const hour = new Date().getHours();
-        let greet = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
-        if(name) document.getElementById('time-greeting').innerText = `${greet}, ${name.split(' ')[0]} ✨`;
-
-        // FIREBASE SYNC
-        function updateStatus() { if(userId) update(ref(db, `users/${userId}`), { name, matric: userMatric || "Unknown", lastActive: serverTimestamp() }); }
-        updateStatus(); setInterval(updateStatus, 30000);
-
-        onValue(ref(db, "broadcast"), (s) => {
-            const d = s.val(); const bar = document.getElementById('broadcast-bar');
-            if(d && d.message) { document.getElementById('live-broadcast-text').innerText = d.message; bar.classList.remove('hidden'); }
-            else bar.classList.add('hidden');
-        });
-
-        // STREAK
-        function getLevelInfo(streak) {
-            if (streak >= 30) return { title: "Diamond", class: "lvl-diamond" };
-            if (streak >= 15) return { title: "Gold", class: "lvl-gold" };
-            if (streak >= 7) return { title: "Silver", class: "lvl-silver" };
-            if (streak >= 3) return { title: "Bronze", class: "lvl-bronze" };
-            return { title: "Novice", class: "level-tag" };
-        }
-
-        const today = new Date().toLocaleDateString();
-        const lastDate = localStorage.getItem('biu_last_date');
-        let streak = parseInt(localStorage.getItem('biu_streak') || 1);
-        if (lastDate && lastDate !== today) {
-            const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-            if (lastDate === yesterday.toLocaleDateString()) streak++; else streak = 1;
-        }
-        localStorage.setItem('biu_streak', streak); localStorage.setItem('biu_last_date', today);
-        const level = getLevelInfo(streak);
-        document.getElementById('streak-count').innerText = streak;
-        document.getElementById('user-level-tag').innerText = level.title;
-        document.getElementById('user-level-tag').className = "level-tag " + level.class;
-        if(userId) update(ref(db, `users/${userId}`), { streak });
-
-        // CHAT
-        window.sendChat = function() {
-            const i = document.getElementById('chat-msg');
-            if (i.value.trim()) { push(ref(db, "messages"), { sender: name ? name.split(' ')[0] : "Guest", message: i.value, timestamp: serverTimestamp() }); i.value = ""; }
-        };
-        onChildAdded(ref(db, "messages"), (s) => {
-            const d = s.val(); const disp = document.getElementById('chat-display');
-            if (disp.innerHTML.includes('Connecting')) disp.innerHTML = '';
-            const msgDiv = document.createElement('div'); msgDiv.innerHTML = `<strong>${d.sender}:</strong> ${d.message}`;
-            disp.appendChild(msgDiv); disp.scrollTop = disp.scrollHeight;
-        });
-
-        if (localStorage.getItem('theme')) document.body.setAttribute('data-theme', localStorage.getItem('theme'));
     </script>
 </body>
 </html>
