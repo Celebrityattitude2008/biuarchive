@@ -4,379 +4,172 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>My Profile | The BIU Archive</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            --primary: #002147; 
-            --accent: #FFD700; 
-            --bg: #f8f9fa;
-            --white: #ffffff; 
-            --text: #333; 
-            --success: #28a745; 
-            --danger: #dc3545;
-            --blue-tick: #00BFFF;
-            --mod-purple: #8A2BE2;
-            --radius: 20px;
+            --primary: #002147; --accent: #FFD700; --bg: #f8f9fa;
+            --white: #ffffff; --text: #333; --success: #28a745; 
+            --blue-tick: #00BFFF; --radius: 20px;
             --shadow: 0 10px 30px rgba(0,0,0,0.08);
         }
 
-        [data-theme="dark"] { --primary: #FFD700; --accent: #002147; --bg: #121212; --white: #1e1e1e; --text: #f4f4f4; --shadow: 0 10px 30px rgba(0,0,0,0.4); }
-        [data-theme="emerald"] { --primary: #064e3b; --accent: #34d399; --bg: #022c22; --white: #065f46; --text: #ecfdf5; }
-        [data-theme="midnight"] { --primary: #1e1b4b; --accent: #818cf8; --bg: #020617; --white: #1e1b4b; --text: #f8fafc; }
-        [data-theme="crimson"] { --primary: #7f1d1d; --accent: #f87171; --bg: #270606; --white: #7f1d1d; --text: #fef2f2; }
+        [data-theme="dark"] { --primary: #FFD700; --accent: #002147; --bg: #121212; --white: #1e1e1e; --text: #f4f4f4; }
 
         body { 
             font-family: 'Segoe UI', system-ui, sans-serif; 
-            background-color: var(--bg); 
-            color: var(--text); 
-            margin: 0; 
-            padding: 15px; 
-            transition: 0.3s; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
+            background-color: var(--bg); color: var(--text); 
+            margin: 0; padding: 15px; transition: 0.3s; 
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; box-sizing: border-box;
         }
         
         #loader-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg);
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: 0.5s;
+            position: fixed; inset: 0; background: var(--bg); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
-        .spinner {
-            width: 50px; height: 50px;
-            border: 5px solid rgba(0,33,71,0.1);
-            border-top: 5px solid var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .profile-container { 
-            width: 100%;
-            max-width: 450px; 
-            background: var(--white); 
-            padding: 40px 25px; 
-            border-radius: var(--radius); 
-            box-shadow: var(--shadow); 
-            text-align: center; 
-            box-sizing: border-box;
-            position: relative;
+            width: 100%; max-width: 450px; background: var(--white); 
+            padding: 30px 20px; border-radius: var(--radius); 
+            box-shadow: var(--shadow); text-align: center;
         }
-
-        .hidden { display: none !important; }
-
-        .verified-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 18px; height: 18px;
-            background-color: var(--blue-tick);
-            color: white; font-size: 11px;
-            border-radius: 50%; margin-left: 6px;
-            vertical-align: middle;
-        }
-
-        .status-badge { 
-            display: inline-block; 
-            padding: 8px 18px; 
-            border-radius: 25px; 
-            font-weight: 800; 
-            font-size: 11px; 
-            margin-top: 5px; 
-            text-transform: uppercase;
-        }
-        .verified-text { background: var(--success); color: white; }
-        .status-pending { background: #6c757d; color: white; animation: pulse-gray 2s infinite; }
-        @keyframes pulse-gray { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
         .avatar { 
-            width: 100px; height: 100px; 
-            background: linear-gradient(135deg, var(--primary), #004080); 
-            color: var(--white); 
-            border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 36px; font-weight: 800; margin: 0 auto 20px; 
-            border: 4px solid var(--accent); 
-            object-fit: cover;
-            overflow: hidden;
+            width: 100px; height: 100px; background: var(--primary); 
+            color: var(--white); border-radius: 50%; display: flex; 
+            align-items: center; justify-content: center; font-size: 36px; 
+            font-weight: 800; margin: 0 auto 15px; border: 4px solid var(--accent); 
+            overflow: hidden; background-size: cover; background-position: center;
         }
-        
-        .social-links { display: flex; justify-content: center; gap: 15px; margin: 15px 0; }
-        .social-links a { text-decoration: none; font-size: 20px; filter: grayscale(1); transition: 0.3s; }
-        .social-links a:hover { filter: grayscale(0); transform: scale(1.2); }
 
         .info-card { 
-            background: rgba(128,128,128,0.04); 
-            padding: 16px; border-radius: 14px; margin: 12px 0; 
-            text-align: left; border-left: 5px solid var(--primary); 
+            background: rgba(128,128,128,0.06); padding: 14px; 
+            border-radius: 12px; margin: 10px 0; text-align: left; 
+            border-left: 5px solid var(--primary); 
         }
 
-        .customize-section {
-            background: rgba(0, 191, 255, 0.05);
-            border: 1px solid rgba(0, 191, 255, 0.2);
-            padding: 20px; border-radius: 15px;
-            margin-top: 20px; text-align: left;
+        .edit-panel {
+            margin-top: 20px; padding: 15px; border: 1px solid #eee;
+            border-radius: 12px; text-align: left; display: none;
         }
-        .input-group { margin-bottom: 10px; }
-        .input-group label { display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--blue-tick); }
-        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 13px; box-sizing: border-box; background: var(--white); color: var(--text); font-family: inherit; }
-        
+
+        input {
+            width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd;
+            border-radius: 8px; box-sizing: border-box; font-size: 13px;
+        }
+
         .btn-action { 
-            width: 100%; padding: 15px; margin-top: 10px; 
-            border-radius: 12px; border: none; font-weight: 800; 
-            cursor: pointer; transition: 0.2s; font-size: 14px;
+            width: 100%; padding: 14px; margin-top: 8px; border-radius: 10px; 
+            border: none; font-weight: 700; cursor: pointer; font-size: 14px;
         }
-        .btn-action:active { transform: scale(0.98); }
-        .btn-logout { background: #f0f0f0; color: #333; }
-        .btn-back { background: var(--primary); color: var(--white); }
         .btn-save { background: var(--success); color: white; }
-        .btn-edit-toggle { background: var(--white); color: var(--primary); border: 2.5px solid var(--primary); }
+        .btn-edit { background: #eee; color: var(--primary); }
+        .btn-back { background: var(--primary); color: white; }
 
-        #user-bio-display { font-size: 13px; font-style: italic; margin: 10px 0; line-height: 1.4; opacity: 0.8; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <div id="loader-overlay">
-        <div class="spinner"></div>
-        <p style="margin-top: 15px; font-weight: 600; font-size: 14px; color: var(--primary);">Accessing Archive...</p>
-    </div>
-
-    <div id="payment-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px;">
-        <div style="background: var(--white); padding: 30px; border-radius: 20px; max-width: 400px; width: 100%; text-align: center; color: var(--text);">
-            <h3 style="color: var(--blue-tick);">Verification Payment</h3>
-            <p style="font-size: 14px;">Transfer <b>₦500</b> to the admin account:</p>
-            <div style="background: rgba(0,191,255,0.1); padding: 15px; border-radius: 12px; margin: 20px 0; border: 1px dashed var(--blue-tick);">
-                <small>OPAY</small><br>
-                <strong style="font-size: 20px;">7041795388</strong><br> <small>NAME: ADAMU PAUL</small>
-            </div>
-            <button class="btn-action" style="background: var(--success); color: white;" onclick="submitVerificationRequest()">I Have Paid - Notify Admin</button>
-            <button class="btn-action" style="background: none; border: 1px solid #ccc; color: var(--text);" onclick="togglePaymentModal()">Cancel</button>
-        </div>
-    </div>
+    <div id="loader-overlay"><p>Loading Archive...</p></div>
 
     <div class="profile-container">
-        <div id="avatar-container">
-            <div class="avatar" id="user-initial">?</div>
-        </div>
-
-        <h2 style="margin: 0; font-weight: 800; color: var(--primary);">
-            <span id="user-name">Student Name</span><span id="badge-placeholder"></span>
-        </h2>
-        
-        <div id="user-bio-display"></div>
-        
-        <div class="social-links" id="social-display"></div>
-
-        <p id="user-dept" style="opacity: 0.6; margin: 5px 0; font-weight: 600; font-size: 13px;">Department</p>
-        
-        <div id="status-area" style="margin-bottom: 20px;">
-            <span class="status-badge unverified">Checking...</span>
-        </div>
-
-        <button id="edit-profile-btn" class="btn-action btn-edit-toggle hidden" onclick="toggleEditPanel()">✏️ Edit Archive Profile</button>
-
-        <div id="customize-panel" class="customize-section hidden">
-            <h4 style="margin: 0 0 15px 0; font-size: 14px; color: var(--primary);">🎨 Scholar Customization</h4>
-            
-            <div class="input-group">
-                <label>Profile Bio</label>
-                <textarea id="edit-bio" rows="2" placeholder="Tell the archive about yourself..."></textarea>
-            </div>
-
-            <div class="input-group">
-                <label>Profile Pic (Google Drive Link)</label>
-                <input type="text" id="edit-pic" placeholder="Paste Drive/Image link here...">
-            </div>
-
-            <div class="input-group">
-                <label>Portal Theme</label>
-                <select id="edit-theme">
-                    <option value="light">Default Light</option>
-                    <option value="dark">Default Dark</option>
-                    <option value="crimson">Official BIU Law (Crimson)</option>
-                    <option value="emerald">Official BIU Engineering (Emerald)</option>
-                    <option value="midnight">Official BIU Science (Midnight)</option>
-                </select>
-            </div>
-
-            <div class="input-group">
-                <label>Instagram Username</label>
-                <input type="text" id="edit-ig" placeholder="@username">
-            </div>
-            <div class="input-group">
-                <label>Tiktok Username</label>
-                <input type="text" id="edit-tk" placeholder="@username">
-            </div>
-            <div class="input-group">
-                <label>LinkedIn Link</label>
-                <input type="text" id="edit-li" placeholder="https://linkedin.com/in/...">
-            </div>
-            <button class="btn-action btn-save" onclick="saveProfileUpdates()">Update Profile</button>
-        </div>
-
-        <div id="request-tick-area" class="hidden"></div>
+        <div class="avatar" id="user-avatar">?</div>
+        <h2 id="user-name" style="margin: 0; color: var(--primary);">Student Name</h2>
+        <p id="user-dept" style="opacity: 0.6; font-size: 13px; margin: 5px 0;">Department</p>
 
         <div class="info-card">
-            <div style="font-size: 11px; text-transform: uppercase; opacity: 0.5; font-weight: 800;">Matric Number</div>
-            <strong id="display-matric" style="font-size: 16px;">Loading...</strong>
+            <small style="font-weight: 800; opacity: 0.5;">MATRIC NO</small><br>
+            <strong id="display-matric">Loading...</strong>
         </div>
 
-        <div style="margin-top: 30px;">
-            <button class="btn-action btn-back" onclick="window.location.href='index.html'">Go to Vault</button>
-            <button class="btn-action btn-logout" onclick="logout()">Log Out</button>
+        <div id="socials-display" style="display: flex; justify-content: center; gap: 15px; margin: 10px 0;">
+            </div>
+
+        <button class="btn-action btn-edit" id="toggle-edit">Edit Profile</button>
+
+        <div id="edit-panel" class="edit-panel">
+            <label style="font-size: 11px; font-weight: 700;">G-DRIVE PHOTO LINK</label>
+            <input type="text" id="edit-photo" placeholder="Paste link to your photo">
+            
+            <label style="font-size: 11px; font-weight: 700;">INSTAGRAM USERNAME</label>
+            <input type="text" id="edit-ig" placeholder="@username">
+            
+            <label style="font-size: 11px; font-weight: 700;">TIKTOK USERNAME</label>
+            <input type="text" id="edit-tt" placeholder="@username">
+
+            <button class="btn-action btn-save" onclick="saveProfile()">Update Archive</button>
         </div>
+
+        <button class="btn-action btn-back" style="margin-top: 20px;" onclick="window.location.href='index.html'">Go to Vault</button>
+        <button class="btn-action" style="background:none; font-size:12px; color:gray;" onclick="handleLogout()">Sign Out</button>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    <script>
+        const SUPABASE_URL = 'https://xkjttkgohmehrrjyjzwc.supabase.co'; 
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhranR0a2dvaG1laHJyanlqendjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMzM4MzUsImV4cCI6MjA4NTkwOTgzNX0.wf_utl6KxdlKCq7bV6sqwm3CnmaJGZyrM-b9-T71B34';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
-            authDomain: "biu-archive.firebaseapp.com",
-            databaseURL: "https://biu-archive-default-rtdb.firebaseio.com",
-            projectId: "biu-archive"
+        const editBtn = document.getElementById('toggle-edit');
+        const editPanel = document.getElementById('edit-panel');
+
+        editBtn.onclick = () => {
+            editPanel.style.display = editPanel.style.display === 'block' ? 'none' : 'block';
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        async function loadProfile() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) { window.location.href = 'login.html'; return; }
 
-        const name = localStorage.getItem('biu_user_name');
-        const userId = localStorage.getItem('biu_user_id');
-        const matric = localStorage.getItem('biu_user_matric');
-
-        if (!name || !userId) window.location.href = 'login.html';
-
-        document.getElementById('user-name').innerText = name;
-        document.getElementById('user-dept').innerText = localStorage.getItem('biu_user_dept');
-        document.getElementById('display-matric').innerText = matric || "Not Set";
-        document.getElementById('user-initial').innerText = name.charAt(0).toUpperCase();
-
-        // FIX FOR GOOGLE DRIVE LINKS
-        function formatImageUrl(url) {
-            if (!url) return '';
-            if (url.includes('drive.google.com')) {
-                let id = "";
-                if (url.includes('/d/')) {
-                    id = url.split('/d/')[1].split('/')[0];
-                } else if (url.includes('id=')) {
-                    id = url.split('id=')[1].split('&')[0];
-                }
-                return id ? `https://lh3.googleusercontent.com/u/0/d/${id}` : url;
-            }
-            return url;
-        }
-
-        onValue(ref(db, "users/" + userId), (snapshot) => {
-            const userData = snapshot.val();
-            document.getElementById('loader-overlay').style.opacity = '0';
-            setTimeout(() => document.getElementById('loader-overlay').classList.add('hidden'), 500);
-
-            if (!userData) return;
-
-            // Apply theme & Bio
-            if(userData.preferredTheme) {
-                document.body.setAttribute('data-theme', userData.preferredTheme);
-                document.getElementById('edit-theme').value = userData.preferredTheme;
-            }
-            document.getElementById('user-bio-display').innerText = userData.bio || "";
-
-            if (userData.profilePic) {
-                const imgUrl = formatImageUrl(userData.profilePic);
-                document.getElementById('user-initial').innerHTML = `<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerText='${name.charAt(0)}'">`;
-            }
-
-            const socialBox = document.getElementById('social-display');
-            socialBox.innerHTML = '';
-            if (userData.instagram) socialBox.innerHTML += `<a href="https://instagram.com/${userData.instagram.replace('@','')}" target="_blank">📸</a>`;
-            if (userData.tiktok) socialBox.innerHTML += `<a href="https://tiktok.com/@${userData.tiktok.replace('@','')}" target="_blank">🎵</a>`;
-            if (userData.linkedin) socialBox.innerHTML += `<a href="${userData.linkedin}" target="_blank">💼</a>`;
-
-            const statusArea = document.getElementById('status-area');
-            const badgePlaceholder = document.getElementById('badge-placeholder');
-            const requestArea = document.getElementById('request-tick-area');
-            const editBtn = document.getElementById('edit-profile-btn');
-
-            if (userData.isVerified) {
-                statusArea.innerHTML = `<span class="status-badge verified-text">Verified Scholar ✅</span>`;
-                badgePlaceholder.innerHTML = `<span class="verified-badge">✓</span>`;
-                editBtn.classList.remove('hidden');
-                requestArea.classList.add('hidden');
-                
-                // Pre-fill inputs
-                document.getElementById('edit-bio').value = userData.bio || '';
-                document.getElementById('edit-pic').value = userData.profilePic || '';
-                document.getElementById('edit-ig').value = userData.instagram || '';
-                document.getElementById('edit-tk').value = userData.tiktok || '';
-                document.getElementById('edit-li').value = userData.linkedin || '';
+            const meta = user.user_metadata;
+            document.getElementById('user-name').innerText = meta.full_name;
+            document.getElementById('user-dept').innerText = meta.department;
+            document.getElementById('display-matric').innerText = meta.matric_no;
+            
+            // Set initial or Photo
+            if (meta.photo_url) {
+                document.getElementById('user-avatar').style.backgroundImage = `url('${meta.photo_url}')`;
+                document.getElementById('user-avatar').innerText = '';
             } else {
-                checkPendingRequest();
+                document.getElementById('user-avatar').innerText = meta.full_name.charAt(0);
             }
-        });
 
-        function checkPendingRequest() {
-            onValue(ref(db, "verification_requests/" + userId), (reqSnap) => {
-                const statusArea = document.getElementById('status-area');
-                const requestArea = document.getElementById('request-tick-area');
-                if (reqSnap.exists()) {
-                    statusArea.innerHTML = `<span class="status-badge status-pending">Reviewing... ⏳</span>`;
-                    requestArea.classList.remove('hidden');
-                    requestArea.innerHTML = `<p style="font-size:11px; opacity:0.6;">Admin is verifying your ₦500 payment.</p>`;
-                } else {
-                    statusArea.innerHTML = `<span class="status-badge unverified" style="background:#eee; color:#666;">Standard Member</span>`;
-                    requestArea.classList.remove('hidden');
-                    requestArea.innerHTML = `<button class="btn-action" style="background:var(--blue-tick); color:white;" onclick="togglePaymentModal()">Get Blue Tick & Custom Themes (₦500)</button>`;
-                }
-            });
+            // Display Social Icons
+            const socials = document.getElementById('socials-display');
+            socials.innerHTML = '';
+            if(meta.ig) socials.innerHTML += `<a href="https://instagram.com/${meta.ig.replace('@','')}" target="_blank">📸</a>`;
+            if(meta.tt) socials.innerHTML += `<a href="https://tiktok.com/@${meta.tt.replace('@','')}" target="_blank">🎵</a>`;
+
+            // Pre-fill edit inputs
+            document.getElementById('edit-photo').value = meta.photo_url || '';
+            document.getElementById('edit-ig').value = meta.ig || '';
+            document.getElementById('edit-tt').value = meta.tt || '';
+
+            document.getElementById('loader-overlay').style.display = 'none';
         }
 
-        window.toggleEditPanel = () => {
-            const panel = document.getElementById('customize-panel');
-            panel.classList.toggle('hidden');
-            window.scrollTo({ top: panel.offsetTop, behavior: 'smooth' });
-        };
-
-        window.saveProfileUpdates = () => {
-            const bio = document.getElementById('edit-bio').value;
-            const pic = document.getElementById('edit-pic').value;
+        async function saveProfile() {
+            const photo = document.getElementById('edit-photo').value;
             const ig = document.getElementById('edit-ig').value;
-            const tk = document.getElementById('edit-tk').value;
-            const li = document.getElementById('edit-li').value;
-            const theme = document.getElementById('edit-theme').value;
+            const tt = document.getElementById('edit-tt').value;
 
-            update(ref(db, "users/" + userId), {
-                bio: bio,
-                profilePic: pic,
-                instagram: ig,
-                tiktok: tk,
-                linkedin: li,
-                preferredTheme: theme
-            }).then(() => {
-                alert("Archive Profile Updated!");
-                document.getElementById('customize-panel').classList.add('hidden');
+            const { error } = await supabase.auth.updateUser({
+                data: { photo_url: photo, ig: ig, tt: tt }
             });
-        };
 
-        window.togglePaymentModal = () => document.getElementById('payment-modal').classList.toggle('hidden');
+            if (error) alert(error.message);
+            else {
+                alert("Archive Updated!");
+                location.reload();
+            }
+        }
 
-        window.submitVerificationRequest = () => {
-            set(ref(db, "verification_requests/" + userId), {
-                name, matric, userId, timestamp: new Date().toLocaleString()
-            }).then(() => {
-                alert("Request Sent! Once admin confirms your payment, you'll get the Blue Tick.");
-                togglePaymentModal();
-            });
-        };
+        async function handleLogout() {
+            await supabase.auth.signOut();
+            window.location.href = 'login.html';
+        }
 
-        window.logout = () => { if(confirm("Logout from archive?")) { localStorage.clear(); window.location.href = 'login.html'; } };
+        loadProfile();
     </script>
 </body>
 </html>

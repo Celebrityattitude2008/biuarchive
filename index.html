@@ -3,161 +3,284 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Maintenance | BIU Archive</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>BIU Archive | Student Portal</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .bg-pattern {
-            background-color: #002147;
-            background-image: url("https://www.transparenttextures.com/patterns/cubes.png");
+        :root {
+            --primary: #002147; --accent: #FFD700; --light: #f4f4f4;
+            --white: #ffffff; --text: #333;
         }
-        .shimmer {
-            animation: shimmer 2.5s infinite linear;
-            background: linear-gradient(to right, #ffd700 0%, #fff 50%, #ffd700 100%);
-            background-size: 200% auto;
-            display: inline-block;
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            color: transparent;
+
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            margin: 0; 
+            background-color: var(--light); 
+            display: flex; 
+            justify-content: center;
+            padding: 10px;
+            overflow-x: hidden;
         }
-        @keyframes shimmer { to { background-position: 200% center; } }
-        .status-pulse { animation: pulse-ring 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite; }
-        @keyframes pulse-ring { 0% { transform: scale(0.33); } 80%, 100% { opacity: 0; } }
-        @keyframes stripes { from { background-position: 0 0; } to { background-position: 20px 0; } }
-        .animate-stripes { animation: stripes 1s linear infinite; }
+
+        .container { 
+            background: var(--white); 
+            width: 100%; 
+            max-width: 850px; 
+            min-height: 90vh;
+            border-radius: 15px; 
+            padding: 20px; 
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr; 
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        @media (min-width: 600px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .chat-display-area { 
+            height: 250px; 
+            overflow-y: auto; 
+            background: #f9f9f9; 
+            border-radius: 10px; 
+            padding: 15px;
+            border: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+
+        .nav-btn {
+            background: var(--primary);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 25px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        /* --- QUICK ACCESS DROPDOWN STYLES --- */
+        .fab-menu {
+            position: fixed;
+            bottom: 30px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .fab-btn {
+            width: 56px;
+            height: 56px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 8px 16px rgba(0,33,71,0.3);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .fab-btn.active { transform: rotate(90deg); background: #b91c1c; }
+
+        .dropdown-content {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            width: 220px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            display: none;
+            flex-direction: column;
+            padding: 10px;
+            border: 1px solid rgba(0,0,0,0.05);
+            animation: popUp 0.3s ease-out;
+        }
+
+        .dropdown-content.show { display: flex; }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            text-decoration: none;
+            color: var(--primary);
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+
+        .dropdown-item:hover { background: rgba(0, 33, 71, 0.05); transform: translateX(5px); }
+        .dropdown-item span { font-size: 18px; }
+
+        @keyframes popUp {
+            from { opacity: 0; transform: scale(0.8) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
     </style>
 </head>
-<body class="bg-pattern min-h-screen flex items-center justify-center p-6 text-white overflow-y-auto select-none">
+<body>
 
-    <div class="max-w-md w-full text-center space-y-8 my-10">
-        <div class="relative inline-block">
-            <div class="text-7xl animate-bounce drop-shadow-2xl">🛠️</div>
-            <div class="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 status-pulse rounded-full"></div>
-            <div class="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full"></div>
+<div id="main-archive" class="container">
+    <div class="top-nav">
+        <div id="streak-box" style="font-size: 14px;">🔥 <span id="streak-count">1</span></div>
+        <button class="nav-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <div style="text-align: center;">
+        <h2 id="greeting" style="color: var(--primary); margin-bottom: 5px;">Loading...</h2>
+        <p style="font-size: 14px; color: #666;">Benson Idahosa University</p>
+    </div>
+
+    <div class="dashboard-grid">
+        <div style="background: #f0f7ff; padding: 20px; border-radius: 12px; border-left: 5px solid var(--primary);">
+            <h3 style="margin-top:0;">📄 Past Questions</h3>
+            <button class="nav-btn" onclick="location.href='pq.html'">Enter Archive</button>
         </div>
-
-        <div class="space-y-4">
-            <h1 class="text-4xl font-black tracking-tighter shimmer uppercase">BIU Archive</h1>
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/40 border border-blue-700/50">
-                <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
-                <span class="text-xs font-bold tracking-widest text-blue-200 uppercase">System Maintenance</span>
-            </div>
-            
-            <div class="py-2">
-                <p class="text-[10px] text-yellow-500/80 uppercase font-bold tracking-[0.2em] mb-1">Estimated Completion</p>
-                <div id="countdown" class="text-3xl font-mono font-bold text-white tabular-nums tracking-widest">--:--:--</div>
-            </div>
-
-            <p class="text-blue-100/80 leading-relaxed text-sm px-4">
-                We're currently polishing the archive to give you a better study experience.
-            </p>
-        </div>
-
-        <div class="bg-blue-900/20 border border-white/10 p-5 rounded-[2rem] space-y-3">
-            <p class="text-[10px] text-blue-400 uppercase font-black tracking-widest mb-2">Available Practice Tests</p>
-            <div class="grid grid-cols-1 gap-3">
-                <a href="csc111test.html" class="flex items-center justify-between px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all active:scale-95 group">
-                    <span class="font-bold text-sm tracking-wide">CSC 111 Master CBT</span>
-                    <span class="text-yellow-400 group-hover:translate-x-1 transition-transform">→</span>
-                </a>
-                <a href="idsquiz.html" class="flex items-center justify-between px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all active:scale-95 group">
-                    <span class="font-bold text-sm tracking-wide">IDS Test Prep</span>
-                    <span class="text-yellow-400 group-hover:translate-x-1 transition-transform">→</span>
-                </a>
-            </div>
-        </div>
-
-        <div class="relative w-full bg-blue-950/80 rounded-full h-3 overflow-hidden border border-blue-800 shadow-inner">
-            <div id="progressBar" class="absolute top-0 left-0 bg-gradient-to-r from-yellow-600 to-yellow-300 h-full w-0 rounded-full transition-all duration-1000 ease-in-out">
-                <div class="w-full h-full opacity-30 bg-[linear-gradient(45deg,rgba(255,255,255,.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,.2)_50%,rgba(255,255,255,.2)_75%,transparent_75%,transparent)] bg-[length:20px_20px] animate-stripes"></div>
-            </div>
-        </div>
-
-        <div class="flex flex-col gap-4">
-            <button id="statusBtn" class="w-full py-4 bg-yellow-400 hover:bg-yellow-500 text-blue-950 font-black rounded-2xl transition-all active:scale-95 shadow-xl shadow-yellow-900/20 uppercase tracking-wider text-sm">
-                🔄 Refresh Status
-            </button>
-
-            <button onclick="adminAccess()" class="w-full py-2 bg-blue-900/40 hover:bg-blue-800/60 text-blue-200 border border-blue-700/50 rounded-xl transition-all text-[10px] uppercase font-bold tracking-[0.2em]">
-                ⚙️ Admin Dashboard
-            </button>
-            
-            <div class="space-y-1 cursor-pointer group" onclick="adminAccess()">
-                <p class="text-[10px] text-blue-400 uppercase tracking-widest font-bold group-hover:text-yellow-400 transition-colors">Maintained by</p>
-                <p class="text-xs text-blue-200 font-medium">Paul Adamu • 2026 Admin</p>
-            </div>
+        <div style="background: #fff9e6; padding: 20px; border-radius: 12px; border-left: 5px solid var(--accent);">
+            <h3 style="margin-top:0;">🔍 Lost & Found</h3>
+            <button class="nav-btn" onclick="location.href='lost.html'">View Items</button>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    <div class="chat-section" style="margin-top: 30px;">
+        <h3 style="color: var(--primary);">💬 Student Chat</h3>
+        <div id="chat-display" class="chat-display-area">Connecting...</div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+            <input type="text" id="chat-msg" placeholder="Ask a question...">
+            <button class="nav-btn" onclick="sendChat()">Send</button>
+        </div>
+    </div>
+</div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
-            authDomain: "biu-archive.firebaseapp.com",
-            databaseURL: "https://biu-archive-default-rtdb.firebaseio.com",
-            projectId: "biu-archive",
-            storageBucket: "biu-archive.firebasestorage.app",
-            messagingSenderId: "245967347998",
-            appId: "1:245967347998:web:a8feb5ad0ef9650946a90f"
-        };
+<script>
+    // YOUR SUPABASE CONFIG
+    const SUPABASE_URL = 'https://xkjttkgohmehrrjyjzwc.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhranR0a2dvaG1laHJyanlqendjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMzM4MzUsImV4cCI6MjA4NTkwOTgzNX0.wf_utl6KxdlKCq7bV6sqwm3CnmaJGZyrM-b9-T71B34';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+    async function initPortal() {
+        // Check Maintenance
+        const { data: maintData } = await supabaseClient
+            .from('settings')
+            .select('value')
+            .eq('key', 'maintenance_mode')
+            .single();
 
-        window.adminAccess = () => {
-            const pin = prompt("Enter Admin Passkey:");
-            if (pin === "BIU2026") {
-                window.location.href = "vault.html";
-            } else if (pin !== null) {
-                alert("Unauthorized Access Attempt Logged.");
-            }
-        };
-
-        let targetTime = 0;
-        const totalDuration = 12 * 60 * 60 * 1000;
-
-        const timeRef = ref(db, "maintenance_end_timestamp");
-        onValue(timeRef, (snapshot) => {
-            targetTime = snapshot.val() || (Date.now() + totalDuration);
-        });
-
-        function updateUI() {
-            const now = Date.now();
-            const distance = targetTime - now;
-
-            if (distance <= 0) {
-                document.getElementById('countdown').innerText = "00:00:00";
-                document.getElementById('progressBar').style.width = "100%";
-                return;
-            }
-
-            const hours = Math.floor(distance / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-            document.getElementById('countdown').innerText = 
-                `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
-            const elapsed = totalDuration - distance;
-            const progress = Math.min(Math.max((elapsed / totalDuration) * 100, 5), 98);
-            document.getElementById('progressBar').style.width = progress + "%";
+        if (maintData && maintData.value === "true") {
+            window.location.href = 'maintenance.html';
+            return;
         }
-        
-        setInterval(updateUI, 1000);
 
-        const maintenanceRef = ref(db, "maintenance_mode");
-        onValue(maintenanceRef, (snapshot) => {
-            if (snapshot.val() === false) {
-                document.body.style.backgroundColor = "#064e3b";
-                setTimeout(() => { window.location.href = 'index.html'; }, 500);
-            }
-        });
+        // Check Auth
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (!user) {
+            window.location.href = 'signup.html';
+        } else {
+            // Set Name
+            const firstName = user.user_metadata.full_name ? user.user_metadata.full_name.split(' ')[0] : 'Scholar';
+            document.getElementById('greeting').innerText = `Welcome, ${firstName}!`;
+            
+            setupRealtime();
+            loadInitialChats();
+            createQuickAccess();
+        }
+    }
 
-        document.getElementById('statusBtn').addEventListener('click', () => {
-            location.reload();
-        });
-    </script>
+    async function loadInitialChats() {
+        const { data } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: false }).limit(20);
+        if (data) {
+            const disp = document.getElementById('chat-display');
+            disp.innerHTML = '';
+            data.reverse().forEach(msg => {
+                disp.innerHTML += `<div><strong>${msg.sender}:</strong> ${msg.content}</div>`;
+            });
+            disp.scrollTop = disp.scrollHeight;
+        }
+    }
+
+    async function sendChat() {
+        const input = document.getElementById('chat-msg');
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (input.value.trim() && user) {
+            const senderName = user.user_metadata.full_name ? user.user_metadata.full_name.split(' ')[0] : 'Scholar';
+            await supabaseClient.from('messages').insert([
+                { sender: senderName, content: input.value }
+            ]);
+            input.value = "";
+        }
+    }
+
+    function setupRealtime() {
+        supabaseClient.channel('room1').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+            const disp = document.getElementById('chat-display');
+            disp.innerHTML += `<div><strong>${payload.new.sender}:</strong> ${payload.new.content}</div>`;
+            disp.scrollTop = disp.scrollHeight;
+        }).subscribe();
+    }
+
+    function logout() { supabaseClient.auth.signOut(); window.location.href = 'login.html'; }
+
+    // DYNAMIC QUICK ACCESS MENU
+    function createQuickAccess() {
+        const menuHTML = `
+            <div class="fab-menu">
+                <div id="fab-btn" class="fab-btn" onclick="toggleMenu()">⚡</div>
+                <div id="fab-dropdown" class="dropdown-content">
+                    <a href="profile.html" class="dropdown-item"><span>👤</span> Profile</a>
+                    <a href="buddy-hub.html" class="dropdown-item"><span>🤝</span> Buddy Hub</a>
+                    <a href="idsquiz.html" class="dropdown-item"><span>⚡</span> IDS QUIZ</a>
+                    <a href="csc111test.html" class="dropdown-item"><span>⚡</span> CSC 111 QUIZ</a>
+                    <a href="leaderboard.html" class="dropdown-item"><span>🏆</span> Leaderboard</a>
+                    <a href="note.html" class="dropdown-item"><span>✍️</span> My Notes</a>
+                    <a href="upgrades.html" class="dropdown-item"><span>🚀</span> Upgrades</a>
+                    <a href="modem.html" class="dropdown-item"><span>🌐</span> Modem Hub</a>
+                    <hr style="border:0; border-top:1px solid #eee; margin:5px 0;">
+                    <a href="vault.html" class="dropdown-item" style="color:#666;"><span>🔒</span> Vault</a>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', menuHTML);
+    }
+
+    window.toggleMenu = function() {
+        const dropdown = document.getElementById('fab-dropdown');
+        const btn = document.getElementById('fab-btn');
+        dropdown.classList.toggle('show');
+        btn.classList.toggle('active');
+        btn.innerText = btn.classList.contains('active') ? '✕' : '⚡';
+    }
+
+    initPortal();
+</script>
 </body>
 </html>

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Maintenance | BIU Archive</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         .bg-pattern {
             background-color: #002147;
@@ -18,23 +19,21 @@
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
             color: transparent;
         }
         @keyframes shimmer { to { background-position: 200% center; } }
         .status-pulse { animation: pulse-ring 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite; }
         @keyframes pulse-ring { 0% { transform: scale(0.33); } 80%, 100% { opacity: 0; } }
-        @keyframes stripes { from { background-position: 0 0; } to { background-position: 20px 0; } }
         .animate-stripes { animation: stripes 1s linear infinite; }
+        @keyframes stripes { from { background-position: 0 0; } to { background-position: 20px 0; } }
     </style>
 </head>
-<body class="bg-pattern h-screen flex items-center justify-center p-6 text-white overflow-hidden select-none">
+<body class="bg-pattern min-h-screen flex items-center justify-center p-6 text-white select-none">
 
     <div class="max-w-md w-full text-center space-y-8">
         <div class="relative inline-block">
             <div class="text-7xl animate-bounce drop-shadow-2xl">🛠️</div>
-            <div class="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full status-pulse"></div>
+            <div class="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 status-pulse rounded-full"></div>
             <div class="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full"></div>
         </div>
 
@@ -47,107 +46,92 @@
             
             <div class="py-2">
                 <p class="text-[10px] text-yellow-500/80 uppercase font-bold tracking-[0.2em] mb-1">Estimated Completion</p>
-                <div id="countdown" class="text-3xl font-mono font-bold text-white tabular-nums tracking-widest">--:--:--</div>
+                <div id="countdown" class="text-3xl font-mono font-bold text-white tracking-widest">--:--:--</div>
             </div>
 
             <p class="text-blue-100/80 leading-relaxed text-sm px-4">
-                We're currently polishing the archive to give you a better study experience. 
-                <span class="block mt-2 font-semibold text-yellow-400/90">Your streaks and data are perfectly safe!</span>
+                We're polishing the archive for a better study experience. Grab a quick test while you wait!
             </p>
         </div>
 
+        <div class="bg-blue-900/20 border border-white/10 p-5 rounded-[2rem] space-y-3">
+            <div class="grid grid-cols-1 gap-3">
+                <a href="csc111test.html" class="flex items-center justify-between px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all active:scale-95 group">
+                    <span class="font-bold text-sm">CSC 111 Master CBT</span>
+                    <span class="text-yellow-400">→</span>
+                </a>
+                <a href="idsquiz.html" class="flex items-center justify-between px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all active:scale-95 group">
+                    <span class="font-bold text-sm">IDS Test Prep</span>
+                    <span class="text-yellow-400">→</span>
+                </a>
+            </div>
+        </div>
+
         <div class="relative w-full bg-blue-950/80 rounded-full h-3 overflow-hidden border border-blue-800 shadow-inner">
-            <div id="progressBar" class="absolute top-0 left-0 bg-gradient-to-r from-yellow-600 to-yellow-300 h-full w-0 rounded-full transition-all duration-1000 ease-in-out">
+            <div id="progressBar" class="absolute top-0 left-0 bg-gradient-to-r from-yellow-600 to-yellow-300 h-full w-0 rounded-full transition-all duration-1000">
                 <div class="w-full h-full opacity-30 bg-[linear-gradient(45deg,rgba(255,255,255,.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,.2)_50%,rgba(255,255,255,.2)_75%,transparent_75%,transparent)] bg-[length:20px_20px] animate-stripes"></div>
             </div>
         </div>
 
-        <div class="flex flex-col gap-4">
-            <button id="statusBtn" class="w-full py-4 bg-yellow-400 hover:bg-yellow-500 text-blue-950 font-black rounded-2xl transition-all active:scale-95 shadow-xl shadow-yellow-900/20 uppercase tracking-wider text-sm">
-                🔄 Check System Status
-            </button>
-
-            <button onclick="adminAccess()" class="w-full py-2 bg-blue-900/40 hover:bg-blue-800/60 text-blue-200 border border-blue-700/50 rounded-xl transition-all text-[10px] uppercase font-bold tracking-[0.2em]">
-                ⚙️ Admin Dashboard
-            </button>
-            
-            <div class="space-y-1 cursor-pointer group" onclick="adminAccess()">
-                <p class="text-[10px] text-blue-400 uppercase tracking-widest font-bold group-hover:text-yellow-400 transition-colors">Maintained by</p>
-                <p class="text-xs text-blue-200 font-medium">Paul Adamu • 2026 Admin</p>
-            </div>
-        </div>
+        <button onclick="location.reload()" class="w-full py-4 bg-yellow-400 hover:bg-yellow-500 text-blue-950 font-black rounded-2xl transition-all active:scale-95 uppercase tracking-wider text-sm">
+            🔄 Refresh Status
+        </button>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    <script>
+        // 1. SUPABASE CONFIG
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
-            authDomain: "biu-archive.firebaseapp.com",
-            databaseURL: "https://biu-archive-default-rtdb.firebaseio.com",
-            projectId: "biu-archive",
-            storageBucket: "biu-archive.firebasestorage.app",
-            messagingSenderId: "245967347998",
-            appId: "1:245967347998:web:a8feb5ad0ef9650946a90f"
-        };
+        let targetTime = Date.now() + (2 * 60 * 60 * 1000); // Default 2 hours
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        async function checkMaintenanceStatus() {
+            // Check if maintenance is still ON
+            const { data } = await supabase
+                .from('settings')
+                .select('value')
+                .eq('key', 'maintenance_mode')
+                .single();
 
-        // Global Admin Access Logic
-        window.adminAccess = () => {
-            const pin = prompt("Enter Admin Passkey:");
-            if (pin === "BIU2026") {
-                window.location.href = "admin.html"; // Change to your actual admin page file
-            } else if (pin !== null) {
-                alert("Unauthorized Access Attempt Logged.");
+            if (data && data.value === "false") {
+                window.location.href = 'index.html';
             }
-        };
+        }
 
-        let targetTime = 0;
-        const totalDuration = 12 * 60 * 60 * 1000;
+        // Listen for changes in Realtime
+        supabase
+            .channel('maint-updates')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'settings' }, payload => {
+                if (payload.new.key === 'maintenance_mode' && payload.new.value === 'false') {
+                    window.location.href = 'index.html';
+                }
+            })
+            .subscribe();
 
-        const timeRef = ref(db, "maintenance_end_timestamp");
-        onValue(timeRef, (snapshot) => {
-            targetTime = snapshot.val() || (Date.now() + totalDuration);
-        });
-
-        function updateUI() {
+        function updateCountdown() {
             const now = Date.now();
-            const distance = targetTime - now;
+            const diff = targetTime - now;
 
-            if (distance <= 0) {
+            if (diff <= 0) {
                 document.getElementById('countdown').innerText = "00:00:00";
                 document.getElementById('progressBar').style.width = "100%";
                 return;
             }
 
-            const hours = Math.floor(distance / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            const h = Math.floor(diff / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
 
             document.getElementById('countdown').innerText = 
-                `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
-            const elapsed = totalDuration - distance;
-            const progress = Math.min(Math.max((elapsed / totalDuration) * 100, 5), 98);
-            document.getElementById('progressBar').style.width = progress + "%";
+                `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            
+            // Artificial progress bar logic
+            document.getElementById('progressBar').style.width = "65%"; 
         }
-        
-        setInterval(updateUI, 1000);
 
-        const maintenanceRef = ref(db, "maintenance_mode");
-        onValue(maintenanceRef, (snapshot) => {
-            if (snapshot.val() === false) {
-                document.body.style.backgroundColor = "#064e3b";
-                setTimeout(() => { window.location.href = 'index.html'; }, 500);
-            }
-        });
-
-        document.getElementById('statusBtn').addEventListener('click', () => {
-            location.reload();
-        });
+        setInterval(updateCountdown, 1000);
+        setInterval(checkMaintenanceStatus, 10000); // Backup check every 10s
     </script>
 </body>
 </html>

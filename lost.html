@@ -3,247 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BIU Archive | Lost & Found</title>
+    <title>Lost & Found | BIU Archive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root {
-            --primary: #002147; --accent: #FFD700; --light: #f8f9fa;
-            --white: #ffffff; --text: #333; --purple: #6f42c1;
-            --danger: #dc3545;
-        }
-        [data-theme="dark"] {
-            --primary: #FFD700; --accent: #002147; --light: #121212;
-            --white: #1e1e1e; --text: #f4f4f4;
-        }
-        body { 
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
-            background-color: var(--light); 
-            color: var(--text); 
-            margin: 0; 
-            display: flex; 
-            justify-content: center; 
-            padding: 10px; 
-            transition: 0.3s; 
-        }
-        .container { 
-            background: var(--white); 
-            padding: 1.5rem; 
-            border-radius: 20px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
-            width: 100%; 
-            max-width: 550px; 
-            box-sizing: border-box;
-        }
-        
-        .nav-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 25px; 
-        }
-        .btn-back { 
-            padding: 8px 16px; 
-            background: #eee; 
-            color: #333; 
-            border: none; 
-            border-radius: 10px; 
-            cursor: pointer; 
-            text-decoration: none; 
-            font-size: 12px; 
-            font-weight: bold;
-            transition: 0.2s;
-        }
-        .btn-back:hover { background: #ddd; }
-        
-        .form-section { 
-            background: rgba(111, 66, 193, 0.03); 
-            padding: 20px; 
-            border-radius: 15px; 
-            border: 2px dashed rgba(111, 66, 193, 0.2); 
-            margin-bottom: 30px; 
-            text-align: left; 
-        }
-        input, textarea { 
-            width: 100%; 
-            padding: 14px; 
-            margin: 10px 0; 
-            border: 1px solid #ddd; 
-            border-radius: 12px; 
-            box-sizing: border-box; 
-            font-family: inherit; 
-            font-size: 14px;
-            outline: none;
-        }
-        input:focus { border-color: var(--purple); }
-        
-        .post-btn { 
-            width: 100%; 
-            padding: 16px; 
-            background: var(--purple); 
-            color: white; 
-            border: none; 
-            border-radius: 12px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            font-size: 16px; 
-            margin-top: 10px; 
-            box-shadow: 0 4px 12px rgba(111, 66, 193, 0.2);
-        }
-
-        .feed-title { 
-            text-align: left; 
-            font-size: 1.2rem;
-            color: var(--primary);
-            margin-bottom: 20px;
-            padding-left: 5px;
-            border-left: 4px solid var(--purple);
-        }
-        .item-card { 
-            background: var(--white); 
-            border: 1px solid rgba(0,0,0,0.05); 
-            padding: 18px; 
-            border-radius: 15px; 
-            margin-bottom: 15px; 
-            text-align: left; 
-            position: relative; 
-            transition: 0.2s;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-        }
-        .item-card h3 { margin: 0 0 8px 0; color: var(--purple); font-size: 1.1rem; padding-right: 60px; }
-        .item-card p { margin: 6px 0; font-size: 13px; line-height: 1.4; color: #555; }
-        .item-card .meta { font-size: 10px; opacity: 0.5; margin-top: 12px; display: block; border-top: 1px solid #eee; padding-top: 8px; }
-        .status-tag { position: absolute; top: 18px; right: 18px; font-size: 9px; padding: 4px 10px; border-radius: 8px; background: #e8f5e9; color: #2e7d32; font-weight: bold; }
-
-        .del-btn {
-            background: none; border: none; color: var(--danger); font-size: 10px; cursor: pointer; float: right; margin-top: -5px; font-weight: bold;
-        }
-
-        #toast { visibility: hidden; min-width: 250px; background: #333; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 1000; font-size: 14px; }
-        #toast.show { visibility: visible; animation: fadeInUp 0.3s; }
-        @keyframes fadeInUp { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
-        
-        .empty-msg { text-align: center; opacity: 0.4; font-style: italic; margin-top: 40px; }
+        .bg-biu { background-color: #002147; }
+        .text-biu { color: #002147; }
+        .bg-gold { background-color: #FFD700; }
     </style>
 </head>
-<body>
-    <div id="toast"></div>
+<body class="bg-gray-50 min-h-screen pb-24">
 
-    <div class="container">
-        <div class="nav-header">
-            <a href="index.html" class="btn-back">← Home</a>
-            <h3 style="margin:0; color:var(--purple); font-weight: 800;">LOST & FOUND</h3>
-        </div>
+    <header class="bg-biu text-white p-6 rounded-b-[2.5rem] shadow-xl text-center mb-6">
+        <h1 class="text-2xl font-black uppercase tracking-widest">🔍 Lost & Found</h1>
+        <p class="text-blue-200 text-xs mt-1">Benson Idahosa University Student Portal</p>
+    </header>
 
-        <div class="form-section">
-            <h4 style="margin:0 0 10px 0; font-size: 14px;">📢 Post an Announcement</h4>
-            <input type="text" id="item-name" placeholder="Item Name (e.g. My Laptop Charger)">
-            <input type="text" id="item-location" placeholder="Last seen / Found where?">
-            <textarea id="item-contact" rows="2" placeholder="Contact info or distinguishing marks..."></textarea>
-            <p id="reporter-tag" style="font-size: 10px; color: #888; margin: 5px 0;"></p>
-            <button class="post-btn" onclick="submitPost()">Publish to Board</button>
-        </div>
+    <main class="max-w-md mx-auto px-4">
+        
+        <button onclick="toggleForm()" class="w-full py-4 bg-gold text-biu font-black rounded-2xl shadow-lg active:scale-95 transition-all mb-6 flex items-center justify-center gap-2">
+            <span>➕</span> REPORT FOUND ITEM
+        </button>
 
-        <div style="text-align: left;">
-            <h3 class="feed-title">Notice Board</h3>
-            <div id="items-list">
-                <p class="empty-msg">Checking for items...</p>
+        <div id="uploadForm" class="hidden bg-white p-6 rounded-3xl shadow-md border border-gray-100 mb-8 space-y-4">
+            <h2 class="text-biu font-bold text-sm uppercase tracking-wider">Item Details</h2>
+            
+            <input type="text" id="itemName" placeholder="What did you find? (e.g. ID Card)" 
+                   class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-yellow-400">
+            
+            <input type="text" id="location" placeholder="Found where? (e.g. Heritage Hall)" 
+                   class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none">
+
+            <input type="tel" id="founderPhone" placeholder="Your WhatsApp (e.g. 08012345678)" 
+                   class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none">
+            
+            <textarea id="desc" placeholder="Brief description (color, marks, etc.)" 
+                      class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none h-24"></textarea>
+            
+            <div class="space-y-2">
+                <label class="block text-[10px] font-black text-gray-400 uppercase ml-1">Attach Photo</label>
+                <input type="file" id="itemPhoto" accept="image/*" 
+                       class="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-biu">
             </div>
+            
+            <button onclick="uploadItem()" id="submitBtn" 
+                    class="w-full py-4 bg-biu text-white font-black rounded-xl uppercase tracking-widest text-xs shadow-lg">
+                Submit to Archive
+            </button>
         </div>
-    </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        <div id="itemFeed" class="space-y-6">
+            <div class="text-center py-10 text-gray-400 animate-pulse text-sm">Searching the archive...</div>
+        </div>
+    </main>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBmZDLDyQ2YhMxsYal1q4d0hyr03VXEqak",
-            authDomain: "biu-archive.firebaseapp.com",
-            databaseURL: "https://biu-archive-default-rtdb.firebaseio.com",
-            projectId: "biu-archive",
-            storageBucket: "biu-archive.firebasestorage.app",
-            messagingSenderId: "245967347998",
-            appId: "1:245967347998:web:a8feb5ad0ef9650946a90f"
-        };
+    <nav class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-gray-100 p-4 flex justify-around items-center z-50">
+        <button onclick="location.href='index.html'" class="flex flex-col items-center gap-1 group">
+            <span class="text-xl group-hover:scale-110 transition-transform">🏠</span>
+            <span class="text-[10px] font-bold text-gray-400">HOME</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 group">
+            <span class="text-xl group-hover:scale-110 transition-transform">🔍</span>
+            <span class="text-[10px] font-bold text-biu">FOUND</span>
+        </button>
+        <button onclick="location.href='pq.html'" class="flex flex-col items-center gap-1 group">
+            <span class="text-xl group-hover:scale-110 transition-transform">📄</span>
+            <span class="text-[10px] font-bold text-gray-400">LIBRARY</span>
+        </button>
+    </nav>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const lostRef = ref(db, "lost_found");
+    <script>
+        // CONFIGURATION
+        const SUPABASE_URL = 'https://xkjttkgohmehrrjyjzwc.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhranR0a2dvaG1laHJyanlqendjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMzM4MzUsImV4cCI6MjA4NTkwOTgzNX0.wf_utl6KxdlKCq7bV6sqwm3CnmaJGZyrM-b9-T71B34';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const loggedInUser = localStorage.getItem('biu_user_name');
-        const loggedInDept = localStorage.getItem('biu_user_dept');
-
-        if (!loggedInUser) {
-            window.location.href = 'login.html';
-        } else {
-            document.getElementById('reporter-tag').innerText = "Logged in as " + loggedInUser;
+        function toggleForm() {
+            const form = document.getElementById('uploadForm');
+            form.classList.toggle('hidden');
+            form.scrollIntoView({ behavior: 'smooth' });
         }
 
-        window.submitPost = function() {
-            const name = document.getElementById('item-name').value;
-            const loc = document.getElementById('item-location').value;
-            const contact = document.getElementById('item-contact').value;
+        async function uploadItem() {
+            const btn = document.getElementById('submitBtn');
+            const file = document.getElementById('itemPhoto').files[0];
+            const name = document.getElementById('itemName').value;
+            const loc = document.getElementById('location').value;
+            const phone = document.getElementById('founderPhone').value;
+            const description = document.getElementById('desc').value;
 
-            if (!name || !loc || !contact) {
-                showToast("⚠️ Fill in all fields first");
+            if(!file || !name || !phone) {
+                alert("Please provide the Item Name, Phone Number, and a Photo.");
                 return;
             }
 
-            push(lostRef, {
-                item: name,
-                location: loc,
-                contact: contact,
-                postedBy: loggedInUser,
-                department: loggedInDept,
-                timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                date: new Date().toLocaleDateString(),
-                timeUnix: Date.now()
-            }).then(() => {
-                showToast("✅ Posted successfully");
-                document.getElementById('item-name').value = "";
-                document.getElementById('item-location').value = "";
-                document.getElementById('item-contact').value = "";
-            });
-        };
+            btn.innerText = "UPLOADING...";
+            btn.disabled = true;
 
-        window.deletePost = function(postId) {
-            if(confirm("Did you find this item? Remove it from the board?")) {
-                remove(ref(db, `lost_found/${postId}`));
+            try {
+                // 1. Upload Image
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Math.random()}.${fileExt}`;
+                const { data: uploadData, error: uploadError } = await supabaseClient.storage
+                    .from('item-images')
+                    .upload(fileName, file);
+
+                if (uploadError) throw uploadError;
+
+                // 2. Get Public URL
+                const { data: urlData } = supabaseClient.storage.from('item-images').getPublicUrl(fileName);
+
+                // 3. Save to Database
+                const { error: dbError } = await supabaseClient.from('lost_found').insert([{
+                    item_name: name,
+                    location_found: loc,
+                    description: description,
+                    founder_phone: phone,
+                    image_url: urlData.publicUrl
+                }]);
+
+                if (dbError) throw dbError;
+
+                alert("Item posted successfully!");
+                location.reload();
+            } catch (err) {
+                alert(err.message);
+                btn.innerText = "TRY AGAIN";
+                btn.disabled = false;
             }
-        };
+        }
 
-        onValue(lostRef, (snapshot) => {
-            const list = document.getElementById('items-list');
-            list.innerHTML = "";
-            const data = snapshot.val();
+        async function loadFeed() {
+            const { data, error } = await supabaseClient
+                .from('lost_found')
+                .select('*')
+                .order('created_at', { ascending: false });
 
-            if (data) {
-                const entries = Object.entries(data).reverse();
-                entries.forEach(([id, item]) => {
-                    const isOwner = item.postedBy === loggedInUser;
-                    list.innerHTML += `
-                        <div class="item-card">
-                            <span class="status-tag">ACTIVE</span>
-                            <h3>${item.item}</h3>
-                            <p>📍 <b>At:</b> ${item.location}</p>
-                            <p>📞 <b>Info:</b> ${item.contact}</p>
-                            <p>👤 <b>By:</b> ${item.postedBy} (${item.department || 'Student'})</p>
-                            <span class="meta">
-                                ${item.date} at ${item.timestamp}
-                                ${isOwner ? `<button class="del-btn" onclick="deletePost('${id}')">Remove Post</button>` : ''}
-                            </span>
+            const feed = document.getElementById('itemFeed');
+            feed.innerHTML = '';
+
+            if (data && data.length > 0) {
+                data.forEach(item => {
+                    feed.innerHTML += `
+                        <div class="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 transition-all active:scale-[0.98]">
+                            ${item.image_url ? `<img src="${item.image_url}" class="w-full h-56 object-cover">` : ''}
+                            <div class="p-6">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h3 class="font-black text-xl text-biu leading-tight">${item.item_name}</h3>
+                                    <span class="bg-blue-50 text-biu text-[9px] font-black px-2 py-1 rounded-md uppercase">New</span>
+                                </div>
+                                <p class="text-xs text-blue-500 font-bold mb-3 flex items-center gap-1">
+                                    <span>📍</span> ${item.location_found || 'Unknown Location'}
+                                </p>
+                                <p class="text-gray-500 text-sm mb-6 leading-relaxed">${item.description || 'No additional description provided.'}</p>
+                                
+                                <button onclick="claimItem('${item.founder_phone}', '${item.item_name}')" 
+                                        class="w-full py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.15em] shadow-lg shadow-green-100 flex items-center justify-center gap-2">
+                                    ✅ This is mine (Claim)
+                                </button>
+                            </div>
                         </div>
                     `;
                 });
             } else {
-                list.innerHTML = '<p class="empty-msg">Board is currently clear.</p>';
+                feed.innerHTML = `<div class="text-center py-20 text-gray-400 text-sm">No items found yet. Keep an eye out!</div>`;
             }
-        });
-
-        window.showToast = function(m) {
-            const t = document.getElementById('toast');
-            t.innerText = m;
-            t.className = "show";
-            setTimeout(() => t.className = "", 3000);
         }
+
+        function claimItem(phone, itemName) {
+            const cleanPhone = phone.replace(/\s+/g, '');
+            const msg = `Hello! I'm a BIU student. I saw the "${itemName}" you posted on the BIU Archive. I think it belongs to me. Can we meet?`;
+            window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        // Initialize
+        loadFeed();
+
+        // Realtime listener for new found items
+        supabaseClient
+            .channel('lost-updates')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'lost_found' }, payload => {
+                loadFeed();
+            })
+            .subscribe();
     </script>
 </body>
 </html>
