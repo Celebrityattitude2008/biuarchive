@@ -204,36 +204,61 @@
     const auth = firebase.auth();
 
     async function initPortal() {
-        auth.onAuthStateChanged(async (user) => {
-            if (!user) {
+        // Safety: if auth state doesn't resolve within 6s, redirect to login to avoid hang
+        let resolved = false;
+        const fallback = setTimeout(() => {
+            if (!resolved) {
+                console.warn('Auth state timed out — redirecting to login');
                 window.location.href = 'login.html';
-                return;
             }
+        }, 6000);
 
-            // Set greeting
-            const firstName = user.displayName ? user.displayName.split(' ')[0] : 'Scholar';
-            document.getElementById('greeting').innerText = `Welcome, ${firstName}!`;
-            
-            setupRealtime();
-            loadInitialChats();
-            createQuickAccess();
-        });
+        try {
+            auth.onAuthStateChanged(async (user) => {
+                resolved = true;
+                clearTimeout(fallback);
+                try {
+                    if (!user) {
+                        window.location.href = 'login.html';
+                        return;
+                    }
+
+                    // Set greeting
+                    const firstName = user.displayName ? user.displayName.split(' ')[0] : 'Scholar';
+                    document.getElementById('greeting').innerText = `Welcome, ${firstName}!`;
+
+                    setupRealtime();
+                    loadInitialChats();
+                    createQuickAccess();
+                } catch (innerErr) {
+                    console.error('Error inside auth handler:', innerErr);
+                    // safe redirect
+                    window.location.href = 'login.html';
+                }
+            });
+        } catch (err) {
+            console.error('Auth listener failed to attach:', err);
+            clearTimeout(fallback);
+            window.location.href = 'login.html';
+        }
     }
 
     async function loadInitialChats() {
-        const messagesRef = db.ref('messages');
-        messagesRef.limitToLast(20).once('value', (snapshot) => {
+        try {
+            const messagesRef = db.ref('messages');
+            const snapshot = await messagesRef.limitToLast(20).once('value');
             const disp = document.getElementById('chat-display');
             disp.innerHTML = '';
             const messages = [];
-            snapshot.forEach((child) => {
-                messages.push(child.val());
-            });
+            snapshot.forEach((child) => { messages.push(child.val()); });
             messages.reverse().forEach(msg => {
-                disp.innerHTML += `<div><strong>${msg.sender}:</strong> ${msg.content}</div>`;
+                if (msg && msg.sender && msg.content) disp.innerHTML += `<div><strong>${msg.sender}:</strong> ${msg.content}</div>`;
             });
             disp.scrollTop = disp.scrollHeight;
-        });
+        } catch (err) {
+            console.error('Failed to load initial chats:', err);
+            document.getElementById('chat-display').innerText = 'Chat unavailable';
+        }
     }
 
     async function sendChat() {
@@ -252,13 +277,21 @@
     }
 
     function setupRealtime() {
-        const messagesRef = db.ref('messages');
-        messagesRef.on('child_added', (snapshot) => {
-            const msg = snapshot.val();
-            const disp = document.getElementById('chat-display');
-            disp.innerHTML += `<div><strong>${msg.sender}:</strong> ${msg.content}</div>`;
-            disp.scrollTop = disp.scrollHeight;
-        });
+        try {
+            const messagesRef = db.ref('messages');
+            messagesRef.on('child_added', (snapshot) => {
+                const msg = snapshot.val();
+                const disp = document.getElementById('chat-display');
+                if (msg && msg.sender && msg.content) {
+                    disp.innerHTML += `<div><strong>${msg.sender}:</strong> ${msg.content}</div>`;
+                    disp.scrollTop = disp.scrollHeight;
+                }
+            }, (err) => {
+                console.error('Realtime listener error:', err);
+            });
+        } catch (err) {
+            console.error('Failed to attach realtime listeners:', err);
+        }
     }
 
     function logout() { auth.signOut(); window.location.href = 'login.html'; }
@@ -271,6 +304,7 @@
                 <div id="fab-dropdown" class="dropdown-content">
                     <a href="profile.html" class="dropdown-item"><span>👤</span> Profile</a>
                     <a href="buddy-hub.html" class="dropdown-item"><span>🤝</span> Buddy Hub</a>
+                    <a href="cgpa.html" class="dropdown-item"><span>📊</span> CGPA Calculator</a>
                     <a href="csc111test.html" class="dropdown-item"><span>⚡</span> CSC 111 QUIZ</a>
                     <a href="leaderboard.html" class="dropdown-item"><span>🏆</span> Leaderboard</a>
                     <a href="note.html" class="dropdown-item"><span>✍️</span> My Notes</a>
