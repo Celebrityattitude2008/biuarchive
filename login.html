@@ -4,7 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Login | The BIU Archive</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="theme.css">
+    <script>(function(){try{var t=localStorage.getItem('site-theme')||'dark';document.documentElement.classList.add('theme-'+t);}catch(e){}})();</script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
+    <meta name="google-signin-client_id" content="137837754242-gte1234567890.apps.googleusercontent.com">
     <style>
         :root {
             --primary: #002147; --accent: #FFD700; --bg: #f8f9fa;
@@ -126,6 +131,15 @@
 
             <button type="submit" class="btn-vault" id="submit-btn">UNLOCK ARCHIVE</button>
             
+            <div style="margin: 20px 0; position: relative; text-align: center;">
+                <span style="background: var(--white); padding: 0 10px; position: relative; z-index: 1; color: #999; font-size: 12px; font-weight: 600;">OR</span>
+                <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(0,0,0,0.05); z-index: 0;"></div>
+            </div>
+
+            <button type="button" onclick="loginWithGoogle()" style="width: 100%; padding: 18px; background: #ffffff; color: var(--primary); border: 2px solid rgba(0,0,0,0.1); border-radius: 12px; cursor: pointer; font-weight: 800; font-size: 15px; margin-top: 0; display: flex; align-items: center; justify-content: center; gap: 10px; text-transform: uppercase; letter-spacing: 1.5px;">
+                <span style="font-size: 18px;">🔐</span> Login with Google
+            </button>
+            
             <div class="footer-links">
                 <span>New?</span><a href="signup.html">Create Identity</a>
             </div>
@@ -138,23 +152,79 @@
     </div>
 
     <script>
-        // --- SUPABASE CONFIG ---
-        const SUPABASE_URL = 'https://xkjttkgohmehrrjyjzwc.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhranR0a2dvaG1laHJyanlqendjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMzM4MzUsImV4cCI6MjA4NTkwOTgzNX0.wf_utl6KxdlKCq7bV6sqwm3CnmaJGZyrM-b9-T71B34';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // FIREBASE CONFIG
+        const firebaseConfig = {
+          apiKey: "AIzaSyC0QC_qi2aKIIT5axmN5rk-3igybyxoqW0",
+          authDomain: "biuarchive.firebaseapp.com",
+          databaseURL: "https://biuarchive-default-rtdb.firebaseio.com",
+          projectId: "biuarchive",
+          storageBucket: "biuarchive.firebasestorage.app",
+          messagingSenderId: "137837754242",
+          appId: "1:137837754242:web:4da8aa153cd505e6de019b",
+          measurementId: "G-9KYG7N5F1T"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
 
         const overlay = document.getElementById('auth-overlay');
         const toast = document.getElementById('success-toast');
         const loginForm = document.getElementById('login-form');
 
-        // --- THEME ENGINE ---
+        // Google Login Handler
+        async function loginWithGoogle() {
+            overlay.style.display = 'flex';
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.addScope('profile');
+                provider.addScope('email');
+                const result = await auth.signInWithPopup(provider);
+                const user = result.user;
+
+                // Ensure user exists in DB
+                const userRef = db.ref('users/' + user.uid);
+                const snapshot = await userRef.once('value');
+                if (!snapshot.exists()) {
+                    await userRef.set({
+                        full_name: user.displayName || user.email.split('@')[0],
+                        email: user.email,
+                        department: "Not Set",
+                        matric_no: "GOOGLE_AUTH",
+                        isVerified: false,
+                        preferredTheme: 'dark',
+                        streak: 0,
+                        profilePic: user.photoURL || '',
+                        createdAt: firebase.database.ServerValue.TIMESTAMP
+                    });
+                }
+
+                overlay.style.display = 'none';
+                toast.classList.add('show');
+                setTimeout(() => { window.location.href = 'index.html'; }, 1800);
+            } catch (err) {
+                overlay.style.display = 'none';
+                alert("Google Login Error: " + err.message);
+            }
+        }
+
+        // --- THEME ENGINE (unified) ---
         const themeBtn = document.getElementById('theme-btn');
-        const setTheme = (theme) => {
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('theme', theme);
-        };
-        setTheme(localStorage.getItem('theme') || 'light');
-        themeBtn.addEventListener('click', () => setTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'));
+        function toggleTheme(){
+            try{
+                const current = localStorage.getItem('site-theme') || 'dark';
+                const next = current === 'light' ? 'dark' : 'light';
+                localStorage.setItem('site-theme', next);
+                document.documentElement.classList.remove('theme-dark','theme-light');
+                document.documentElement.classList.add('theme-'+next);
+            }catch(e){}
+        }
+        themeBtn.addEventListener('click', toggleTheme);
+
+        // Ensure theme.js is available and applied
+        (function(){
+            var s=document.createElement('script'); s.src='theme.js'; s.defer=true; document.body.appendChild(s);
+        })();
 
         // --- SESSION PERSISTENCE ---
         window.onload = () => {
@@ -175,14 +245,9 @@
             const remember = document.getElementById('remember').checked;
 
             try {
-                // Direct authentication with Supabase
-                const { data, error } = await supabaseClient.auth.signInWithPassword({
-                    email: email,
-                    password: password,
-                });
-
-                if (error) throw error;
-
+                // Firebase authentication
+                const result = await auth.signInWithEmailAndPassword(email, password);
+                
                 // Handle "Remember Me"
                 if(remember) {
                     localStorage.setItem('biu_email', email);

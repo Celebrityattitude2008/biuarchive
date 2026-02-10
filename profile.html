@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>My Profile | The BIU Archive</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
+        <link rel="stylesheet" href="theme.css">
+        <script>(function(){try{var t=localStorage.getItem('site-theme')||'dark';document.documentElement.classList.add('theme-'+t);}catch(e){}})();</script>
     <style>
         :root {
             --primary: #002147; --accent: #FFD700; --bg: #f8f9fa;
@@ -106,9 +110,21 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://xkjttkgohmehrrjyjzwc.supabase.co'; 
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhranR0a2dvaG1laHJyanlqendjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMzM4MzUsImV4cCI6MjA4NTkwOTgzNX0.wf_utl6KxdlKCq7bV6sqwm3CnmaJGZyrM-b9-T71B34';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // FIREBASE CONFIG
+        const firebaseConfig = {
+          apiKey: "AIzaSyC0QC_qi2aKIIT5axmN5rk-3igybyxoqW0",
+          authDomain: "biuarchive.firebaseapp.com",
+          databaseURL: "https://biuarchive-default-rtdb.firebaseio.com",
+          projectId: "biuarchive",
+          storageBucket: "biuarchive.firebasestorage.app",
+          messagingSenderId: "137837754242",
+          appId: "1:137837754242:web:4da8aa153cd505e6de019b",
+          measurementId: "G-9KYG7N5F1T"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
 
         const editBtn = document.getElementById('toggle-edit');
         const editPanel = document.getElementById('edit-panel');
@@ -118,58 +134,75 @@
         };
 
         async function loadProfile() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) { window.location.href = 'login.html'; return; }
+            auth.onAuthStateChanged(async (user) => {
+                if (!user) { 
+                    window.location.href = 'login.html'; 
+                    return; 
+                }
 
-            const meta = user.user_metadata;
-            document.getElementById('user-name').innerText = meta.full_name;
-            document.getElementById('user-dept').innerText = meta.department;
-            document.getElementById('display-matric').innerText = meta.matric_no;
-            
-            // Set initial or Photo
-            if (meta.photo_url) {
-                document.getElementById('user-avatar').style.backgroundImage = `url('${meta.photo_url}')`;
-                document.getElementById('user-avatar').innerText = '';
-            } else {
-                document.getElementById('user-avatar').innerText = meta.full_name.charAt(0);
-            }
+                // Get user data from Firebase Realtime DB
+                const userRef = db.ref('users/' + user.uid);
+                userRef.once('value', (snapshot) => {
+                    const userData = snapshot.val() || {};
+                    
+                    document.getElementById('user-name').innerText = user.displayName || 'Student';
+                    document.getElementById('user-dept').innerText = userData.department || 'Department';
+                    document.getElementById('display-matric').innerText = userData.matric_no || 'Loading...';
+                    
+                    // Set initial or Photo
+                    if (userData.profilePic) {
+                        document.getElementById('user-avatar').style.backgroundImage = `url('${userData.profilePic}')`;
+                        document.getElementById('user-avatar').innerText = '';
+                    } else {
+                        document.getElementById('user-avatar').innerText = (user.displayName || 'S').charAt(0);
+                    }
 
-            // Display Social Icons
-            const socials = document.getElementById('socials-display');
-            socials.innerHTML = '';
-            if(meta.ig) socials.innerHTML += `<a href="https://instagram.com/${meta.ig.replace('@','')}" target="_blank">📸</a>`;
-            if(meta.tt) socials.innerHTML += `<a href="https://tiktok.com/@${meta.tt.replace('@','')}" target="_blank">🎵</a>`;
+                    // Display Social Icons
+                    const socials = document.getElementById('socials-display');
+                    socials.innerHTML = '';
+                    if(userData.instagram) socials.innerHTML += `<a href="https://instagram.com/${userData.instagram.replace('@','')}" target="_blank">📸</a>`;
+                    if(userData.tiktok) socials.innerHTML += `<a href="https://tiktok.com/@${userData.tiktok.replace('@','')}" target="_blank">🎵</a>`;
+                    if(userData.linkedin) socials.innerHTML += `<a href="${userData.linkedin}" target="_blank">💼</a>`;
 
-            // Pre-fill edit inputs
-            document.getElementById('edit-photo').value = meta.photo_url || '';
-            document.getElementById('edit-ig').value = meta.ig || '';
-            document.getElementById('edit-tt').value = meta.tt || '';
+                    // Pre-fill edit inputs
+                    document.getElementById('edit-photo').value = userData.profilePic || '';
+                    document.getElementById('edit-ig').value = userData.instagram || '';
+                    document.getElementById('edit-tt').value = userData.tiktok || '';
 
-            document.getElementById('loader-overlay').style.display = 'none';
+                    document.getElementById('loader-overlay').style.display = 'none';
+                });
+            });
         }
 
         async function saveProfile() {
+            const user = auth.currentUser;
+            if(!user) { alert('Not authenticated'); return; }
+
             const photo = document.getElementById('edit-photo').value;
             const ig = document.getElementById('edit-ig').value;
             const tt = document.getElementById('edit-tt').value;
 
-            const { error } = await supabase.auth.updateUser({
-                data: { photo_url: photo, ig: ig, tt: tt }
-            });
+            try {
+                await db.ref('users/' + user.uid).update({
+                    profilePic: photo,
+                    instagram: ig,
+                    tiktok: tt
+                });
 
-            if (error) alert(error.message);
-            else {
                 alert("Archive Updated!");
                 location.reload();
+            } catch (err) {
+                alert("Error: " + err.message);
             }
         }
 
         async function handleLogout() {
-            await supabase.auth.signOut();
+            await auth.signOut();
             window.location.href = 'login.html';
         }
 
         loadProfile();
     </script>
+    <script src="theme.js" defer></script>
 </body>
 </html>

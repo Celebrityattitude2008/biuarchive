@@ -4,8 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Lost & Found | BIU Archive</title>
+    <link rel="stylesheet" href="theme.css">
+    <script>(function(){try{var t=localStorage.getItem('site-theme')||'dark';document.documentElement.classList.add('theme-'+t);}catch(e){}})();</script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
     <style>
         .bg-biu { background-color: #002147; }
         .text-biu { color: #002147; }
@@ -73,10 +77,25 @@
     </nav>
 
     <script>
-        // CONFIGURATION
-        const SUPABASE_URL = 'https://xkjttkgohmehrrjyjzwc.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhranR0a2dvaG1laHJyanlqendjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMzM4MzUsImV4cCI6MjA4NTkwOTgzNX0.wf_utl6KxdlKCq7bV6sqwm3CnmaJGZyrM-b9-T71B34';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // CLOUDINARY CONFIG
+        const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/62b4aeb4d67105010cf35eb3eda61c/image/upload";
+        const UPLOAD_PRESET = "biupreset";
+
+        // FIREBASE CONFIG
+        const firebaseConfig = {
+          apiKey: "AIzaSyC0QC_qi2aKIIT5axmN5rk-3igybyxoqW0",
+          authDomain: "biuarchive.firebaseapp.com",
+          databaseURL: "https://biuarchive-default-rtdb.firebaseio.com",
+          projectId: "biuarchive",
+          storageBucket: "biuarchive.firebasestorage.app",
+          messagingSenderId: "137837754242",
+          appId: "1:137837754242:web:4da8aa153cd505e6de019b",
+          measurementId: "G-9KYG7N5F1T"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
 
         function toggleForm() {
             const form = document.getElementById('uploadForm');
@@ -101,73 +120,78 @@
             btn.disabled = true;
 
             try {
-                // 1. Upload Image
-                const fileExt = file.name.split('.').pop();
-                const fileName = `${Math.random()}.${fileExt}`;
-                const { data: uploadData, error: uploadError } = await supabaseClient.storage
-                    .from('item-images')
-                    .upload(fileName, file);
+                // 1. Upload Image to Cloudinary
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', UPLOAD_PRESET);
+                
+                const cloudinaryRes = await fetch(CLOUDINARY_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!cloudinaryRes.ok) throw new Error('Cloudinary upload failed');
+                
+                const cloudinaryData = await cloudinaryRes.json();
+                const imageUrl = cloudinaryData.secure_url;
 
-                if (uploadError) throw uploadError;
-
-                // 2. Get Public URL
-                const { data: urlData } = supabaseClient.storage.from('item-images').getPublicUrl(fileName);
-
-                // 3. Save to Database
-                const { error: dbError } = await supabaseClient.from('lost_found').insert([{
+                // 2. Save to Realtime Database
+                await db.ref('lost_found').push({
                     item_name: name,
                     location_found: loc,
                     description: description,
                     founder_phone: phone,
-                    image_url: urlData.publicUrl
-                }]);
-
-                if (dbError) throw dbError;
+                    image_url: imageUrl,
+                    created_at: firebase.database.ServerValue.TIMESTAMP,
+                    founderUid: auth.currentUser ? auth.currentUser.uid : 'anonymous'
+                });
 
                 alert("Item posted successfully!");
                 location.reload();
             } catch (err) {
-                alert(err.message);
+                alert("Upload Error: " + err.message);
                 btn.innerText = "TRY AGAIN";
                 btn.disabled = false;
             }
         }
 
         async function loadFeed() {
-            const { data, error } = await supabaseClient
-                .from('lost_found')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            const feed = document.getElementById('itemFeed');
-            feed.innerHTML = '';
-
-            if (data && data.length > 0) {
-                data.forEach(item => {
-                    feed.innerHTML += `
-                        <div class="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 transition-all active:scale-[0.98]">
-                            ${item.image_url ? `<img src="${item.image_url}" class="w-full h-56 object-cover">` : ''}
-                            <div class="p-6">
-                                <div class="flex justify-between items-start mb-2">
-                                    <h3 class="font-black text-xl text-biu leading-tight">${item.item_name}</h3>
-                                    <span class="bg-blue-50 text-biu text-[9px] font-black px-2 py-1 rounded-md uppercase">New</span>
-                                </div>
-                                <p class="text-xs text-blue-500 font-bold mb-3 flex items-center gap-1">
-                                    <span>📍</span> ${item.location_found || 'Unknown Location'}
-                                </p>
-                                <p class="text-gray-500 text-sm mb-6 leading-relaxed">${item.description || 'No additional description provided.'}</p>
-                                
-                                <button onclick="claimItem('${item.founder_phone}', '${item.item_name}')" 
-                                        class="w-full py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.15em] shadow-lg shadow-green-100 flex items-center justify-center gap-2">
-                                    ✅ This is mine (Claim)
-                                </button>
-                            </div>
-                        </div>
-                    `;
+            const feedRef = db.ref('lost_found');
+            feedRef.orderByChild('created_at').once('value', (snapshot) => {
+                const feed = document.getElementById('itemFeed');
+                feed.innerHTML = '';
+                const items = [];
+                snapshot.forEach(child => {
+                    items.unshift(child.val()); // Reverse order for latest first
                 });
-            } else {
-                feed.innerHTML = `<div class="text-center py-20 text-gray-400 text-sm">No items found yet. Keep an eye out!</div>`;
-            }
+
+                if (items.length > 0) {
+                    items.forEach(item => {
+                        feed.innerHTML += `
+                            <div class="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 transition-all active:scale-[0.98]">
+                                ${item.image_url ? `<img src="${item.image_url}" class="w-full h-56 object-cover">` : ''}
+                                <div class="p-6">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h3 class="font-black text-xl text-biu leading-tight">${item.item_name}</h3>
+                                        <span class="bg-blue-50 text-biu text-[9px] font-black px-2 py-1 rounded-md uppercase">New</span>
+                                    </div>
+                                    <p class="text-xs text-blue-500 font-bold mb-3 flex items-center gap-1">
+                                        <span>📍</span> ${item.location_found || 'Unknown Location'}
+                                    </p>
+                                    <p class="text-gray-500 text-sm mb-6 leading-relaxed">${item.description || 'No additional description provided.'}</p>
+                                    
+                                    <button onclick="claimItem('${item.founder_phone.replace(/'/g, "\\'")}', '${item.item_name.replace(/'/g, "\\'")}')" 
+                                            class="w-full py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.15em] shadow-lg shadow-green-100 flex items-center justify-center gap-2">
+                                        ✅ This is mine (Claim)
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    feed.innerHTML = `<div class="text-center py-20 text-gray-400 text-sm">No items found yet. Keep an eye out!</div>`;
+                }
+            });
         }
 
         function claimItem(phone, itemName) {
@@ -179,13 +203,9 @@
         // Initialize
         loadFeed();
 
-        // Realtime listener for new found items
-        supabaseClient
-            .channel('lost-updates')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'lost_found' }, payload => {
-                loadFeed();
-            })
-            .subscribe();
+        // Real-time listener for new found items (Firebase)
+        db.ref('lost_found').on('child_added', () => loadFeed());
     </script>
+    <script src="theme.js" defer></script>
 </body>
 </html>

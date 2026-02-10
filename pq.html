@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Past Questions | BIU Archive</title>
+    <link rel="stylesheet" href="theme.css">
+    <script>(function(){try{var t=localStorage.getItem('site-theme')||'dark';document.documentElement.classList.add('theme-'+t);}catch(e){}})();</script>
     <style>
         :root {
             --primary: #002147; 
@@ -215,7 +217,13 @@
                 <div>
                     <h3>MTH 112</h3><p>Elementary Statistics</p>
                 </div>
-                <button class="download-btn" onclick="handleDownload('MTH 112','https://docs.google.com/document/d/1IHjwn7HRnlUoypBEOJL2-k_u0ptZ8GEq/edit')">View PQ</button>
+                <button class="download-btn" onclick="handleDownload('MTH 112','https://docs.google.com/document/d/1jFZFlzQvHxNbnzY35d19kOoOGLX6NxyF/edit?usp=drivesdk&ouid=111271384522252483913&rtpof=true&sd=true')">View PQ</button>
+            </div>
+            <div class="course-card cat-sci">
+                <div>
+                    <h3>CSC 113</h3><p>Intro Programming II</p>
+                </div>
+                <button class="download-btn" onclick="handleDownload('CSC 113','https://docs.google.com/document/d/1QJxLjtQTpA1AHVFRgEfwe24QPZPHGti-/edit?usp=drivesdk&ouid=111271384522252483913&rtpof=true&sd=true')">View PQ</button>
             </div>
             <div class="course-card cat-sci">
                 <div>
@@ -229,33 +237,74 @@
                 </div>
                 <button class="download-btn" onclick="handleDownload('CSC 111','https://docs.google.com/document/d/1tGh6b6NQTMQoF_IpiMb6HY-xQ5HrsPyf/view')">View PQ</button>
             </div>
+            <div class="course-card cat-sci">
+                <div>
+                    <h3>CHM 113</h3><p>Organic & Inorganic Basics</p>
+                </div>
+                <button class="download-btn" onclick="handleDownload('CHM 113','https://drive.google.com/file/d/1YQTm7bRCGPls4Q0SaGnGA57cPOCXhPB3/view?usp=drivesdk')">View PQ</button>
+            </div>
+            <div class="course-card cat-sci">
+                <div>
+                    <h3>ZOO 111</h3><p>Introductory Zoology</p>
+                </div>
+                <button class="download-btn" onclick="handleDownload('ZOO 111','https://drive.google.com/file/d/1d5X3OVPWjmrQhd1ybgulCBHZEqgvvbSp/view?usp=drivesdk')">View PQ</button>
+            </div>
         </div>
+
+        <div id="dynamic-pqs" style="margin-top:22px;"></div>
 
         <footer>
             The BIU Archive &copy; 2026
         </footer>
     </div>
 
-    <script>
-        const name = localStorage.getItem('biu_user_name');
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0QC_qi2aKIIT5axmN5rk-3igybyxoqW0",
+            authDomain: "biuarchive.firebaseapp.com",
+            databaseURL: "https://biuarchive-default-rtdb.firebaseio.com",
+            projectId: "biuarchive",
+            storageBucket: "biuarchive.firebasestorage.app",
+            messagingSenderId: "137837754242",
+            appId: "1:137837754242:web:4da8aa153cd505e6de019b",
+            measurementId: "G-9KYG7N5F1T"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
         let currentCategory = 'all';
 
-        if(!name) { window.location.href = 'login.html'; }
-        document.getElementById('display-name').innerText = name;
-
-        // ALL PQ'S OPEN FOR EVERYONE: REMOVED HIDDEN CLASS LOGIC
-        function applyAccess() {
-            document.querySelectorAll('.course-card').forEach(el => el.classList.remove('hidden'));
+        // Theme helpers (use 'site-theme')
+        function applyTheme(name) {
+            try {
+                document.documentElement.classList.remove('theme-dark','theme-light');
+                document.documentElement.classList.add('theme-' + name);
+                document.body.setAttribute('data-theme', name);
+                localStorage.setItem('site-theme', name);
+            } catch (e) {}
         }
-        applyAccess();
 
-        window.handleDownload = function(t, u) { 
+        window.toggleTheme = function() {
+            const current = localStorage.getItem('site-theme') || 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            applyTheme(next);
+        };
+
+        // Show snack and open link
+        window.handleDownload = function(t, u) {
             const toast = document.getElementById('toast');
             toast.innerText = `✅ Opening ${t} Past Question...`;
             toast.className = "show";
             setTimeout(() => { toast.className = ""; window.open(u, '_blank'); }, 1200);
         };
 
+        // Course filtering
         window.filterCourses = function() {
             const query = document.getElementById('courseSearch').value.toLowerCase();
             document.querySelectorAll('.course-card').forEach(card => {
@@ -264,11 +313,7 @@
                 const matchesCategory = (currentCategory === 'all' || card.classList.contains(currentCategory));
                 const matchesSearch = title.includes(query) || desc.includes(query);
 
-                if (matchesCategory && matchesSearch) {
-                    card.style.display = 'flex';
-                } else {
-                    card.style.display = 'none';
-                }
+                card.style.display = (matchesCategory && matchesSearch) ? 'flex' : 'none';
             });
         };
 
@@ -279,14 +324,57 @@
             filterCourses();
         };
 
-        window.toggleTheme = function() {
-            const body = document.body;
-            const current = body.getAttribute('data-theme');
-            body.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
-            localStorage.setItem('theme', current === 'dark' ? 'light' : 'dark');
-        };
-        
-        if (localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
+        function applyAccess() { document.querySelectorAll('.course-card').forEach(el => el.classList.remove('hidden')); }
+        applyAccess();
+
+        // Load dynamic past questions from Realtime DB
+        function renderPastQuestions(snapshot) {
+            const container = document.getElementById('dynamic-pqs');
+            container.innerHTML = '';
+            if (!snapshot) return;
+            snapshot.forEach(itemSnap => {
+                const item = itemSnap.val();
+                const card = document.createElement('div');
+                card.className = 'course-card';
+                card.style.marginTop = '10px';
+                card.innerHTML = `
+                    <div>
+                        <h3>${item.course || item.title || 'Past Question'}</h3>
+                        <p style="font-weight:700; opacity:0.8;">${item.title || item.course || ''}</p>
+                    </div>
+                    <button class="download-btn">Open</button>
+                `;
+                const btn = card.querySelector('.download-btn');
+                btn.addEventListener('click', () => window.open(item.url, '_blank'));
+                container.appendChild(card);
+            });
+        }
+
+        // Auth enforcement + user data sync
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                // If no firebase user, fall back to localStorage check; if none, redirect
+                const nameLocal = localStorage.getItem('biu_user_name');
+                if (!nameLocal) return window.location.href = 'login.html';
+                document.getElementById('display-name').innerText = nameLocal;
+                // Still try to load dynamic PQs (read-only)
+                onValue(ref(db, 'past_questions'), (snap) => renderPastQuestions(snap));
+                return;
+            }
+
+            const uid = user.uid;
+            // Sync display name and theme from DB
+            onValue(ref(db, `users/${uid}`), (snap) => {
+                const data = snap.val() || {};
+                document.getElementById('display-name').innerText = data.full_name || user.email || 'Scholar';
+                if (data.preferredTheme) applyTheme(data.preferredTheme);
+            });
+
+            // Load dynamic PQs
+            onValue(ref(db, 'past_questions'), (snap) => renderPastQuestions(snap));
+        });
+
     </script>
+    <script src="theme.js" defer></script>
 </body>
 </html>

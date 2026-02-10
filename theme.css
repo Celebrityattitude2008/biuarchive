@@ -1,0 +1,34 @@
+:root{
+  --biu-maroon: #6b0f0f;
+  --biu-gold: #f2c94c;
+  --bg-dark: #071018;
+  --card-dark: #0f1720;
+  --text-dark: #f3efe6;
+  --bg-light: #fffdfa;
+  --card-light: #ffffff;
+  --text-light: #0b1220;
+  --accent-light: var(--biu-maroon);
+}
+
+/* Default theme will be dark (Benson Idahosa University colors) */
+.theme-dark {
+  background-color: var(--bg-dark);
+  color: var(--text-dark);
+}
+.theme-dark body, .theme-dark html { background: var(--bg-dark); color: var(--text-dark); }
+.theme-dark .card, .theme-dark .signup-container { background: var(--card-dark); color: var(--text-dark); box-shadow: 0 8px 30px rgba(0,0,0,0.6); }
+.theme-dark a, .theme-dark button { color: var(--text-dark); }
+.theme-dark .btn-accent { background: linear-gradient(90deg,var(--biu-maroon), #4b0b0b); color: var(--biu-gold); }
+
+/* Light, eye-catching mode */
+.theme-light { background: linear-gradient(180deg,#fffdfa,#f6fbff); color: var(--text-light); }
+.theme-light body, .theme-light html { background: linear-gradient(180deg,#fffdfa,#f6fbff); color: var(--text-light); }
+.theme-light .card, .theme-light .signup-container { background: var(--card-light); color: var(--text-light); box-shadow: 0 10px 30px rgba(10,20,40,0.06); }
+.theme-light .btn-accent { background: linear-gradient(90deg,var(--accent-light), #8b1a1a); color: #fff; }
+
+/* Utility classes */
+.theme-toggle { display:flex; gap:8px; align-items:center }
+.theme-toggle select { padding:8px; border-radius:8px; border:1px solid #ddd }
+
+/* Basic reset for pages that use .card class */
+.card { transition: background .25s, color .25s; }

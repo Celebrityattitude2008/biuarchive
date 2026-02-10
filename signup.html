@@ -4,7 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BIU Student Archive | Signup</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="theme.css">
+    <script>(function(){try{var t=localStorage.getItem('site-theme')||'dark';document.documentElement.classList.add('theme-'+t);}catch(e){}})();</script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
+    <meta name="google-signin-client_id" content="137837754242-gte1234567890.apps.googleusercontent.com">
     <style>
         body {
             font-family: 'Inter', system-ui, sans-serif;
@@ -147,7 +152,16 @@
 </div>
 
 <div class="signup-container">
-    <h2>The BIU Archive</h2>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+            <h2 style="margin:0">The BIU Archive</h2>
+            <div class="theme-toggle" style="margin-left:auto">
+                <label style="font-weight:700;font-size:12px;margin-right:8px">Theme</label>
+                <select id="themeSelect" aria-label="Theme selection">
+                    <option value="dark">BIU Dark</option>
+                    <option value="light">Light Mode</option>
+                </select>
+            </div>
+        </div>
     <p class="subtitle">Secure your academic legacy</p>
     
     <div id="error-box" class="error-box"></div>
@@ -187,6 +201,15 @@
 
         <button type="submit" id="submitBtn">CREATE VAULT IDENTITY</button>
 
+        <div style="margin: 20px 0; position: relative; text-align: center;">
+            <span style="background: #ffffff; padding: 0 10px; position: relative; z-index: 1; color: #666; font-size: 12px; font-weight: 600;">OR</span>
+            <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #eee; z-index: 0;"></div>
+        </div>
+
+        <button type="button" onclick="signUpWithGoogle()" style="background-color: #ffffff; color: #003366; border: 2px solid #eee; display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <span style="font-size: 18px;">🔐</span> Sign Up with Google
+        </button>
+
         <div class="login-link">
             Already a member? <a href="login.html">Login here</a>
         </div>
@@ -194,13 +217,58 @@
 </div>
 
 <script>
-    const SUPABASE_URL = 'https://xkjttkgohmehrrjyjzwc.supabase.co'; 
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhranR0a2dvaG1laHJyanlqendjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMzM4MzUsImV4cCI6MjA4NTkwOTgzNX0.wf_utl6KxdlKCq7bV6sqwm3CnmaJGZyrM-b9-T71B34';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // FIREBASE CONFIG
+    const firebaseConfig = {
+      apiKey: "AIzaSyC0QC_qi2aKIIT5axmN5rk-3igybyxoqW0",
+      authDomain: "biuarchive.firebaseapp.com",
+      databaseURL: "https://biuarchive-default-rtdb.firebaseio.com",
+      projectId: "biuarchive",
+      storageBucket: "biuarchive.firebasestorage.app",
+      messagingSenderId: "137837754242",
+      appId: "1:137837754242:web:4da8aa153cd505e6de019b",
+      measurementId: "G-9KYG7N5F1T"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
 
     const errorBox = document.getElementById('error-box');
     const authOverlay = document.getElementById('auth-overlay');
     const successToast = document.getElementById('success-toast');
+
+    // Google Sign-Up Handler
+    async function signUpWithGoogle() {
+        authOverlay.style.display = "flex";
+        try {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('profile');
+            provider.addScope('email');
+            const result = await auth.signInWithPopup(provider);
+            const user = result.user;
+            
+            // Save Google user to Realtime Database
+            await db.ref('users/' + user.uid).set({
+                full_name: user.displayName || user.email.split('@')[0],
+                email: user.email,
+                department: "Not Set",
+                matric_no: "GOOGLE_AUTH",
+                isVerified: false,
+                preferredTheme: 'dark',
+                streak: 0,
+                profilePic: user.photoURL || '',
+                createdAt: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            authOverlay.style.display = "none";
+            successToast.classList.add('show');
+            setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+        } catch (err) {
+            authOverlay.style.display = "none";
+            errorBox.innerText = "Google Sign-Up Error: " + err.message;
+            errorBox.style.display = "block";
+        }
+    }
 
     function updatePlaceholder() {
         const dept = document.getElementById('dept').value;
@@ -225,7 +293,7 @@
         const dept = document.getElementById('dept').value;
         const matric = document.getElementById('matric_no').value.toUpperCase();
 
-        // Pass Match Check
+        // Password Match Check
         if (password !== confirm_password) {
             errorBox.innerText = "Passwords do not match!";
             errorBox.style.display = "block";
@@ -248,21 +316,23 @@
         authOverlay.style.display = "flex";
 
         try {
-            // We save data into USER_METADATA to ensure it always saves without RLS errors
-            const { data, error } = await supabaseClient.auth.signUp({
+            // Create Firebase Auth User
+            const { user } = await auth.createUserWithEmailAndPassword(email, password);
+            
+            // Update display name
+            await user.updateProfile({ displayName: full_name });
+            
+            // Store user data in Realtime Database
+            await db.ref('users/' + user.uid).set({
+                full_name: full_name,
                 email: email,
-                password: password,
-                options: {
-                    data: {
-                        full_name: full_name,
-                        matric_no: matric,
-                        department: dept,
-                        is_approved: true // Automatically approve users
-                    }
-                }
+                department: dept,
+                matric_no: matric,
+                isVerified: false,
+                preferredTheme: 'dark',
+                streak: 0,
+                createdAt: firebase.database.ServerValue.TIMESTAMP
             });
-
-            if (error) throw error;
 
             authOverlay.style.display = "none";
             successToast.classList.add('show');
@@ -278,5 +348,25 @@
         }
     });
 </script>
+<script src="theme.js" defer></script>
+<script>
+    // Wire the theme selector
+    (function(){
+        const sel = document.getElementById('themeSelect');
+        try{
+            const stored = localStorage.getItem('site-theme') || 'dark';
+            sel.value = stored;
+        }catch(e){ }
+
+        sel.addEventListener('change', (e)=>{
+            const val = e.target.value === 'light' ? 'light' : 'dark';
+            try{ localStorage.setItem('site-theme', val); }catch(_){}
+            // apply immediately
+            document.documentElement.classList.remove('theme-dark','theme-light');
+            document.documentElement.classList.add('theme-'+val);
+        });
+    })();
+</script>
+<script src="theme.js" defer></script>
 </body>
 </html>

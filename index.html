@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BIU Archive | Student Portal</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="theme.css">
+    <script>(function(){try{var t=localStorage.getItem('site-theme')||'dark';document.documentElement.classList.add('theme-'+t);}catch(e){}})();</script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
     <style>
         :root {
             --primary: #002147; --accent: #FFD700; --light: #f4f4f4;
@@ -183,72 +187,81 @@
 </div>
 
 <script>
-    // YOUR SUPABASE CONFIG
-    const SUPABASE_URL = 'https://xkjttkgohmehrrjyjzwc.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhranR0a2dvaG1laHJyanlqendjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMzM4MzUsImV4cCI6MjA4NTkwOTgzNX0.wf_utl6KxdlKCq7bV6sqwm3CnmaJGZyrM-b9-T71B34';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // FIREBASE CONFIG
+    const firebaseConfig = {
+      apiKey: "AIzaSyC0QC_qi2aKIIT5axmN5rk-3igybyxoqW0",
+      authDomain: "biuarchive.firebaseapp.com",
+      databaseURL: "https://biuarchive-default-rtdb.firebaseio.com",
+      projectId: "biuarchive",
+      storageBucket: "biuarchive.firebasestorage.app",
+      messagingSenderId: "137837754242",
+      appId: "1:137837754242:web:4da8aa153cd505e6de019b",
+      measurementId: "G-9KYG7N5F1T"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
 
     async function initPortal() {
-        // Check Maintenance
-        const { data: maintData } = await supabaseClient
-            .from('settings')
-            .select('value')
-            .eq('key', 'maintenance_mode')
-            .single();
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
 
-        if (maintData && maintData.value === "true") {
-            window.location.href = 'maintenance.html';
-            return;
-        }
-
-        // Check Auth
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        if (!user) {
-            window.location.href = 'signup.html';
-        } else {
-            // Set Name
-            const firstName = user.user_metadata.full_name ? user.user_metadata.full_name.split(' ')[0] : 'Scholar';
+            // Set greeting
+            const firstName = user.displayName ? user.displayName.split(' ')[0] : 'Scholar';
             document.getElementById('greeting').innerText = `Welcome, ${firstName}!`;
             
             setupRealtime();
             loadInitialChats();
             createQuickAccess();
-        }
+        });
     }
 
     async function loadInitialChats() {
-        const { data } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: false }).limit(20);
-        if (data) {
+        const messagesRef = db.ref('messages');
+        messagesRef.limitToLast(20).once('value', (snapshot) => {
             const disp = document.getElementById('chat-display');
             disp.innerHTML = '';
-            data.reverse().forEach(msg => {
+            const messages = [];
+            snapshot.forEach((child) => {
+                messages.push(child.val());
+            });
+            messages.reverse().forEach(msg => {
                 disp.innerHTML += `<div><strong>${msg.sender}:</strong> ${msg.content}</div>`;
             });
             disp.scrollTop = disp.scrollHeight;
-        }
+        });
     }
 
     async function sendChat() {
         const input = document.getElementById('chat-msg');
-        const { data: { user } } = await supabaseClient.auth.getUser();
+        const user = auth.currentUser;
         if (input.value.trim() && user) {
-            const senderName = user.user_metadata.full_name ? user.user_metadata.full_name.split(' ')[0] : 'Scholar';
-            await supabaseClient.from('messages').insert([
-                { sender: senderName, content: input.value }
-            ]);
+            const senderName = user.displayName ? user.displayName.split(' ')[0] : 'Scholar';
+            db.ref('messages').push({
+                sender: senderName,
+                content: input.value,
+                senderUid: user.uid,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
             input.value = "";
         }
     }
 
     function setupRealtime() {
-        supabaseClient.channel('room1').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+        const messagesRef = db.ref('messages');
+        messagesRef.on('child_added', (snapshot) => {
+            const msg = snapshot.val();
             const disp = document.getElementById('chat-display');
-            disp.innerHTML += `<div><strong>${payload.new.sender}:</strong> ${payload.new.content}</div>`;
+            disp.innerHTML += `<div><strong>${msg.sender}:</strong> ${msg.content}</div>`;
             disp.scrollTop = disp.scrollHeight;
-        }).subscribe();
+        });
     }
 
-    function logout() { supabaseClient.auth.signOut(); window.location.href = 'login.html'; }
+    function logout() { auth.signOut(); window.location.href = 'login.html'; }
 
     // DYNAMIC QUICK ACCESS MENU
     function createQuickAccess() {
@@ -258,7 +271,6 @@
                 <div id="fab-dropdown" class="dropdown-content">
                     <a href="profile.html" class="dropdown-item"><span>👤</span> Profile</a>
                     <a href="buddy-hub.html" class="dropdown-item"><span>🤝</span> Buddy Hub</a>
-                    <a href="idsquiz.html" class="dropdown-item"><span>⚡</span> IDS QUIZ</a>
                     <a href="csc111test.html" class="dropdown-item"><span>⚡</span> CSC 111 QUIZ</a>
                     <a href="leaderboard.html" class="dropdown-item"><span>🏆</span> Leaderboard</a>
                     <a href="note.html" class="dropdown-item"><span>✍️</span> My Notes</a>
@@ -282,5 +294,6 @@
 
     initPortal();
 </script>
+<script src="theme.js" defer></script>
 </body>
 </html>

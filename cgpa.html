@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIU CGPA Calculator | The Crucial Twist</title>
+    <link rel="stylesheet" href="theme.css">
+    <script>(function(){try{var t=localStorage.getItem('site-theme')||'dark';document.documentElement.classList.add('theme-'+t);}catch(e){}})();</script>
+    <style>
+        :root {
+            --primary: #002147;
+            --accent: #FFD700;
+            --bg: #f8f9fa;
+            --white: #ffffff;
+            --text: #333;
+            --success: #28a745;
+            --danger: #dc3545;
+            --radius: 12px;
+        }
+
+        [data-theme="dark"] {
+            --primary: #FFD700;
+            --accent: #002147;
+            --bg: #121212;
+            --white: #1e1e1e;
+            --text: #f4f4f4;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            transition: 0.3s;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--white);
+            padding: 30px;
+            border-radius: var(--radius);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin: 0 0 10px 0;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            color: rgba(0, 0, 0, 0.6);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        /* GRADING SCALE REFERENCE */
+        .grading-scale {
+            background: rgba(0, 33, 71, 0.05);
+            padding: 15px;
+            border-radius: var(--radius);
+            margin-bottom: 25px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .grading-scale h3 {
+            margin: 0 0 10px 0;
+            font-size: 13px;
+            text-transform: uppercase;
+            color: var(--primary);
+        }
+
+        .grade-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+        }
+
+        .grade-item {
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            text-align: center;
+            background: var(--white);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .grade-letter {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .grade-range {
+            font-size: 11px;
+            opacity: 0.7;
+        }
+
+        /* COURSE INPUT TABLE */
+        .courses-section {
+            margin-top: 30px;
+        }
+
+        .courses-section h2 {
+            color: var(--primary);
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: var(--radius);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        thead {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        tbody tr:hover {
+            background: rgba(0, 33, 71, 0.02);
+        }
+
+        .course-name {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .course-desc {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+
+        .cu-badge {
+            background: rgba(255, 215, 0, 0.2);
+            color: var(--primary);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        select, input[type="number"] {
+            padding: 8px 10px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 6px;
+            background: var(--white);
+            color: var(--text);
+            font-size: 12px;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        select:focus, input[type="number"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 33, 71, 0.1);
+        }
+
+        /* CALCULATION RESULTS */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, var(--primary), rgba(0, 33, 71, 0.8));
+            color: var(--white);
+            padding: 20px;
+            border-radius: var(--radius);
+            text-align: center;
+        }
+
+        .result-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .result-value {
+            font-size: 2rem;
+            font-weight: 900;
+            margin: 0;
+        }
+
+        .result-desc {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        /* ACTIONS */
+        .actions {
+            margin-top: 25px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: 0.2s;
+        }
+
+        .btn-calculate {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-calculate:hover {
+            opacity: 0.9;
+        }
+
+        .btn-reset {
+            background: rgba(0, 0, 0, 0.1);
+            color: var(--text);
+        }
+
+        .btn-reset:hover {
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        .info-box {
+            background: rgba(40, 167, 69, 0.1);
+            border-left: 4px solid var(--success);
+            padding: 15px;
+            border-radius: var(--radius);
+            margin-top: 25px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .info-box strong {
+            color: var(--success);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            font-size: 11px;
+            opacity: 0.6;
+        }
+
+        .nav-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 16px;
+            background: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 15px; }
+            h1 { font-size: 1.5rem; }
+            .grade-grid { grid-template-columns: repeat(3, 1fr); }
+            .results-grid { grid-template-columns: 1fr; }
+            th, td { padding: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <button class="nav-btn" onclick="window.location.href='index.html'">← Home</button>
+
+    <div class="container">
+        <div class="header">
+            <h1>🎓 BIU CGPA Calculator</h1>
+            <p class="subtitle">Cumulative Grade Point Average — The Crucial Twist</p>
+        </div>
+
+        <!-- GRADING SCALE -->
+        <div class="grading-scale">
+            <h3>📊 BIU Grading Scale (5-Point)</h3>
+            <div class="grade-grid">
+                <div class="grade-item">
+                    <div class="grade-letter">A</div>
+                    <div class="grade-range">70–100%<br>5.0 GP</div>
+                </div>
+                <div class="grade-item">
+                    <div class="grade-letter">B</div>
+                    <div class="grade-range">60–69%<br>4.0 GP</div>
+                </div>
+                <div class="grade-item">
+                    <div class="grade-letter">C</div>
+                    <div class="grade-range">50–59%<br>3.0 GP</div>
+                </div>
+                <div class="grade-item">
+                    <div class="grade-letter">D</div>
+                    <div class="grade-range">45–49%<br>2.0 GP</div>
+                </div>
+                <div class="grade-item">
+                    <div class="grade-letter">E</div>
+                    <div class="grade-range">40–44%<br>1.0 GP</div>
+                </div>
+                <div class="grade-item">
+                    <div class="grade-letter">F</div>
+                    <div class="grade-range">0–39%<br>0.0 GP</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COURSE INPUT -->
+        <div class="courses-section">
+            <h2>Select Your Grades</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Course Code</th>
+                            <th>Course Title</th>
+                            <th>Credit Units</th>
+                            <th>Your Grade</th>
+                            <th>Grade Point</th>
+                            <th>Quality Points</th>
+                        </tr>
+                    </thead>
+                    <tbody id="course-table">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- RESULTS -->
+        <div class="results-grid" id="results-grid" style="display: none;">
+            <div class="result-card">
+                <div class="result-label">Total Quality Points</div>
+                <p class="result-value" id="totalQP">0</p>
+            </div>
+            <div class="result-card">
+                <div class="result-label">Total Credit Units</div>
+                <p class="result-value" id="totalCU">0</p>
+            </div>
+            <div class="result-card" style="background: linear-gradient(135deg, var(--accent), rgba(255, 215, 0, 0.7));">
+                <div class="result-label" style="color: var(--text);">Your CGPA</div>
+                <p class="result-value" id="cgpaValue" style="color: var(--primary);">0.00</p>
+                <p class="result-desc" id="cgpaGrade" style="color: var(--text);">Grade: A+</p>
+            </div>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="actions">
+            <button class="btn btn-calculate" onclick="calculateCGPA()">📈 Calculate CGPA</button>
+            <button class="btn btn-reset" onclick="resetForm()">🔄 Reset All</button>
+        </div>
+
+        <!-- INFO BOX -->
+        <div class="info-box">
+            <strong>📌 How CGPA Works:</strong><br>
+            CGPA = Total Quality Points ÷ Total Credit Units<br>
+            Quality Points = Grade Point × Credit Unit<br>
+            Example: If you scored B (4.0 GP) in a 3-CU course → 4.0 × 3 = 12 Quality Points
+        </div>
+
+        <div class="footer">
+            The BIU Archive © 2026 | Accurate CGPA Calculation
+        </div>
+    </div>
+
+    <script>
+        // BIU Course Database with Credit Units
+        const courses = [
+            // General Studies
+            { code: 'GST 111', title: 'Communication English', cu: 2 },
+            { code: 'GST 112', title: 'People and Culture', cu: 2 },
+            { code: 'IDS 111', title: 'Rudiments of Faith', cu: 2 },
+
+            // Sciences/Mathematics
+            { code: 'MTH 111', title: 'General Mathematics', cu: 3 },
+            { code: 'MTH 112', title: 'Elementary Statistics', cu: 3 },
+            { code: 'CHM 111', title: 'General Chemistry I', cu: 4 },
+            { code: 'CHM 113', title: 'Organic & Inorganic Basics', cu: 4 },
+            { code: 'ZOO 111', title: 'Introductory Zoology', cu: 3 },
+
+            // Departmental
+            { code: 'CSC 111', title: 'Intro to Computer Science', cu: 3 },
+            { code: 'CSC 113', title: 'Intro Programming II', cu: 4 }
+        ];
+
+        // Grading scale
+        const gradeScale = {
+            'A': 5.0,
+            'B': 4.0,
+            'C': 3.0,
+            'D': 2.0,
+            'E': 1.0,
+            'F': 0.0
+        };
+
+        // Initialize course table
+        function initCourseTable() {
+            const table = document.getElementById('course-table');
+            table.innerHTML = courses.map((course, idx) => `
+                <tr>
+                    <td><span class="course-name">${course.code}</span></td>
+                    <td>
+                        <span class="course-name">${course.title}</span>
+                        <div class="cu-badge">${course.cu} CU</div>
+                    </td>
+                    <td style="text-align: center; font-weight: 700;">${course.cu}</td>
+                    <td>
+                        <select id="grade-${idx}" onchange="updateQualityPoints(${idx})" style="width: 100%;">
+                            <option value="">-- Select --</option>
+                            <option value="A">A (70–100%)</option>
+                            <option value="B">B (60–69%)</option>
+                            <option value="C">C (50–59%)</option>
+                            <option value="D">D (45–49%)</option>
+                            <option value="E">E (40–44%)</option>
+                            <option value="F">F (0–39%)</option>
+                        </select>
+                    </td>
+                    <td style="text-align: center; font-weight: 700;"><span id="gp-${idx}">—</span></td>
+                    <td style="text-align: center; font-weight: 700; background: rgba(255, 215, 0, 0.1);"><span id="qp-${idx}">—</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function updateQualityPoints(idx) {
+            const grade = document.getElementById(`grade-${idx}`).value;
+            const course = courses[idx];
+            const gpElement = document.getElementById(`gp-${idx}`);
+            const qpElement = document.getElementById(`qp-${idx}`);
+
+            if (!grade) {
+                gpElement.textContent = '—';
+                qpElement.textContent = '—';
+                return;
+            }
+
+            const gp = gradeScale[grade];
+            const qp = (gp * course.cu).toFixed(2);
+
+            gpElement.textContent = gp.toFixed(1);
+            qpElement.textContent = qp;
+        }
+
+        function calculateCGPA() {
+            let totalQP = 0;
+            let totalCU = 0;
+            let coursesEntered = 0;
+
+            courses.forEach((course, idx) => {
+                const grade = document.getElementById(`grade-${idx}`).value;
+                if (grade) {
+                    const gp = gradeScale[grade];
+                    const qp = gp * course.cu;
+                    totalQP += qp;
+                    totalCU += course.cu;
+                    coursesEntered++;
+                }
+            });
+
+            if (coursesEntered === 0) {
+                alert('Please select at least one grade.');
+                return;
+            }
+
+            const cgpa = (totalQP / totalCU).toFixed(2);
+            const cgpaGrade = cgpa >= 4.5 ? 'A+ (Excellent)' : cgpa >= 4.0 ? 'A (Very Good)' : cgpa >= 3.5 ? 'B+ (Good)' : cgpa >= 3.0 ? 'B (Very Good)' : cgpa >= 2.5 ? 'C+ (Good)' : cgpa >= 2.0 ? 'C (Pass)' : 'D (Low Pass)';
+
+            document.getElementById('totalQP').textContent = totalQP.toFixed(2);
+            document.getElementById('totalCU').textContent = totalCU;
+            document.getElementById('cgpaValue').textContent = cgpa;
+            document.getElementById('cgpaGrade').textContent = `Grade: ${cgpaGrade}`;
+            document.getElementById('results-grid').style.display = 'grid';
+        }
+
+        function resetForm() {
+            courses.forEach((_, idx) => {
+                document.getElementById(`grade-${idx}`).value = '';
+                document.getElementById(`gp-${idx}`).textContent = '—';
+                document.getElementById(`qp-${idx}`).textContent = '—';
+            });
+            document.getElementById('results-grid').style.display = 'none';
+        }
+
+        // Initialize on page load
+        initCourseTable();
+    </script>
+
+    <script src="theme.js" defer></script>
+</body>
+</html>

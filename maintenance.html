@@ -4,8 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Maintenance | BIU Archive</title>
+    <link rel="stylesheet" href="theme.css">
+    <script>(function(){try{var t=localStorage.getItem('site-theme')||'dark';document.documentElement.classList.add('theme-'+t);}catch(e){}})();</script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
     <style>
         .bg-pattern {
             background-color: #002147;
@@ -79,35 +83,40 @@
     </div>
 
     <script>
-        // 1. SUPABASE CONFIG
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-        const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // FIREBASE CONFIG
+        const firebaseConfig = {
+          apiKey: "AIzaSyC0QC_qi2aKIIT5axmN5rk-3igybyxoqW0",
+          authDomain: "biuarchive.firebaseapp.com",
+          databaseURL: "https://biuarchive-default-rtdb.firebaseio.com",
+          projectId: "biuarchive",
+          storageBucket: "biuarchive.firebasestorage.app",
+          messagingSenderId: "137837754242",
+          appId: "1:137837754242:web:4da8aa153cd505e6de019b",
+          measurementId: "G-9KYG7N5F1T"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
         let targetTime = Date.now() + (2 * 60 * 60 * 1000); // Default 2 hours
 
         async function checkMaintenanceStatus() {
-            // Check if maintenance is still ON
-            const { data } = await supabase
-                .from('settings')
-                .select('value')
-                .eq('key', 'maintenance_mode')
-                .single();
-
-            if (data && data.value === "false") {
-                window.location.href = 'index.html';
-            }
-        }
-
-        // Listen for changes in Realtime
-        supabase
-            .channel('maint-updates')
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'settings' }, payload => {
-                if (payload.new.key === 'maintenance_mode' && payload.new.value === 'false') {
+            // Check if maintenance is still ON via Firebase
+            const settingsRef = db.ref('settings/maintenance_mode');
+            settingsRef.once('value', (snapshot) => {
+                const isMaintenance = snapshot.val();
+                if (isMaintenance === false) {
                     window.location.href = 'index.html';
                 }
-            })
-            .subscribe();
+            });
+        }
+
+        // Listen for real-time changes to maintenance_mode
+        db.ref('settings/maintenance_mode').on('value', (snapshot) => {
+            if (snapshot.val() === false) {
+                window.location.href = 'index.html';
+            }
+        });
 
         function updateCountdown() {
             const now = Date.now();
@@ -133,5 +142,6 @@
         setInterval(updateCountdown, 1000);
         setInterval(checkMaintenanceStatus, 10000); // Backup check every 10s
     </script>
+    <script src="theme.js" defer></script>
 </body>
 </html>

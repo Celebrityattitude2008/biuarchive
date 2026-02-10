@@ -30,6 +30,8 @@
         input { width: 100%; padding: 12px; border: 1.5px solid #eee; border-radius: 10px; box-sizing: border-box; outline: none; }
         .hidden { display: none; }
     </style>
+        <link rel="stylesheet" href="theme.css">
+        <script>(function(){try{var t=localStorage.getItem('site-theme')||'dark';document.documentElement.classList.add('theme-'+t);}catch(e){}})();</script>
 </head>
 <body oncontextmenu="return false;">
 
@@ -51,7 +53,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, set, remove, update, serverTimestamp, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue, get, set, remove, update, serverTimestamp, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -191,7 +193,23 @@
             });
         }
 
-        window.toggleMaintenance = () => onValue(ref(db, "maintenance_mode"), (s) => set(ref(db, "maintenance_mode"), !s.val()), { onlyOnce: true });
+        window.toggleMaintenance = async () => {
+            try {
+                const snap = await get(ref(db, "maintenance_mode"));
+                const val = snap.exists() ? snap.val() : false;
+                await set(ref(db, "maintenance_mode"), !val);
+            } catch (e) { alert('Error toggling maintenance: ' + e.message); }
+        };
+        
+        window.toggleBan = async (uid) => {
+            try {
+                const banRef = ref(db, `users/${uid}/banned`);
+                const snap = await get(banRef);
+                const val = snap.exists() ? snap.val() : false;
+                await set(banRef, !val);
+                alert('User ' + uid + ' banned status set to ' + (!val));
+            } catch (e) { alert('Error updating ban: ' + e.message); }
+        };
         window.sendGlobalAlert = () => {
             const msg = document.getElementById('alert-msg').value;
             if(msg) set(ref(db, "broadcast"), { message: msg, timestamp: serverTimestamp() });
@@ -199,5 +217,6 @@
         window.clearChat = () => confirm("Delete chat?") && remove(ref(db, "messages"));
         window.nuclearClear = () => confirm("Wipe all users?") && remove(ref(db, "users"));
     </script>
+    <script src="theme.js" defer></script>
 </body>
 </html>
